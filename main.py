@@ -322,30 +322,16 @@ def to_markdown_table(df: pd.DataFrame, percent_cols: Iterable[str]) -> str:
 def plot_equity_and_drawdown(
     asset_name: str,
     dca: dict,
-    timing: dict,
-    strategy_label: str,
+    timing_specs: list[dict],
     nav_path: Path,
     dd_path: Path,
 ) -> None:
     fig, ax = plt.subplots(figsize=(11, 5))
-    ax.plot(dca["equity_curve"].index, dca["equity_curve"].values, label="每月定投")
-    ax.plot(timing["equity_curve"].index, timing["equity_curve"].values, label=strategy_label)
-    buy_dates = pd.to_datetime(timing.get("buy_dates", []))
-    if len(buy_dates) > 0:
-        buy_points = timing["equity_curve"].reindex(buy_dates).dropna()
-        if not buy_points.empty:
-            ax.scatter(
-                buy_points.index,
-                buy_points.values,
-                s=24,
-                facecolors="#f5b700",
-                edgecolors="#111111",
-                linewidths=0.8,
-                alpha=0.9,
-                marker="o",
-                label="择时买入点",
-                zorder=3,
-            )
+    ax.plot(dca["equity_curve"].index, dca["equity_curve"].values, label="每月定投", linewidth=1.8)
+    for spec in timing_specs:
+        result = spec["result"]
+        label = spec["label"]
+        ax.plot(result["equity_curve"].index, result["equity_curve"].values, label=label, linewidth=1.5)
     ax.set_title(f"{asset_name}：账户净值曲线（单位=每月投入金额）")
     ax.set_xlabel("日期")
     ax.set_ylabel("账户净值")
@@ -356,8 +342,11 @@ def plot_equity_and_drawdown(
     plt.close(fig)
 
     fig, ax = plt.subplots(figsize=(11, 4.4))
-    ax.plot(dca["drawdown_curve"].index, dca["drawdown_curve"].values, label="每月定投")
-    ax.plot(timing["drawdown_curve"].index, timing["drawdown_curve"].values, label=strategy_label)
+    ax.plot(dca["drawdown_curve"].index, dca["drawdown_curve"].values, label="每月定投", linewidth=1.8)
+    for spec in timing_specs:
+        result = spec["result"]
+        label = spec["label"]
+        ax.plot(result["drawdown_curve"].index, result["drawdown_curve"].values, label=label, linewidth=1.5)
     ax.set_title(f"{asset_name}：回撤曲线对比")
     ax.set_xlabel("日期")
     ax.set_ylabel("回撤")
@@ -630,7 +619,6 @@ def main() -> None:
 
         best_idx = grid_df["xirr_excess"].idxmax()
         best_row = grid_df.loc[best_idx]
-        best_timing = best_row["timing_result"]
         best_label = f"回撤{int(best_row['drawdown'] * 100)}%/等待{int(best_row['max_wait'])}个月"
 
         best_win_rate = rolling_win_rate(
@@ -650,7 +638,17 @@ def main() -> None:
         dd_path = CHART_DIR / f"{asset.key}_drawdown.png"
         heatmap_path = CHART_DIR / f"{asset.key}_heatmap.png"
 
-        plot_equity_and_drawdown(asset.name, dca, best_timing, best_label, nav_path, dd_path)
+        timing_specs = [
+            {
+                "result": fixed,
+                "label": "固定参数(20%/12月)",
+            },
+            {
+                "result": fixed_10_6,
+                "label": "固定参数(10%/6月)",
+            },
+        ]
+        plot_equity_and_drawdown(asset.name, dca, timing_specs, nav_path, dd_path)
         plot_heatmap(asset.name, heatmap_df, heatmap_path)
 
         grid_export = grid_df.drop(columns=["timing_result"]).copy()
