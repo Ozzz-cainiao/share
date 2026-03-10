@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
@@ -707,4 +708,10 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    if "--framework" in sys.argv:
+        from investlab.cli import main as framework_main
+
+        sys.argv = [arg for arg in sys.argv if arg != "--framework"]
+        framework_main()
+    else:
+        main()
