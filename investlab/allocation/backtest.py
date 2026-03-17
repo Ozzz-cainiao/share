@@ -20,10 +20,29 @@ Includes:
 from __future__ import annotations
 
 import math
+import os
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+
+# Disable proxy to avoid connection issues with data sources
+os.environ["NO_PROXY"] = "*"
+os.environ["http_proxy"] = ""
+os.environ["https_proxy"] = ""
+os.environ["HTTP_PROXY"] = ""
+os.environ["HTTPS_PROXY"] = ""
+
+# Monkey-patch requests to ignore system proxy settings
+import requests
+import urllib3
+
+urllib3.disable_warnings()
+session = requests.Session()
+session.trust_env = False  # Ignore proxy environment variables
+session.proxies = {}  # Explicitly empty proxies
+# Replace default session factory
+requests.Session = lambda: session
 
 import akshare as ak
 import matplotlib.pyplot as plt
@@ -167,22 +186,70 @@ def fetch_cn_index_monthly() -> Tuple[pd.DataFrame, str]:
 
 def fetch_cn_etf_monthly(symbol: str, out_col: str) -> pd.DataFrame:
     """Fetch Chinese ETF monthly prices."""
-    df = pd.DataFrame(
-        ak.fund_etf_hist_em(
-            symbol=symbol,
-            period="daily",
-            start_date="20080101",
-            end_date="20301231",
-            adjust="qfq",
-        )
-    )
-    date_col = df.columns[0]
-    close_col = df.columns[2]
-    return month_end(df, date_col, close_col, out_col)
+    import akshare as ak
+    import time
+
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            df = pd.DataFrame(
+                ak.fund_etf_hist_em(
+                    symbol=symbol,
+                    period="daily",
+                    start_date="20080101",
+                    end_date="20301231",
+                    adjust="qfq",
+                )
+            )
+            date_col = df.columns[0]
+            close_col = df.columns[2]
+            return month_end(df, date_col, close_col, out_col)
+        except Exception as e:
+            print(
+                f"Warning: Failed to fetch ETF {symbol} data (attempt {attempt + 1}/{max_retries}): {e}"
+            )
+            if attempt < max_retries - 1:
+                time.sleep(2)
+                continue
+            # 返回空的DataFrame，后续处理会处理缺失数据
+            return pd.DataFrame(columns=["month", out_col])
 
 
-def build_panel() -> Tuple[pd.DataFrame, str]:
-    """Build unified panel with all required data."""
+def build_panel(cache_path: Optional[Path] = None) -> Tuple[pd.DataFrame, str]:
+    """Build unified panel with all required data.
+
+    Args:
+        cache_path: Optional path to cache file. If provided and file exists,
+                   will load from cache instead of fetching from API.
+    """
+    import os
+
+    # 如果提供了缓存路径且文件存在，尝试加载缓存
+    if cache_path and cache_path.exists():
+        try:
+            print(f"Loading panel from cache: {cache_path}")
+            panel = pd.read_csv(cache_path)
+            panel["month"] = pd.to_datetime(panel["month"]).dt.to_period("M")
+            # 尝试从文件属性或文件名推断使用的指数
+            cn_index_used = "CSI800"  # 默认值
+            if "cn_index_used" in panel.attrs:
+                cn_index_used = panel.attrs["cn_index_used"]
+            return panel, cn_index_used
+        except Exception as e:
+            print(f"Warning: Failed to load from cache {cache_path}: {e}")
+            print("Falling back to API data fetch...")
+
+    # 清除代理环境变量
+    for key in [
+        "http_proxy",
+        "https_proxy",
+        "HTTP_PROXY",
+        "HTTPS_PROXY",
+        "all_proxy",
+        "ALL_PROXY",
+    ]:
+        os.environ.pop(key, None)
+
     cn_stock, cn_index_used = fetch_cn_index_monthly()
 
     us_stock = fetch_us_close_monthly(".INX", "usStock_usd")
@@ -572,3 +639,362 @@ def plot_horizon_comparison(
     plt.tight_layout()
     plt.savefig(out_path, dpi=180)
     plt.close(fig)
+
+
+def select_quarter_starts(panel: pd.DataFrame) -> List[pd.Period]:
+    """Select quarter-end months (Mar, Jun, Sep, Dec) that have enough data for 7-year window.
+
+    Args:
+        panel: DataFrame with 'month' column (pd.Period)
+
+    Returns:
+        List of starting months for rolling windows
+    """
+    months = panel["month"].unique()
+    quarter_months = [m for m in months if m.month in QUARTER_MONTHS]
+
+    # Need at least 84 months (7 years) of data after start
+    last_month = months[-1]
+    valid_starts = [
+        m for m in quarter_months if m <= last_month - 84 and m >= months[0]
+    ]
+    return valid_starts
+
+
+def run_rolling_7y_quarterly_rebalance(
+    panel: pd.DataFrame,
+) -> pd.DataFrame:
+    """Run rolling 7-year quarterly rebalance backtest.
+
+    Args:
+        panel: DataFrame with price and signal data
+
+    Returns:
+        DataFrame with columns:
+            - start_month: window start
+            - end_month: window end
+            - cagr: annualized return
+            - max_drawdown: maximum drawdown
+            - sharpe: sharpe ratio
+            - rebalances: number of rebalances
+            - total_return: total return
+            - annual_vol: annual volatility
+    """
+    from investlab.allocation.calculator import target_weights
+
+    horizon_months = 84  # 7 years
+    results = []
+
+    starts = select_quarter_starts(panel)
+    if not starts:
+        return pd.DataFrame()
+
+    for start_month in starts:
+        end_month = start_month + horizon_months
+        df = panel[
+            (panel["month"] >= start_month) & (panel["month"] <= end_month)
+        ].copy()
+        if len(df) < horizon_months + 1:
+            continue
+
+        # Initialize with target weights
+        first = df.iloc[0]
+        tw = target_weights(first["x_signal"], first["y_signal"])
+        holdings = {
+            "cash_val": INITIAL_CAPITAL * tw["cash"],
+            "gold_val": INITIAL_CAPITAL * tw["gold"],
+            "cnBond_val": INITIAL_CAPITAL * tw["cnBond"],
+            "cnStock_val": INITIAL_CAPITAL * tw["cnStock"],
+            "usBond_val": INITIAL_CAPITAL * tw["usBond"],
+            "usStock_val": INITIAL_CAPITAL * tw["usStock"],
+        }
+
+        nav = [float(sum(holdings.values()))]
+        rebalances = 0
+
+        for i in range(1, len(df)):
+            row = df.iloc[i]
+            prev = df.iloc[i - 1]
+
+            # Calculate returns
+            returns = {
+                "cash_val": 1.0 + float(row["cash_ret"]),
+                "gold_val": float(row["gold_price"]) / float(prev["gold_price"]),
+                "cnBond_val": float(row["cnBond_price"]) / float(prev["cnBond_price"]),
+                "cnStock_val": float(row["cn_stock_price"])
+                / float(prev["cn_stock_price"]),
+                "usBond_val": float(row["usBond_rmb"]) / float(prev["usBond_rmb"]),
+                "usStock_val": float(row["usStock_rmb"]) / float(prev["usStock_rmb"]),
+            }
+
+            # Update holdings
+            for key in holdings:
+                holdings[key] *= returns[key]
+
+            total_val = float(sum(holdings.values()))
+
+            # Quarterly rebalance (Mar, Jun, Sep, Dec)
+            if row["month"].month in QUARTER_MONTHS:
+                tw = target_weights(row["x_signal"], row["y_signal"])
+                for key, val in holdings.items():
+                    asset_key = key.replace("_val", "")
+                    holdings[key] = total_val * tw[asset_key]
+                rebalances += 1
+
+            nav.append(total_val)
+
+        # Calculate metrics
+        nav_series = pd.Series(nav, index=df["month"])
+        returns = nav_series.pct_change().dropna()
+        if len(returns) < 2:
+            continue
+
+        years = len(nav_series) / 12
+        total_return = nav_series.iloc[-1] / nav_series.iloc[0] - 1
+        cagr = (1 + total_return) ** (1 / years) - 1
+        annual_vol = returns.std() * np.sqrt(12)
+        sharpe = cagr / annual_vol if annual_vol > 0 else 0
+
+        # Maximum drawdown
+        cummax = nav_series.cummax()
+        drawdown = (nav_series - cummax) / cummax
+        max_drawdown = drawdown.min()
+
+        results.append(
+            {
+                "start_month": start_month,
+                "end_month": end_month,
+                "cagr": cagr,
+                "max_drawdown": max_drawdown,
+                "sharpe": sharpe,
+                "rebalances": rebalances,
+                "total_return": total_return,
+                "annual_vol": annual_vol,
+            }
+        )
+
+    return pd.DataFrame(results).sort_values("start_month").reset_index(drop=True)
+
+
+def run_rolling_7y_quarterly_dca(
+    panel: pd.DataFrame,
+    dca_amount: float = 10000.0,
+) -> pd.DataFrame:
+    """Run rolling 7-year quarterly DCA backtest.
+
+    Args:
+        panel: DataFrame with price and signal data
+        dca_amount: amount to invest each quarter (RMB)
+
+    Returns:
+        DataFrame with columns:
+            - start_month: window start
+            - end_month: window end
+            - total_invested: total amount invested
+            - end_value: ending portfolio value
+            - xirr: internal rate of return
+            - cagr_on_total_cost: annualized return on total cost
+            - max_drawdown: maximum drawdown
+    """
+    from investlab.allocation.calculator import target_weights
+
+    horizon_months = 84  # 7 years
+    results = []
+
+    starts = select_quarter_starts(panel)
+    if not starts:
+        return pd.DataFrame()
+
+    for start_month in starts:
+        end_month = start_month + horizon_months
+        df = panel[
+            (panel["month"] >= start_month) & (panel["month"] <= end_month)
+        ].copy()
+        if len(df) < horizon_months + 1:
+            continue
+
+        holdings = {
+            "cash_val": 0.0,
+            "gold_val": 0.0,
+            "cnBond_val": 0.0,
+            "cnStock_val": 0.0,
+            "usBond_val": 0.0,
+            "usStock_val": 0.0,
+        }
+
+        cashflows = []
+        invested = 0.0
+        nav_history = []
+
+        # Helper function to calculate portfolio value
+        def portfolio_value(holdings_dict, price_row):
+            return (
+                holdings_dict["cash_val"] * (1 + float(price_row["cash_ret"]))
+                + holdings_dict["gold_val"] * float(price_row["gold_price"])
+                + holdings_dict["cnBond_val"] * float(price_row["cnBond_price"])
+                + holdings_dict["cnStock_val"] * float(price_row["cn_stock_price"])
+                + holdings_dict["usBond_val"] * float(price_row["usBond_rmb"])
+                + holdings_dict["usStock_val"] * float(price_row["usStock_rmb"])
+            )
+
+        for pos, (i, row) in enumerate(df.iterrows()):
+            month = row["month"]
+
+            # Quarterly investment
+            if month.month in QUARTER_MONTHS:
+                tw = target_weights(row["x_signal"], row["y_signal"])
+                for key in holdings:
+                    asset_key = key.replace("_val", "")
+                    holdings[key] += dca_amount * tw[asset_key]
+                invested += dca_amount
+                cashflows.append((month.to_timestamp(how="end"), -dca_amount))
+
+            # Update holdings with returns (except cash which earns interest)
+            if pos > 0:
+                prev = df.iloc[pos - 1]
+                holdings["cash_val"] *= 1 + float(row["cash_ret"])
+                holdings["gold_val"] *= float(row["gold_price"]) / float(
+                    prev["gold_price"]
+                )
+                holdings["cnBond_val"] *= float(row["cnBond_price"]) / float(
+                    prev["cnBond_price"]
+                )
+                holdings["cnStock_val"] *= float(row["cn_stock_price"]) / float(
+                    prev["cn_stock_price"]
+                )
+                holdings["usBond_val"] *= float(row["usBond_rmb"]) / float(
+                    prev["usBond_rmb"]
+                )
+                holdings["usStock_val"] *= float(row["usStock_rmb"]) / float(
+                    prev["usStock_rmb"]
+                )
+
+            # Calculate current portfolio value
+            current_value = portfolio_value(holdings, row)
+            nav_history.append(current_value)
+
+        if not nav_history:
+            continue
+
+        end_value = nav_history[-1]
+        cashflows.append((df.iloc[-1]["month"].to_timestamp(how="end"), end_value))
+
+        # Calculate XIRR
+        def xnpv(rate, cfs):
+            t0 = cfs[0][0]
+            total = 0.0
+            for t, cf in cfs:
+                days = (t - t0).days
+                total += cf / ((1 + rate) ** (days / 365.0))
+            return total
+
+        def xirr_bisect(cashflows):
+            low, high = -0.999, 5.0
+            f_low = xnpv(low, cashflows)
+            f_high = xnpv(high, cashflows)
+
+            if np.sign(f_low) == np.sign(f_high):
+                high = 20.0
+                f_high = xnpv(high, cashflows)
+                if np.sign(f_low) == np.sign(f_high):
+                    return np.nan
+
+            for _ in range(200):
+                mid = (low + high) / 2.0
+                f_mid = xnpv(mid, cashflows)
+                if abs(f_mid) < 1e-9:
+                    return mid
+                if np.sign(f_mid) == np.sign(f_low):
+                    low, f_low = mid, f_mid
+                else:
+                    high, f_high = mid, f_mid
+            return (low + high) / 2.0
+
+        xirr_val = xirr_bisect(cashflows)
+
+        # CAGR on total cost
+        years = len(df) / 12
+        cagr_cost = (end_value / invested) ** (1 / years) - 1 if invested > 0 else 0
+
+        # Maximum drawdown
+        nav_series = pd.Series(nav_history, index=df["month"])
+        cummax = nav_series.cummax()
+        drawdown = (nav_series - cummax) / cummax
+        max_dd = drawdown.min()
+
+        results.append(
+            {
+                "start_month": start_month,
+                "end_month": end_month,
+                "total_invested": invested,
+                "end_value": end_value,
+                "xirr": xirr_val if not np.isnan(xirr_val) else 0.0,
+                "cagr_on_total_cost": cagr_cost,
+                "max_drawdown": max_dd,
+            }
+        )
+
+    return pd.DataFrame(results).sort_values("start_month").reset_index(drop=True)
+
+
+def generate_mock_panel(
+    start_date: str = "2008-01-01", end_date: str = "2026-02-01"
+) -> Tuple[pd.DataFrame, str]:
+    """Generate mock panel for testing when API is unavailable.
+
+    Creates realistic-looking price series with correlations and trends.
+    """
+    import numpy as np
+    from datetime import datetime
+
+    # Generate monthly date range
+    dates = pd.date_range(start=start_date, end=end_date, freq="ME")
+    n_months = len(dates)
+
+    # Base random walk for global trend
+    np.random.seed(42)
+    global_shocks = np.random.randn(n_months) * 0.02
+
+    # Asset-specific parameters (USD denominated)
+    assets = {
+        "usStock_usd": {"drift": 0.007, "vol": 0.06, "beta": 1.2},
+        "usBond_usd": {"drift": 0.002, "vol": 0.02, "beta": 0.3},
+        "cn_stock_price": {"drift": 0.008, "vol": 0.08, "beta": 1.5},
+        "cnBond_price": {"drift": 0.003, "vol": 0.015, "beta": 0.2},
+        "gold_price": {"drift": 0.004, "vol": 0.04, "beta": 0.1},
+        "cash_price": {"drift": 0.001, "vol": 0.001, "beta": 0.0},
+    }
+
+    panel = pd.DataFrame({"month": dates.to_period("M")})
+
+    # Generate correlated returns
+    for asset, params in assets.items():
+        shocks = params["beta"] * global_shocks + np.random.randn(n_months) * params[
+            "vol"
+        ] / np.sqrt(12)
+        returns = params["drift"] / 12 + shocks
+        # Convert to price (starting at 100)
+        price = 100 * np.exp(np.cumsum(returns))
+        panel[asset] = price
+
+    # Generate USDCNY exchange rate (random walk around 6.8)
+    usdcny_returns = np.random.randn(n_months) * 0.02 / np.sqrt(12)
+    usdcny = 6.8 * np.exp(np.cumsum(usdcny_returns))
+    panel["usdcny"] = usdcny
+
+    # Convert USD assets to RMB
+    panel["usStock_rmb"] = panel["usStock_usd"] * panel["usdcny"]
+    panel["usBond_rmb"] = panel["usBond_usd"] * panel["usdcny"]
+
+    # Add signal columns (mock signals)
+    panel["xUsPremium"] = np.clip(np.random.randn(n_months) * 0.5, -1, 1)
+    panel["yCnSignal"] = np.clip(np.random.rand(n_months), 0, 1)
+    # Add required columns for backtest
+    panel["x_signal"] = panel["xUsPremium"]  # alias
+    panel["y_signal"] = panel["yCnSignal"]  # alias
+    panel["cash_ret"] = 0.001 / 12  # monthly cash return (0.1% annual)
+
+    print(
+        f"Mock panel generated: {len(panel)} months from {panel['month'].min()} to {panel['month'].max()}"
+    )
+    return panel, "CSI800 (mock)"

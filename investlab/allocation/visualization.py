@@ -343,6 +343,298 @@ def generate_performance_comparison(
     plt.close(fig)
 
 
+def generate_rolling_7y_quarterly_rebalance_summary(
+    results_df: pd.DataFrame, out_path: Path
+) -> None:
+    """Generate rolling 7-year quarterly rebalance summary chart.
+
+    Args:
+        results_df: DataFrame with columns:
+            - start_month: period start
+            - cagr: annualized return
+            - max_drawdown: maximum drawdown
+            - sharpe: sharpe ratio (optional)
+            - rebalances: number of rebalances (optional)
+        out_path: output file path
+    """
+    x = np.arange(len(results_df))
+    labels = results_df["start_month"].astype(str).tolist()
+
+    fig, (ax1, ax2) = plt.subplots(
+        2, 1, figsize=(14, 9), sharex=True, gridspec_kw={"height_ratios": [2, 2]}
+    )
+
+    # CAGR plot
+    ax1.plot(
+        x,
+        results_df["cagr"] * 100,
+        marker="o",
+        color="#2F6DB3",
+        linewidth=1.8,
+        label="7年年化收益",
+    )
+    ax1.axhline(
+        results_df["cagr"].median() * 100,
+        color="#888888",
+        linestyle="--",
+        linewidth=1.2,
+        label="中位数",
+    )
+    ax1.set_ylabel("年化收益（%）")
+    ax1.set_title("最近10年：按季度起点的7年滚动回测（季度再平衡）")
+    ax1.grid(alpha=0.25)
+    ax1.legend(loc="best")
+
+    # Max drawdown plot
+    ax2.bar(
+        x,
+        results_df["max_drawdown"] * 100,
+        color="#D87070",
+        alpha=0.85,
+        label="最大回撤",
+    )
+    ax2.axhline(
+        results_df["max_drawdown"].median() * 100,
+        color="#888888",
+        linestyle="--",
+        linewidth=1.2,
+        label="中位数",
+    )
+    ax2.set_ylabel("最大回撤（%）")
+    ax2.set_xlabel("起投季度")
+    ax2.grid(alpha=0.25)
+    ax2.legend(loc="best")
+
+    # X-axis ticks
+    step = max(1, len(labels) // 14)
+    ticks = np.arange(0, len(labels), step)
+    ax2.set_xticks(ticks)
+    ax2.set_xticklabels([labels[i] for i in ticks], rotation=45, ha="right")
+
+    plt.tight_layout()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(out_path, dpi=180)
+    plt.close(fig)
+
+
+def generate_rolling_7y_quarterly_dca_10k_summary(
+    results_df: pd.DataFrame, out_path: Path
+) -> None:
+    """Generate rolling 7-year quarterly DCA summary chart.
+
+    Args:
+        results_df: DataFrame with columns:
+            - start_month: period start
+            - xirr: internal rate of return
+            - cagr_on_total_cost: annualized return on total cost
+            - total_invested: total amount invested
+            - end_value: ending portfolio value
+            - max_drawdown: maximum drawdown
+        out_path: output file path
+    """
+    x = np.arange(len(results_df))
+    labels = results_df["start_month"].astype(str).tolist()
+
+    fig, (ax1, ax2) = plt.subplots(
+        2, 1, figsize=(14, 9), sharex=True, gridspec_kw={"height_ratios": [2, 2]}
+    )
+
+    # Return metrics
+    ax1.plot(
+        x,
+        results_df["xirr"] * 100,
+        marker="o",
+        color="#2F6DB3",
+        linewidth=1.8,
+        label="XIRR",
+    )
+    ax1.plot(
+        x,
+        results_df["cagr_on_total_cost"] * 100,
+        marker="s",
+        color="#579D5B",
+        linewidth=1.6,
+        label="按总投入折算年化",
+    )
+    ax1.axhline(
+        results_df["xirr"].median() * 100,
+        color="#666666",
+        linestyle="--",
+        linewidth=1.1,
+        label="XIRR中位数",
+    )
+    ax1.set_ylabel("收益率（%）")
+    ax1.set_title("季度定投1万元：7年窗口滚动结果")
+    ax1.grid(alpha=0.25)
+    ax1.legend(loc="best")
+
+    # Investment amount and drawdown
+    width = 0.38
+    ax2.bar(
+        x - width / 2,
+        results_df["total_invested"] / 10000,
+        width=width,
+        color="#C9A14A",
+        label="累计投入（万元）",
+    )
+    ax2.bar(
+        x + width / 2,
+        results_df["end_value"] / 10000,
+        width=width,
+        color="#4F84C4",
+        label="期末资产（万元）",
+    )
+    ax2_t = ax2.twinx()
+    ax2_t.plot(
+        x,
+        results_df["max_drawdown"] * 100,
+        color="#B24D4D",
+        marker="^",
+        linewidth=1.4,
+        label="最大回撤",
+    )
+
+    ax2.set_ylabel("金额（万元）")
+    ax2_t.set_ylabel("最大回撤（%）")
+    ax2.set_xlabel("起投季度")
+    ax2.grid(alpha=0.2)
+
+    # Combine legends
+    h1, l1 = ax2.get_legend_handles_labels()
+    h2, l2 = ax2_t.get_legend_handles_labels()
+    ax2.legend(h1 + h2, l1 + l2, loc="best")
+
+    # X-axis ticks
+    step = max(1, len(labels) // 14)
+    ticks = np.arange(0, len(labels), step)
+    ax2.set_xticks(ticks)
+    ax2.set_xticklabels([labels[i] for i in ticks], rotation=45, ha="right")
+
+    plt.tight_layout()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(out_path, dpi=180)
+    plt.close(fig)
+
+
+def generate_allocation_backtest_chart(
+    nav: pd.Series,
+    drawdown: pd.Series,
+    metrics: Dict[str, float],
+    label: str,
+    out_path: Path,
+) -> None:
+    """Generate allocation backtest chart (like allocation_backtest_3y.png).
+
+    Args:
+        nav: NAV series with datetime index
+        drawdown: drawdown series (0 to -1)
+        metrics: dictionary with metrics:
+            - cagr: annualized return
+            - total_return: total return
+            - max_drawdown: maximum drawdown
+            - annual_vol: annual volatility
+            - rebalances: number of rebalances
+        label: horizon label (e.g., "3y")
+        out_path: output file path
+    """
+    idx = nav.index.astype(str)
+    norm = nav / nav.iloc[0]
+
+    fig, (ax1, ax2) = plt.subplots(
+        2, 1, figsize=(12, 8), sharex=True, gridspec_kw={"height_ratios": [3, 1]}
+    )
+
+    # NAV plot
+    ax1.plot(idx, norm.values, color="#2F6DB3", linewidth=2.0, label="组合净值")
+    ax1.set_ylabel("净值（起点=1.0）")
+    ax1.grid(alpha=0.25)
+    ax1.legend(loc="upper left")
+    ax1.set_title(f"{label}回测（按月检查，偏离>5%调仓）")
+
+    # Metrics text
+    txt = (
+        f"年化收益: {metrics['cagr']:.2%}  |  累计收益: {metrics['total_return']:.2%}  |  "
+        f"最大回撤: {metrics['max_drawdown']:.2%}  |  年化波动: {metrics['annual_vol']:.2%}  |  "
+        f"调仓次数: {int(metrics['rebalances'])}"
+    )
+    ax1.text(0.01, 0.03, txt, transform=ax1.transAxes, fontsize=10, va="bottom")
+
+    # Drawdown plot
+    ax2.fill_between(idx, np.asarray(drawdown) * 100, 0, color="#D87070", alpha=0.35)
+    ax2.plot(idx, np.asarray(drawdown) * 100, color="#B24D4D", linewidth=1.5)
+    ax2.set_ylabel("回撤（%）")
+    ax2.grid(alpha=0.25)
+
+    # X-axis ticks
+    step = max(1, len(idx) // 12)
+    xt = np.arange(0, len(idx), step)
+    ax2.set_xticks(xt)
+    ax2.set_xticklabels([idx[i] for i in xt], rotation=45, ha="right")
+
+    plt.tight_layout()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(out_path, dpi=180)
+    plt.close(fig)
+
+
+def generate_allocation_shift_10y_quarterly_stack(
+    weights_df: pd.DataFrame,
+    out_path: Path,
+    title: str = "过去10年目标资产权重变化（按季度）",
+) -> None:
+    """Generate 10-year quarterly stacked allocation shift chart.
+
+    Args:
+        weights_df: DataFrame with datetime index and columns:
+            - cash, gold, cnBond, cnStock, usBond, usStock
+        out_path: output file path
+        title: chart title
+    """
+    # Filter to quarter-end months (Mar, Jun, Sep, Dec)
+    # Handle different index types (PeriodIndex or DatetimeIndex)
+    import pandas as pd
+
+    if isinstance(weights_df.index, pd.PeriodIndex):
+        # Convert PeriodIndex to DatetimeIndex for month extraction
+        dt_index = weights_df.index.to_timestamp()
+        month_mask = dt_index.month.isin([3, 6, 9, 12])  # type: ignore
+    elif isinstance(weights_df.index, pd.DatetimeIndex):
+        month_mask = weights_df.index.month.isin([3, 6, 9, 12])  # type: ignore
+    else:
+        # Try to access month attribute as fallback
+        month_mask = weights_df.index.month.isin([3, 6, 9, 12])  # type: ignore
+
+    qdf = weights_df[month_mask].copy()
+    if qdf.empty:
+        qdf = weights_df  # fallback to all months
+
+    idx = [str(i) for i in qdf.index]
+    cols = ["cash", "gold", "cnBond", "cnStock", "usBond", "usStock"]
+    labels = ["现金", "黄金", "中债", "中股", "美债", "美股"]
+    colors = ["#6FAF9F", "#E6D58A", "#AEB6D6", "#5E93CF", "#DFA0AC", "#D77A6C"]
+
+    fig, ax = plt.subplots(figsize=(14, 7))
+    # Prepare data for stackplot
+    stack_data = [np.asarray(qdf[c]) for c in cols]
+    ax.stackplot(idx, stack_data, labels=labels, colors=colors, alpha=0.9)
+    ax.set_title(title)
+    ax.set_ylabel("权重")
+    ax.set_ylim(0, 1)
+    ax.grid(alpha=0.2)
+    ax.legend(loc="upper left", ncol=3)
+
+    step = max(1, len(idx) // 18)
+    xt = np.arange(0, len(idx), step)
+    ax.set_xticks(xt)
+    tick_labels = [idx[i] for i in xt]
+    ax.set_xticklabels(tick_labels, rotation=45, ha="right")
+
+    plt.tight_layout()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(out_path, dpi=180)
+    plt.close(fig)
+
+
 def generate_all_figures(output_dir: Path) -> Dict[str, Path]:
     """Generate all standard figures for documentation."""
     output_dir.mkdir(parents=True, exist_ok=True)

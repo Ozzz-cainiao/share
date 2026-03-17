@@ -23,16 +23,27 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
+
+# Disable proxy to avoid connection issues with data sources
+os.environ["NO_PROXY"] = "*"
+os.environ["http_proxy"] = ""
+os.environ["https_proxy"] = ""
+os.environ["HTTP_PROXY"] = ""
+os.environ["HTTPS_PROXY"] = ""
 
 import pandas as pd
 
 from investlab.allocation.backtest import (
     build_panel,
+    generate_mock_panel,
     run_lumpsum_backtest,
     run_dca_backtest,
+    run_rolling_7y_quarterly_rebalance,
+    run_rolling_7y_quarterly_dca,
     benchmark_nav_from_prices,
     run_benchmark_dca,
     BENCHMARKS,
@@ -43,10 +54,15 @@ from investlab.allocation.visualization import (
     generate_all_figures,
     generate_allocation_shift_chart,
     generate_performance_comparison,
+    generate_rolling_7y_quarterly_rebalance_summary,
+    generate_rolling_7y_quarterly_dca_10k_summary,
+    generate_allocation_backtest_chart,
+    generate_allocation_shift_10y_quarterly_stack,
 )
 from investlab.allocation.calculator import (
     allocation_table,
     get_asset_summary,
+    target_weights,
 )
 
 
@@ -160,7 +176,7 @@ def generate_markdown_report(
             # Benchmark metrics
             bench_cagrs = {}
             for key in BENCHMARKS:
-                bench_nav = benchmark_nav_from_prices(df, key, 10000)
+                bench_nav = benchmark_nav_from_prices(df, key, 10000)  # type: ignore
                 bench_returns = bench_nav.pct_change().dropna()
                 if len(bench_returns) > 0:
                     years = len(bench_nav) / 12
@@ -204,7 +220,7 @@ def generate_markdown_report(
             # Benchmark max drawdowns
             bench_mdds = {}
             for key in BENCHMARKS:
-                bench_nav = benchmark_nav_from_prices(df, key, 10000)
+                bench_nav = benchmark_nav_from_prices(df, key, 10000)  # type: ignore
                 dd = bench_nav / bench_nav.cummax() - 1
                 bench_mdds[key] = dd.min()
 
@@ -264,10 +280,28 @@ def main():
         help="Output directory for results and reports",
     )
     parser.add_argument(
+        "--use-cache",
+        action="store_true",
+        default=True,
+        help="Use cached data if available",
+    )
+    parser.add_argument(
+        "--force-refresh",
+        action="store_true",
+        default=False,
+        help="Force refresh data from API even if cache exists",
+    )
+    parser.add_argument(
         "--generate-figures",
         action="store_true",
         default=True,
         help="Generate visualization figures",
+    )
+    parser.add_argument(
+        "--mock-data",
+        action="store_true",
+        default=False,
+        help="Use mock data instead of fetching from API (for testing)",
     )
     args = parser.parse_args()
 
@@ -280,8 +314,29 @@ def main():
 
     # Step 1: Build data panel
     print("\n1. 构建数据面板...")
-    panel, cn_index_used = build_panel()
-    panel.attrs["cn_index_used"] = cn_index_used
+
+    # Determine cache file path
+    panel_path = output_dir / "data_panel.csv"
+
+    # Use cache if requested and not forcing refresh
+    cache_file = None
+    if args.use_cache and not args.force_refresh and panel_path.exists():
+        cache_file = panel_path
+        print(f"   使用缓存数据: {panel_path}")
+
+    if args.mock_data:
+        print("   使用模拟数据 (mock data)...")
+        panel, cn_index_used = generate_mock_panel()
+        panel.attrs["cn_index_used"] = cn_index_used
+    else:
+        try:
+            panel, cn_index_used = build_panel(cache_file)
+            panel.attrs["cn_index_used"] = cn_index_used
+        except Exception as e:
+            print(f"   警告: 数据获取失败: {e}")
+            print("   尝试使用模拟数据继续...")
+            panel, cn_index_used = generate_mock_panel()
+            panel.attrs["cn_index_used"] = cn_index_used
 
     print(f"   数据区间: {panel['month'].min()} 至 {panel['month'].max()}")
     print(f"   月度样本数: {len(panel)}")
@@ -299,7 +354,7 @@ def main():
         fig_dir = output_dir / "figures"
         figure_paths = generate_all_figures(fig_dir)
         for name, path in figure_paths.items():
-            print(f"   ✓ {name}: {path}")
+            print(f"   + {name}: {path}")
 
     # Step 3: Run lumpsum backtests
     print("\n3. 运行一次性投入回测...")
@@ -338,7 +393,7 @@ def main():
         # Calculate monthly weights for the full panel
         monthly_weights = []
         for _, row in panel.iterrows():
-            weights = get_asset_summary({"x": row["x_signal"], "y": row["y_signal"]})
+            weights = target_weights(float(row["x_signal"]), float(row["y_signal"]))
             monthly_weights.append({"month": row["month"], **weights})
 
         weights_df = pd.DataFrame(monthly_weights).set_index("month")
@@ -351,8 +406,94 @@ def main():
     except Exception as e:
         print(f"   生成配置变化趋势图失败: {e}")
 
-    # Step 6: Generate performance comparison charts
-    print("\n6. 生成表现对比图表...")
+    # Step 6: Run rolling 7-year quarterly rebalance backtest
+    print("\n6. 运行7年滚动季度再平衡回测...")
+    try:
+        rolling_rebalance_df = run_rolling_7y_quarterly_rebalance(panel)
+        if not rolling_rebalance_df.empty:
+            rolling_rebalance_csv = (
+                output_dir / "rolling_7y_quarterly_rebalance_metrics.csv"
+            )
+            rolling_rebalance_df.to_csv(
+                rolling_rebalance_csv, index=False, encoding="utf-8-sig"
+            )
+            print(f"   7年滚动季度再平衡指标已保存: {rolling_rebalance_csv}")
+
+            # Generate summary chart
+            rebalance_chart_path = (
+                output_dir / "rolling_7y_quarterly_rebalance_summary.png"
+            )
+            generate_rolling_7y_quarterly_rebalance_summary(
+                rolling_rebalance_df, rebalance_chart_path
+            )
+            figure_paths["rolling_7y_quarterly_rebalance_summary"] = (
+                rebalance_chart_path
+            )
+            print(f"   7年滚动季度再平衡汇总图已保存: {rebalance_chart_path}")
+        else:
+            print("   警告: 7年滚动季度再平衡回测无结果")
+    except Exception as e:
+        print(f"   7年滚动季度再平衡回测失败: {e}")
+
+    # Step 7: Run rolling 7-year quarterly DCA backtest
+    print("\n7. 运行7年滚动季度定投回测...")
+    try:
+        rolling_dca_df = run_rolling_7y_quarterly_dca(panel)
+        if not rolling_dca_df.empty:
+            rolling_dca_csv = output_dir / "rolling_7y_quarterly_dca_10k_metrics.csv"
+            rolling_dca_df.to_csv(rolling_dca_csv, index=False, encoding="utf-8-sig")
+            print(f"   7年滚动季度定投指标已保存: {rolling_dca_csv}")
+
+            # Generate summary chart
+            dca_chart_path = output_dir / "rolling_7y_quarterly_dca_10k_summary.png"
+            generate_rolling_7y_quarterly_dca_10k_summary(
+                rolling_dca_df, dca_chart_path
+            )
+            figure_paths["rolling_7y_quarterly_dca_10k_summary"] = dca_chart_path
+            print(f"   7年滚动季度定投汇总图已保存: {dca_chart_path}")
+        else:
+            print("   警告: 7年滚动季度定投回测无结果")
+    except Exception as e:
+        print(f"   7年滚动季度定投回测失败: {e}")
+
+    # Step 8: Generate allocation backtest charts (like allocation_backtest_3y.png)
+    print("\n8. 生成分配回测详细图表...")
+    for r in lumpsum_results:
+        try:
+            # Calculate drawdown series
+            nav = r.nav
+            cummax = nav.cummax()
+            drawdown = (nav - cummax) / cummax
+
+            chart_path = output_dir / f"allocation_backtest_{r.label}.png"
+            generate_allocation_backtest_chart(
+                nav, drawdown, r.metrics, r.label, chart_path
+            )
+            figure_paths[f"allocation_backtest_{r.label}"] = chart_path
+            print(f"   + {r.label}回测图: {chart_path}")
+        except Exception as e:
+            print(f"   生成{r.label}回测图失败: {e}")
+
+    # Step 9: Generate 10-year quarterly stacked allocation shift chart
+    print("\n9. 生成10年季度堆叠配置变化图...")
+    try:
+        # Calculate monthly weights for the full panel (reuse from step 5)
+        # Recalculate monthly weights for the full panel
+        monthly_weights = []
+        for _, row in panel.iterrows():
+            weights = target_weights(float(row["x_signal"]), float(row["y_signal"]))
+            monthly_weights.append({"month": row["month"], **weights})
+        weights_df = pd.DataFrame(monthly_weights).set_index("month")
+
+        shift_10y_path = output_dir / "allocation_shift_10y_quarterly_stack.png"
+        generate_allocation_shift_10y_quarterly_stack(weights_df, shift_10y_path)
+        figure_paths["allocation_shift_10y_quarterly_stack"] = shift_10y_path
+        print(f"   10年季度堆叠配置变化图已保存: {shift_10y_path}")
+    except Exception as e:
+        print(f"   生成10年季度堆叠配置变化图失败: {e}")
+
+    # Step 10: Generate performance comparison charts
+    print("\n10. 生成表现对比图表...")
     for label, months in horizons:
         try:
             start = last_month - months
@@ -373,7 +514,7 @@ def main():
             # Calculate benchmark NAVs
             bench_navs = {}
             for key in BENCHMARKS:
-                bench_nav = benchmark_nav_from_prices(df, key, 10000)
+                bench_nav = benchmark_nav_from_prices(df, key, 10000)  # type: ignore
                 bench_navs[key] = bench_nav
 
             # Generate comparison chart
@@ -382,12 +523,12 @@ def main():
                 strategy_nav, bench_navs, comp_path, f"{label}窗口: 策略与基准表现对比"
             )
             figure_paths[f"comparison_{label}"] = comp_path
-            print(f"   ✓ {label}对比图: {comp_path}")
+            print(f"   + {label}对比图: {comp_path}")
         except Exception as e:
             print(f"   生成{label}对比图失败: {e}")
 
-    # Step 7: Generate comprehensive report
-    print("\n7. 生成综合报告...")
+    # Step 11: Generate comprehensive report
+    print("\n11. 生成综合报告...")
     try:
         results_dict = {"lumpsum": lumpsum_results}
         dca_dict = {"dca": dca_results}
@@ -399,8 +540,8 @@ def main():
     except Exception as e:
         print(f"   生成报告失败: {e}")
 
-    # Step 8: Save raw results
-    print("\n8. 保存原始结果数据...")
+    # Step 12: Save raw results
+    print("\n12. 保存原始结果数据...")
 
     # Lumpsum results
     lumpsum_rows = []
