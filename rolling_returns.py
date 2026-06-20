@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate a rolling annualized-return matrix for a CSI total-return index.
+"""Generate a rolling annualized-return matrix for a supported investment asset.
 
 The return in column Y and row N is the CAGR from the last close before year Y
 to the last close in year Y + N - 1.  Thus a one-year holding period for 2005
@@ -11,11 +11,13 @@ from __future__ import annotations
 import argparse
 import html
 import sys
+from io import StringIO
 from pathlib import Path
 
 import akshare as ak
 import numpy as np
 import pandas as pd
+import requests
 
 from asset_catalog import AssetDefinition, asset_help, resolve_assets
 
@@ -61,6 +63,67 @@ def fetch_csindex_closes(symbol: str, start_year: int, end_year: int) -> pd.Seri
     if closes.empty:
         raise RuntimeError(f"{symbol} 没有可用的正数收盘价")
     return closes
+
+
+def fetch_us_etf_closes(symbol: str, start_year: int, end_year: int) -> pd.Series:
+    response = requests.get(
+        f"https://totalrealreturns.com/n/{symbol}",
+        headers={"User-Agent": "Mozilla/5.0"},
+        timeout=30,
+    )
+    response.raise_for_status()
+    tables = pd.read_html(StringIO(response.content.decode("utf-8")))
+    annual = next(
+        (
+            table
+            for table in tables
+            if "Year" in table.columns and symbol in table.columns
+        ),
+        None,
+    )
+    if annual is None:
+        raise RuntimeError(f"无法识别 {symbol} 的年度总收益表")
+
+    years = annual["Year"].astype(str).str.extract(r"(\d{4})", expand=False)
+    values = (
+        annual[symbol]
+        .astype(str)
+        .str.replace("−", "-", regex=False)
+        .str.replace("%", "", regex=False)
+        .str.replace("+", "", regex=False)
+    )
+    returns = pd.Series(
+        pd.to_numeric(values, errors="coerce").to_numpy(),
+        index=pd.to_numeric(years, errors="coerce"),
+    ).dropna()
+    returns.index = returns.index.astype(int)
+
+    required = set(range(start_year, end_year + 1))
+    missing = sorted(required - set(returns.index))
+    if missing:
+        raise RuntimeError(f"{symbol} 缺少年度总收益：{missing}")
+
+    wealth = {start_year - 1: 100.0}
+    for year in range(start_year, end_year + 1):
+        wealth[year] = wealth[year - 1] * (1.0 + float(returns.at[year]) / 100.0)
+    dates = pd.to_datetime([f"{year}-12-31" for year in wealth])
+    return pd.Series(list(wealth.values()), index=dates, name=symbol)
+
+
+def fetch_asset_closes(
+    asset: AssetDefinition, start_year: int, end_year: int
+) -> pd.Series:
+    if asset.source == "csindex":
+        return fetch_csindex_closes(asset.symbol, start_year, end_year)
+    if asset.source == "us_etf_total_return":
+        return fetch_us_etf_closes(asset.symbol, start_year, end_year)
+    raise ValueError(f"不支持的数据源：{asset.source}")
+
+
+def source_label(asset: AssetDefinition) -> str:
+    if asset.source == "us_etf_total_return":
+        return "Total Real Returns / ETF 分红再投资年度总收益"
+    return "AkShare / 中证指数"
 
 
 def year_end_closes(closes: pd.Series) -> pd.DataFrame:
@@ -146,6 +209,7 @@ def render_html(
     start_year: int,
     end_year: int,
     warnings: list[str],
+    source_text: str = "AkShare / 中证指数",
 ) -> str:
     values = matrix.to_numpy(dtype=float)
     finite_abs = np.abs(values[np.isfinite(values)])
@@ -217,6 +281,8 @@ small{{display:block;font-size:12px;color:#687287;margin-top:3px}}
 .tooltip-grid span:nth-child(odd){{color:#bac5d9}}
 .tooltip-grid span:nth-child(even){{text-align:right;font-weight:600}}
 .tooltip .hint{{margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,.16);color:#aebbd1;font-size:12px}}
+.source a{{color:rgb(83,106,145)}} .brand-footer{{color:rgb(83,97,122);font-size:14px;font-weight:600;margin:12px 10px 0}}
+body.poster main{{width:2100px;max-width:none;padding:34px 26px 42px}} body.poster .table-wrap{{overflow:visible}}
 @media(max-width:700px){{main{{padding:20px 14px}}h1{{font-size:25px}}th,td{{min-width:78px;height:52px;font-size:15px}}}}
 </style>
 </head>
@@ -228,10 +294,12 @@ small{{display:block;font-size:12px;color:#687287;margin-top:3px}}
 <thead><tr><th>起始年份</th>{head}</tr></thead>
 <tbody>{''.join(rows)}</tbody>
 </table></div>
-<div class="source">数据来源：AkShare / 中证指数；指数：{safe_name}（{safe_symbol}）；日线覆盖 {first_date} 至 {last_date}。计算口径：起始年前一年度最后可用收盘至终止年度最后可用收盘。</div>
+<div class="source">数据来源：{html.escape(source_text)}；标的：{safe_name}（{safe_symbol}）；数据覆盖 {first_date} 至 {last_date}。计算口径：起始年前一年度最后可用收盘至终止年度最后可用收盘。参考资料：<a href="https://youzhiyouxing.cn/sbbi2025/annual-rolling-returns/" target="_blank" rel="noopener">有知有行《中国大类资产投资2025年报》滚动年化收益</a>。</div>
+<div class="brand-footer">更多长期投资研究，欢迎关注公众号：炼金魔女笔记</div>
 <div id="tooltip" class="tooltip" role="status" aria-live="polite"></div>
 </main>
 <script>
+if(new URLSearchParams(location.search).get("poster")==="1")document.body.classList.add("poster");
 const tooltip = document.getElementById("tooltip");
 const cells = document.querySelectorAll("td.metric");
 let pinned = null;
@@ -309,7 +377,7 @@ document.addEventListener("click", () => {{
 
 
 def run_asset(args: argparse.Namespace, asset: AssetDefinition) -> str:
-    closes = fetch_csindex_closes(asset.symbol, args.start_year, args.end_year)
+    closes = fetch_asset_closes(asset, args.start_year, args.end_year)
     annual = year_end_closes(closes)
     adjustment_notes: list[str] = []
     if not args.no_known_adjustments:
@@ -327,7 +395,7 @@ def run_asset(args: argparse.Namespace, asset: AssetDefinition) -> str:
     html_path.write_text(
         render_html(
             matrix, annual, asset.symbol, asset.name,
-            args.start_year, args.end_year, warnings,
+            args.start_year, args.end_year, warnings, source_label(asset),
         ),
         encoding="utf-8",
     )

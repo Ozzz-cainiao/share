@@ -9,6 +9,7 @@ class AssetDefinition:
     symbol: str
     name: str
     category: str
+    source: str = "csindex"
 
 
 ASSETS: tuple[AssetDefinition, ...] = (
@@ -17,6 +18,10 @@ ASSETS: tuple[AssetDefinition, ...] = (
     AssetDefinition("csi800", "H00906", "中证800全收益", "中国大中盘股"),
     AssetDefinition("mid-cap", "H00905", "中证500全收益", "中国中小盘股"),
     AssetDefinition("small-cap", "H00852", "中证1000全收益", "中国小盘股"),
+    AssetDefinition("sp500", "SPY", "标普500（SPY含息）", "美国大盘股", "us_etf_total_return"),
+    AssetDefinition(
+        "nasdaq100", "QQQ", "纳指100（QQQ含息）", "美国科技大盘股", "us_etf_total_return"
+    ),
 )
 
 _BY_KEY = {asset.key: asset for asset in ASSETS}

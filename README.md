@@ -106,7 +106,7 @@ git push -u origin feat/<strategy-or-backtest-name>
 
 ## 9. 滚动年化收益率矩阵
 
-`rolling_returns.py` 使用 AkShare 获取中证指数日线，并生成滚动年化收益率矩阵。默认标的是中证全指全收益指数 `H00985`。
+`rolling_returns.py` 使用 AkShare 获取中证指数日线，或读取美股 ETF 分红再投资年度总收益，并生成滚动年化收益率矩阵。默认标的是中证全指全收益指数 `H00985`。
 
 计算口径：起始年以前一年度最后一个可用收盘价为起点，持有 N 年以后第 N 个年度最后一个可用收盘价为终点，按复合年化收益率计算：
 
@@ -171,7 +171,11 @@ uv run python dca_comparison.py --assets all-a,large-cap,small-cap
 uv run python dca_comparison.py --assets all
 ```
 
-内置标的包括：中证全指全收益（`all-a/H00985`）、沪深300全收益（`large-cap/H00300`）、中证800全收益（`csi800/H00906`）、中证500全收益（`mid-cap/H00905`）、中证1000全收益（`small-cap/H00852`）。也可继续使用 `--symbol CODE --name 名称` 运行自定义中证指数。
+内置标的包括：中证全指全收益（`all-a/H00985`）、沪深300全收益（`large-cap/H00300`）、中证800全收益（`csi800/H00906`）、中证500全收益（`mid-cap/H00905`）、中证1000全收益（`small-cap/H00852`）、标普500 ETF 代理（`sp500/SPY`）和纳斯达克100 ETF 代理（`nasdaq100/QQQ`）。也可继续使用 `--symbol CODE --name 名称` 运行自定义中证指数。
+
+美股表格使用 Total Real Returns 公布的 SPY、QQQ 分红再投资年度总收益。它们是可投资 ETF 代理，并非官方指数点位，因此会包含管理费、跟踪误差及数据商口径影响。
+
+展示思路参考：[有知有行《中国大类资产投资2025年报》滚动年化收益](https://youzhiyouxing.cn/sbbi2025/annual-rolling-returns/)。更多长期投资研究，欢迎关注公众号：**炼金魔女笔记**。
 
 批量运行会额外生成 `index.html`，作为不同投资标的和三种分析页面的统一入口。
 
