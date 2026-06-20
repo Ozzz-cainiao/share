@@ -8,6 +8,7 @@ wheels/
 
 # Virtual environments
 .venv
+.uv-cache/
 
 # Generated outputs (articles/charts/data exports)
 output/
