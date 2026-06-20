@@ -164,6 +164,8 @@ def render_comparison_html(
         f'<a class="{"active" if key == mode else ""}" href="{filename}">{label}</a>'
         for key, (_, label, _, filename) in configs.items()
     )
+    csv_name = Path(page_names[mode]).with_suffix(".csv").name
+    nav += f'<a href="{html.escape(csv_name)}" download>下载当前 CSV</a>'
     if home_href:
         nav = f'<a href="{html.escape(home_href)}">← 站点首页</a>' + nav
     title = f"{html.escape(name)}：{heading}（{start_year}–{end_year} 年）"
