@@ -103,3 +103,90 @@ git push -u origin feat/<strategy-or-backtest-name>
 ```
 
 这样你后面持续加“新策略/新回测”时，仓库会一直保持可维护。
+
+## 9. 滚动年化收益率矩阵
+
+`rolling_returns.py` 使用 AkShare 获取中证指数日线，并生成滚动年化收益率矩阵。默认标的是中证全指全收益指数 `H00985`。
+
+计算口径：起始年以前一年度最后一个可用收盘价为起点，持有 N 年以后第 N 个年度最后一个可用收盘价为终点，按复合年化收益率计算：
+
+```text
+CAGR = (终点指数 / 起点指数) ^ (1 / 持有年数) - 1
+```
+
+例如，“2005 / 持有 10 年”表示从 2004 年最后一个交易日收盘持有至 2014 年最后一个交易日收盘的年化收益率，并非十个单年度收益率的算术平均数。
+
+运行：
+
+```bash
+uv run python rolling_returns.py \
+  --start-year 2005 \
+  --end-year 2025 \
+  --symbol H00985 \
+  --name 中证全指全收益 \
+  --output-dir output/rolling_returns
+```
+
+输出：
+
+- `h00985_rolling_annualized_returns.csv`：便于继续分析的数值矩阵。
+- `h00985_rolling_annualized_returns.html`：自包含中文热力表，可直接用浏览器打开；不依赖任何前端库，窄屏支持横向滚动。
+
+如果某个日历年完全没有数据，相应单元格会留空，同时 HTML 和终端会给出数据提示。当前年份尚未结束时，其“年末值”实际是获取到的最新交易日收盘，正式比较时建议只使用已经结束的完整年份。
+
+## 10. 一次投入与年度定投对比
+
+`dca_comparison.py` 比较两种投入方式：
+
+- 一次投入：起始年前一年度末投入，持有 N 年，指标为 CAGR。
+- 年度定投：每年年初等额投入一份，共投入 N 次，第 N 年年末估值，指标为年度 IRR。
+- 差值：`定投 IRR - 一次投入 CAGR`；正数代表定投占优，负数代表一次投入占优。
+
+```bash
+uv run python dca_comparison.py \
+  --start-year 2005 \
+  --end-year 2025 \
+  --symbol H00985 \
+  --name 中证全指全收益 \
+  --output-dir output/dca_comparison
+```
+
+脚本分别生成一次投入、定投和差值 HTML。三个页面可互相切换；悬浮单元格可同时查看两种年化收益、差值、定投累计投入、期末资产与累计收益。
+
+数据说明：当指数为 `H00300` 时，脚本默认应用《中国大类资产投资 2025 年报》披露的2005年分红估算，将2005年及以后财富指数乘以 `1.026`，使2005年收益由 `-7.65%` 修正为约 `-5.25%`。如需查看数据源未经修正的原始结果，可增加参数 `--no-known-adjustments`。
+
+### 选择或批量生成投资标的
+
+```bash
+# 查看全部内置标的
+uv run python dca_comparison.py --list-assets
+
+# 生成单个标的
+uv run python dca_comparison.py --assets large-cap
+
+# 一次生成多个标的
+uv run python dca_comparison.py --assets all-a,large-cap,small-cap
+
+# 生成全部内置标的
+uv run python dca_comparison.py --assets all
+```
+
+内置标的包括：中证全指全收益（`all-a/H00985`）、沪深300全收益（`large-cap/H00300`）、中证800全收益（`csi800/H00906`）、中证500全收益（`mid-cap/H00905`）、中证1000全收益（`small-cap/H00852`）。也可继续使用 `--symbol CODE --name 名称` 运行自定义中证指数。
+
+批量运行会额外生成 `index.html`，作为不同投资标的和三种分析页面的统一入口。
+
+## 11. 构建公开网站（GitHub Pages）
+
+```bash
+uv run python build_site.py --assets all --output-dir docs
+```
+
+`docs/` 是可直接由 GitHub Pages 发布的静态站点：
+
+- `docs/index.html`：网站总入口；
+- `docs/methodology.html`：计算公式、数据来源、修正和限制；
+- `docs/assets/<asset-key>/index.html`：单个投资标的入口；
+- 每个标的目录下包含一次投入、年度定投、差值 HTML 以及对应 CSV；
+- `docs/.nojekyll`：要求 GitHub Pages 原样发布静态文件。
+
+新增标的时编辑 `asset_catalog.py`；新增公开表格类型时在 `build_site.py` 的 `REPORTS` 目录中登记，并在 `build_asset_site()` 中生成对应矩阵。构建完成后提交 `docs/`，即可更新公开网站。
