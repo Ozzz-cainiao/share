@@ -108,6 +108,8 @@ git push -u origin feat/<strategy-or-backtest-name>
 
 `rolling_returns.py` 使用 AkShare 获取中证指数日线，或读取美股 ETF 分红再投资年度总收益，并生成滚动年化收益率矩阵。默认标的是中证全指全收益指数 `H00985`。
 
+未传入 `--start-year` 时，各标的使用自己的默认历史起点：中国指数从 2005 年开始，SPY 从 1993 年开始，QQQ 从 1999 年开始。SPY 与 QQQ 的起始年度是 ETF 上市后的不完整自然年；如需统一比较区间，可显式传入 `--start-year` 覆盖。
+
 计算口径：起始年以前一年度最后一个可用收盘价为起点，持有 N 年以后第 N 个年度最后一个可用收盘价为终点，按复合年化收益率计算：
 
 ```text
@@ -175,7 +177,7 @@ uv run python dca_comparison.py --assets all
 
 美股表格使用 Total Real Returns 公布的 SPY、QQQ 分红再投资年度总收益。它们是可投资 ETF 代理，并非官方指数点位，因此会包含管理费、跟踪误差及数据商口径影响。
 
-展示思路参考：[有知有行《中国大类资产投资2025年报》滚动年化收益](https://youzhiyouxing.cn/sbbi2025/annual-rolling-returns/)。更多长期投资研究，欢迎关注公众号：**炼金魔女笔记**。
+展示思路参考：[有知有行《中国大类资产投资2025年报》滚动年化收益](https://youzhiyouxing.cn/sbbi2025/annual-rolling-returns/)。更多长期投资研究，欢迎关注公众号：**炼金魔女手记**。
 
 批量运行会额外生成 `index.html`，作为不同投资标的和三种分析页面的统一入口。
 
@@ -191,6 +193,7 @@ uv run python build_site.py --assets all --output-dir docs
 - `docs/methodology.html`：计算公式、数据来源、修正和限制；
 - `docs/assets/<asset-key>/index.html`：单个投资标的入口；
 - 每个标的目录下包含一次投入、年度定投、差值 HTML 以及对应 CSV；
+- `docs/downloads/wechat/`：全部标的三类表格的带水印公众号长图；
 - `docs/.nojekyll`：要求 GitHub Pages 原样发布静态文件。
 
 新增标的时编辑 `asset_catalog.py`；新增公开表格类型时在 `build_site.py` 的 `REPORTS` 目录中登记，并在 `build_asset_site()` 中生成对应矩阵。构建完成后提交 `docs/`，即可更新公开网站。

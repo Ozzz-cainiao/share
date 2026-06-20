@@ -67,6 +67,10 @@ def fmt(value: float) -> str:
     return f"{value:+.2f}%"
 
 
+def effective_start_year(asset: AssetDefinition, override: int | None) -> int:
+    return override if override is not None else asset.start_year
+
+
 def asset_landing(
     asset: AssetDefinition,
     start_year: int,
@@ -83,36 +87,41 @@ def asset_landing(
         adjustment = f'<div class="notice">数据修正：{html.escape("；".join(adjustment_notes))}</div>'
     if asset.source == "us_etf_total_return":
         adjustment += '<div class="notice">口径说明：使用美股 ETF 分红再投资年度总收益作为可投资代理；它与官方指数点位可能存在跟踪误差、费率和税务差异。</div>'
-        adjustment += (
-            '<section><h2 class="section-title">公众号完整表格长图</h2><div class="links">'
-            f'<a href="../../downloads/wechat/{asset.key}-lump-sum.jpg" download>一次投入 JPG</a>'
-            f'<a href="../../downloads/wechat/{asset.key}-dca.jpg" download>年度定投 JPG</a>'
-            f'<a href="../../downloads/wechat/{asset.key}-difference.jpg" download>差值 JPG</a>'
-            '</div></section>'
-        )
+        if asset.key in {"sp500", "nasdaq100"}:
+            adjustment += f'<div class="notice">起点说明：{start_year} 年为 ETF 上市后的不完整自然年，仍按数据可用起点纳入展示。</div>'
+    adjustment += (
+        '<section><h2 class="section-title">公众号完整表格长图</h2><div class="links">'
+        f'<a href="../../downloads/wechat/{asset.key}-lump-sum.jpg" download>一次投入 JPG</a>'
+        f'<a href="../../downloads/wechat/{asset.key}-dca.jpg" download>年度定投 JPG</a>'
+        f'<a href="../../downloads/wechat/{asset.key}-difference.jpg" download>差值 JPG</a>'
+        '</div></section>'
+    )
     body = f"""<main class="shell"><div class="eyebrow">{html.escape(asset.category)} · {asset.symbol}</div>
 <h1>{html.escape(asset.name)}</h1><p class="lead">{start_year}–{end_year} 年滚动收益研究。选择下方页面查看一次投入、年度定投或二者的年化收益差。</p>
 <nav class="topnav"><a href="../../index.html">← 全部标的</a><a href="../../methodology.html">方法与数据</a></nav>
 <div class="metric-row"><div class="metric">完整区间一次投入 CAGR<strong>{fmt(lump_value)}</strong></div><div class="metric">完整区间年度定投 IRR<strong>{fmt(dca_value)}</strong></div><div class="metric">定投 − 一次投入<strong>{fmt(dca_value-lump_value)}</strong></div></div>
 {adjustment}<section><h2 class="section-title">分析表格</h2><div class="links">{report_links}</div></section>
-<div class="footer">参考资料：<a href="https://youzhiyouxing.cn/sbbi2025/annual-rolling-returns/" target="_blank" rel="noopener">有知有行《中国大类资产投资2025年报》滚动年化收益</a><br>更多长期投资研究，欢迎关注公众号：炼金魔女笔记<br>历史收益不代表未来表现。本网站仅用于数据研究与方法展示，不构成任何投资建议。</div></main>"""
+<div class="footer">参考资料：<a href="https://youzhiyouxing.cn/sbbi2025/annual-rolling-returns/" target="_blank" rel="noopener">有知有行《中国大类资产投资2025年报》滚动年化收益</a><br>更多长期投资研究，欢迎关注公众号：炼金魔女手记<br>历史收益不代表未来表现。本网站仅用于数据研究与方法展示，不构成任何投资建议。</div></main>"""
     return page(f"{asset.name}｜投资收益研究", body, depth=2)
 
 
-def home(selected: list[AssetDefinition], start_year: int, end_year: int) -> str:
+def home(
+    selected: list[AssetDefinition], start_year_override: int | None, end_year: int
+) -> str:
     cards = []
     for asset in selected:
         cards.append(
             f'<article class="card"><div class="category">{html.escape(asset.category)}</div>'
             f'<h2>{html.escape(asset.name)}</h2><div class="code">{asset.symbol}</div>'
+            f'<div class="meta">{effective_start_year(asset, start_year_override)}–{end_year} 年</div>'
             f'<div class="links"><a href="assets/{asset.key}/index.html">进入该标的</a>'
             f'<a href="assets/{asset.key}/difference.html">直接看差值</a></div></article>'
         )
     body = f"""<main class="shell"><div class="eyebrow">Index Return Lab</div><h1>中美指数长期收益实验室</h1>
-<p class="lead">比较中美宽基资产在不同起始年份和持有期限下的一次投入 CAGR、年度定投 IRR，以及二者的差值。当前统计区间为 {start_year}–{end_year} 年。</p>
+<p class="lead">比较中美宽基资产在不同起始年份和持有期限下的一次投入 CAGR、年度定投 IRR，以及二者的差值。各标的从可用历史起点统计至 {end_year} 年。</p>
 <nav class="topnav"><a href="methodology.html">方法与数据说明</a><a href="assets/index.html">标的目录</a></nav>
 <h2 class="section-title">投资标的</h2><div class="grid">{''.join(cards)}</div>
-<div class="footer">中国资产使用中证全收益指数，经 AkShare 获取；美股使用 Total Real Returns 的 SPY、QQQ 分红再投资年度总收益。沪深300包含2005年分红估算修正。<br>参考资料：<a href="https://youzhiyouxing.cn/sbbi2025/annual-rolling-returns/" target="_blank" rel="noopener">有知有行《中国大类资产投资2025年报》滚动年化收益</a><br>更多长期投资研究，欢迎关注公众号：炼金魔女笔记<br>历史收益不代表未来表现，不构成投资建议。</div></main>"""
+<div class="footer">中国资产使用中证全收益指数，经 AkShare 获取；美股使用 Total Real Returns 的 SPY、QQQ 分红再投资年度总收益。沪深300包含2005年分红估算修正。<br>参考资料：<a href="https://youzhiyouxing.cn/sbbi2025/annual-rolling-returns/" target="_blank" rel="noopener">有知有行《中国大类资产投资2025年报》滚动年化收益</a><br>更多长期投资研究，欢迎关注公众号：炼金魔女手记<br>历史收益不代表未来表现，不构成投资建议。</div></main>"""
     return page("中美指数长期收益实验室", body)
 
 
@@ -122,8 +131,8 @@ def methodology() -> str:
 <h2>一次投入</h2><p>在起始年份前一年度最后一个可用收盘点位投入并持有 N 年，以终止年度最后一个可用收盘点位估值。年化收益使用复合年化收益率：</p><p><code>CAGR = (终点指数 / 起点指数) ^ (1 / N) - 1</code></p>
 <h2>年度定投</h2><p>每年年初等额投入一份，共投入 N 次，在第 N 年年末估值。年化收益使用等间隔年度现金流 IRR；累计收益以期末资产相对累计投入计算。</p>
 <h2>差值</h2><p><code>定投 IRR − 一次投入 CAGR</code>。正数表示该历史区间内定投的年化收益更高，负数表示一次投入更高。</p>
-<h2>数据与修正</h2><p>中国宽基指数使用全收益口径。H00300 在2005年公布的全收益点位与价格指数相同，缺少分红；本站按《中国大类资产投资 2025 年报》披露的方法，将2005年及以后财富序列乘以1.026，使2005年收益由约−7.65%修正为约−5.25%。</p><p>标普500和纳指100分别使用 Total Real Returns 公布的 SPY、QQQ 分红再投资年度总收益作为可投资代理。ETF 代理会包含管理费、跟踪误差及数据商口径影响，因此不等同于官方全收益指数。</p>
-<h2>参考资料</h2><p><a href="https://youzhiyouxing.cn/sbbi2025/annual-rolling-returns/" target="_blank" rel="noopener">有知有行《中国大类资产投资2025年报》滚动年化收益</a>。本站在其滚动收益展示思路基础上独立实现计算与交互展示。</p><p><strong>更多长期投资研究，欢迎关注公众号：炼金魔女笔记</strong></p>
+<h2>数据与修正</h2><p>中国宽基指数使用全收益口径。H00300 在2005年公布的全收益点位与价格指数相同，缺少分红；本站按《中国大类资产投资 2025 年报》披露的方法，将2005年及以后财富序列乘以1.026，使2005年收益由约−7.65%修正为约−5.25%。</p><p>标普500和纳指100分别使用 Total Real Returns 公布的 SPY、QQQ 分红再投资年度总收益作为可投资代理，默认分别从 1993 年和 1999 年开始。两个起始年度均为 ETF 上市后的不完整自然年。ETF 代理会包含管理费、跟踪误差及数据商口径影响，因此不等同于官方全收益指数。</p>
+<h2>参考资料</h2><p><a href="https://youzhiyouxing.cn/sbbi2025/annual-rolling-returns/" target="_blank" rel="noopener">有知有行《中国大类资产投资2025年报》滚动年化收益</a>。本站在其滚动收益展示思路基础上独立实现计算与交互展示。</p><p><strong>更多长期投资研究，欢迎关注公众号：炼金魔女手记</strong></p>
 <h2>限制</h2><p>指数历史数据、回溯数据和估算值可能与其他数据商存在差异。页面不计交易费用、税费、滑点和实际申赎约束，仅供研究，不构成投资建议。</p></article></main>"""
     return page("方法与数据说明｜中美指数长期收益实验室", body)
 
@@ -177,7 +186,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="构建 docs/ GitHub Pages 静态站点")
     parser.add_argument("--assets", default="all", help="逗号分隔的资产 key/code；默认 all")
     parser.add_argument("--list-assets", action="store_true")
-    parser.add_argument("--start-year", type=int, default=2005)
+    parser.add_argument("--start-year", type=int, default=None, help="覆盖所有标的的默认起始年份")
     parser.add_argument("--end-year", type=int, default=2025)
     parser.add_argument("--output-dir", type=Path, default=Path("docs"))
     return parser.parse_args()
@@ -196,7 +205,7 @@ def main() -> int:
     (docs_dir / "index.html").write_text(home(selected, args.start_year, args.end_year), encoding="utf-8")
     (docs_dir / "methodology.html").write_text(methodology(), encoding="utf-8")
     directory_links = "".join(
-        f'<li><a href="{asset.key}/index.html">{html.escape(asset.category)} · {html.escape(asset.name)}（{asset.symbol}）</a></li>'
+        f'<li><a href="{asset.key}/index.html">{html.escape(asset.category)} · {html.escape(asset.name)}（{asset.symbol}，{effective_start_year(asset, args.start_year)}–{args.end_year}）</a></li>'
         for asset in selected
     )
     directory_body = f'<main class="shell"><h1>标的目录</h1><nav class="topnav"><a href="../index.html">← 返回首页</a></nav><div class="prose"><ul>{directory_links}</ul></div></main>'
@@ -205,7 +214,12 @@ def main() -> int:
     )
     for asset in selected:
         print(f"building {asset.key} ({asset.symbol})")
-        build_asset_site(docs_dir, asset, args.start_year, args.end_year)
+        build_asset_site(
+            docs_dir,
+            asset,
+            effective_start_year(asset, args.start_year),
+            args.end_year,
+        )
     print(f"site: {(docs_dir / 'index.html').resolve()}")
     return 0
 

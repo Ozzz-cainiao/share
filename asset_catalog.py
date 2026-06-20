@@ -10,6 +10,7 @@ class AssetDefinition:
     name: str
     category: str
     source: str = "csindex"
+    start_year: int = 2005
 
 
 ASSETS: tuple[AssetDefinition, ...] = (
@@ -18,9 +19,11 @@ ASSETS: tuple[AssetDefinition, ...] = (
     AssetDefinition("csi800", "H00906", "中证800全收益", "中国大中盘股"),
     AssetDefinition("mid-cap", "H00905", "中证500全收益", "中国中小盘股"),
     AssetDefinition("small-cap", "H00852", "中证1000全收益", "中国小盘股"),
-    AssetDefinition("sp500", "SPY", "标普500（SPY含息）", "美国大盘股", "us_etf_total_return"),
     AssetDefinition(
-        "nasdaq100", "QQQ", "纳指100（QQQ含息）", "美国科技大盘股", "us_etf_total_return"
+        "sp500", "SPY", "标普500（SPY含息）", "美国大盘股", "us_etf_total_return", 1993
+    ),
+    AssetDefinition(
+        "nasdaq100", "QQQ", "纳指100（QQQ含息）", "美国科技大盘股", "us_etf_total_return", 1999
     ),
 )
 
@@ -30,7 +33,7 @@ _BY_SYMBOL = {asset.symbol.upper(): asset for asset in ASSETS}
 
 def asset_help() -> str:
     return "\n".join(
-        f"  {asset.key:<10} {asset.symbol:<7} {asset.category}（{asset.name}）"
+        f"  {asset.key:<10} {asset.symbol:<7} {asset.start_year}–  {asset.category}（{asset.name}）"
         for asset in ASSETS
     )
 

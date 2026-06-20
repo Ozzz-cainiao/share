@@ -24,7 +24,7 @@ from asset_catalog import AssetDefinition, asset_help, resolve_assets
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="生成指数滚动年化收益率矩阵（CSV + HTML）")
-    parser.add_argument("--start-year", type=int, default=2005, help="起始年份，默认 2005")
+    parser.add_argument("--start-year", type=int, default=None, help="覆盖标的默认起始年份")
     parser.add_argument("--end-year", type=int, default=2025, help="终止年份，默认 2025")
     parser.add_argument("--assets", default="all-a", help="逗号分隔的标的 key 或代码；all 表示全部")
     parser.add_argument("--list-assets", action="store_true", help="列出内置投资标的后退出")
@@ -246,8 +246,14 @@ def render_html(
         warning_html = '<div class="warning">数据提示：' + html.escape("；".join(warnings)) + "</div>"
     first_date = pd.Timestamp(annual["date"].min()).date().isoformat()
     last_date = pd.Timestamp(annual["date"].max()).date().isoformat()
+    coverage_text = (
+        f"{start_year}–{end_year} 年度收益"
+        if source_text.startswith("Total Real Returns")
+        else f"{first_date} 至 {last_date}"
+    )
     safe_name, safe_symbol = html.escape(name), html.escape(symbol)
     title = f"{safe_name}的滚动年化收益率（{start_year}–{end_year} 年）"
+    poster_width = max(2100, 190 + len(matrix.columns) * 91)
 
     return f"""<!doctype html>
 <html lang="zh-CN">
@@ -282,7 +288,8 @@ small{{display:block;font-size:12px;color:#687287;margin-top:3px}}
 .tooltip-grid span:nth-child(even){{text-align:right;font-weight:600}}
 .tooltip .hint{{margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,.16);color:#aebbd1;font-size:12px}}
 .source a{{color:rgb(83,106,145)}} .brand-footer{{color:rgb(83,97,122);font-size:14px;font-weight:600;margin:12px 10px 0}}
-body.poster main{{width:2100px;max-width:none;padding:34px 26px 42px}} body.poster .table-wrap{{overflow:visible}}
+body.poster{{position:relative;overflow:hidden}} body.poster main{{width:{poster_width}px;max-width:none;padding:34px 26px 42px}} body.poster .table-wrap{{overflow:visible}}
+.watermark-layer{{position:absolute;inset:140px 0 0;z-index:6;display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(12,1fr);align-items:center;justify-items:center;overflow:hidden;pointer-events:none;color:rgba(40,57,84,.13);font-size:25px;font-weight:700;letter-spacing:.08em}} .watermark-layer span{{white-space:nowrap;transform:rotate(-16deg)}}
 @media(max-width:700px){{main{{padding:20px 14px}}h1{{font-size:25px}}th,td{{min-width:78px;height:52px;font-size:15px}}}}
 </style>
 </head>
@@ -294,12 +301,19 @@ body.poster main{{width:2100px;max-width:none;padding:34px 26px 42px}} body.post
 <thead><tr><th>起始年份</th>{head}</tr></thead>
 <tbody>{''.join(rows)}</tbody>
 </table></div>
-<div class="source">数据来源：{html.escape(source_text)}；标的：{safe_name}（{safe_symbol}）；数据覆盖 {first_date} 至 {last_date}。计算口径：起始年前一年度最后可用收盘至终止年度最后可用收盘。参考资料：<a href="https://youzhiyouxing.cn/sbbi2025/annual-rolling-returns/" target="_blank" rel="noopener">有知有行《中国大类资产投资2025年报》滚动年化收益</a>。</div>
-<div class="brand-footer">更多长期投资研究，欢迎关注公众号：炼金魔女笔记</div>
+<div class="source">数据来源：{html.escape(source_text)}；标的：{safe_name}（{safe_symbol}）；数据覆盖 {coverage_text}。计算口径：起始年前一年度最后可用收盘至终止年度最后可用收盘。参考资料：<a href="https://youzhiyouxing.cn/sbbi2025/annual-rolling-returns/" target="_blank" rel="noopener">有知有行《中国大类资产投资2025年报》滚动年化收益</a>。</div>
+<div class="brand-footer">更多长期投资研究，欢迎关注公众号：炼金魔女手记</div>
 <div id="tooltip" class="tooltip" role="status" aria-live="polite"></div>
 </main>
 <script>
-if(new URLSearchParams(location.search).get("poster")==="1")document.body.classList.add("poster");
+if(new URLSearchParams(location.search).get("poster")==="1"){{
+  document.body.classList.add("poster");
+  const watermark=document.createElement("div");
+  watermark.className="watermark-layer";
+  watermark.setAttribute("aria-hidden","true");
+  watermark.innerHTML=Array.from({{length:60}},()=>"<span>炼金魔女手记</span>").join("");
+  document.body.prepend(watermark);
+}}
 const tooltip = document.getElementById("tooltip");
 const cells = document.querySelectorAll("td.metric");
 let pinned = null;
@@ -377,12 +391,13 @@ document.addEventListener("click", () => {{
 
 
 def run_asset(args: argparse.Namespace, asset: AssetDefinition) -> str:
-    closes = fetch_asset_closes(asset, args.start_year, args.end_year)
+    start_year = args.start_year if args.start_year is not None else asset.start_year
+    closes = fetch_asset_closes(asset, start_year, args.end_year)
     annual = year_end_closes(closes)
     adjustment_notes: list[str] = []
     if not args.no_known_adjustments:
         annual, adjustment_notes = apply_known_adjustments(annual, asset.symbol)
-    matrix, warnings = build_matrix(annual, args.start_year, args.end_year)
+    matrix, warnings = build_matrix(annual, start_year, args.end_year)
     warnings = adjustment_notes + warnings
 
     slug = asset.symbol.lower()
@@ -395,7 +410,7 @@ def run_asset(args: argparse.Namespace, asset: AssetDefinition) -> str:
     html_path.write_text(
         render_html(
             matrix, annual, asset.symbol, asset.name,
-            args.start_year, args.end_year, warnings, source_label(asset),
+            start_year, args.end_year, warnings, source_label(asset),
         ),
         encoding="utf-8",
     )
@@ -412,9 +427,9 @@ def main() -> int:
     if args.list_assets:
         print(asset_help())
         return 0
-    if args.start_year > args.end_year:
+    if args.start_year is not None and args.start_year > args.end_year:
         raise SystemExit("--start-year 不能晚于 --end-year")
-    if args.start_year < 1990 or args.end_year > 2100:
+    if (args.start_year is not None and args.start_year < 1990) or args.end_year > 2100:
         raise SystemExit("年份范围看起来不合理")
     if args.symbol:
         selected = [
@@ -439,7 +454,7 @@ def main() -> int:
         '<title>滚动年化收益率</title><style>body{max-width:760px;margin:48px auto;'
         'padding:0 24px;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;'
         'color:#273249}li{margin:12px 0}a{color:#405477}</style>'
-        f'<h1>滚动年化收益率</h1><p>{args.start_year}–{args.end_year} 年</p><ul>{items}</ul>',
+        f'<h1>滚动年化收益率</h1><p>各标的按默认历史起点统计至 {args.end_year} 年</p><ul>{items}</ul>',
         encoding="utf-8",
     )
     return 0
