@@ -15,7 +15,8 @@ from rolling_returns import (
     apply_known_adjustments,
     build_matrix,
     cell_style,
-    fetch_csindex_closes,
+    fetch_asset_closes,
+    source_label,
     year_end_closes,
 )
 
@@ -103,6 +104,7 @@ def render_comparison_html(
     adjustment_notes: list[str],
     page_names: dict[str, str] | None = None,
     home_href: str | None = None,
+    source_text: str = "AkShare / 中证指数",
 ) -> str:
     page_names = page_names or {
         "lump": f"{symbol.lower()}_lump_sum_annualized_returns.html",
@@ -195,15 +197,19 @@ tr:nth-child(5n) th,tr:nth-child(5n) td{{border-bottom-color:#71809a}} small{{di
 .tooltip{{position:fixed;display:none;z-index:20;min-width:290px;padding:15px 17px;border-radius:11px;background:rgba(25,34,52,.97);color:white;box-shadow:0 12px 34px rgba(14,22,40,.28);pointer-events:none;font-variant-numeric:tabular-nums}} .tooltip.show{{display:block}}
 .tooltip strong{{display:block;margin-bottom:10px}} .grid{{display:grid;grid-template-columns:auto auto;gap:6px 18px;font-size:14px}} .grid span:nth-child(odd){{color:#bac5d9}} .grid span:nth-child(even){{text-align:right;font-weight:600}}
 .hint{{margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,.16);color:#aebbd1;font-size:12px}} .source{{margin:18px 8px 0;color:#7b8497;font-size:13px}}
+.source a{{color:rgb(83,106,145)}} .brand-footer{{margin:12px 8px 0;color:rgb(83,97,122);font-size:14px;font-weight:600}}
+body.poster main{{width:2100px;max-width:none;padding:34px 26px 42px}} body.poster .table-wrap{{max-height:none;overflow:visible}} body.poster .nav{{display:none}}
 @media(max-width:700px){{main{{padding:20px 14px}}h1{{font-size:24px}}th,td{{min-width:78px;height:52px;font-size:15px}}}}
 </style></head><body><main>
 <h1>{title}</h1><nav class="nav">{nav}</nav>
 <div class="note">当前单元格指标：<strong>{metric_label}</strong>。{explanation}<br>鼠标悬浮可同时查看一次投入、定投及差值；点击可固定信息卡。</div>
 {adjustment_html}
 <div class="table-wrap"><table><thead><tr><th>起始年份</th>{header}</tr></thead><tbody>{''.join(rows)}</tbody></table></div>
-<div class="source">数据来源：AkShare / 中证指数；指数：{html.escape(name)}（{html.escape(symbol)}）；日线覆盖 {first_date} 至 {last_date}。</div>
+<div class="source">数据来源：{html.escape(source_text)}；标的：{html.escape(name)}（{html.escape(symbol)}）；数据覆盖 {first_date} 至 {last_date}。参考资料：<a href="https://youzhiyouxing.cn/sbbi2025/annual-rolling-returns/" target="_blank" rel="noopener">有知有行《中国大类资产投资2025年报》滚动年化收益</a>。</div>
+<div class="brand-footer">更多长期投资研究，欢迎关注公众号：炼金魔女笔记</div>
 <div id="tooltip" class="tooltip" role="status" aria-live="polite"></div>
 </main><script>
+if(new URLSearchParams(location.search).get("poster")==="1")document.body.classList.add("poster");
 const tip=document.getElementById("tooltip"),cells=document.querySelectorAll("td.metric");let pinned=null;
 const signed=v=>`${{Number(v)>=0?"+":""}}${{Number(v).toFixed(2)}}%`;
 function fill(c){{const d=c.dataset;tip.innerHTML=`<strong>${{d.start}}–${{d.finish}} · 持有 ${{d.years}} 年</strong><div class="grid"><span>一次投入 CAGR</span><span>${{signed(d.lump)}}</span><span>一次投入累计收益</span><span>${{signed(d.lumpTotal)}}</span><span>定投 IRR</span><span>${{signed(d.dca)}}</span><span>定投 − 一次投入</span><span>${{signed(d.diff)}}</span><span>定投累计投入</span><span>${{Number(d.years).toFixed(0)}} 份</span><span>定投期末资产</span><span>${{Number(d.terminal).toFixed(2)}} 份</span><span>定投累计收益</span><span>${{signed(d.totalReturn)}}</span></div><div class="hint">点击单元格可固定 / 取消固定</div>`}}
@@ -236,7 +242,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def run_asset(args: argparse.Namespace, asset: AssetDefinition) -> dict[str, str]:
-    closes = fetch_csindex_closes(asset.symbol, args.start_year, args.end_year)
+    closes = fetch_asset_closes(asset, args.start_year, args.end_year)
     annual = year_end_closes(closes)
     adjustment_notes: list[str] = []
     if not args.no_known_adjustments:
@@ -262,6 +268,7 @@ def run_asset(args: argparse.Namespace, asset: AssetDefinition) -> dict[str, str
                 mode=mode, annual=annual, symbol=asset.symbol, name=asset.name,
                 start_year=args.start_year, end_year=args.end_year,
                 adjustment_notes=adjustment_notes,
+                source_text=source_label(asset),
             ),
             encoding="utf-8",
         )
