@@ -133,6 +133,7 @@ def render_comparison_html(
     }
     heading, metric_label, explanation, _ = configs[mode]
     scale = _scale(primary)
+    poster_width = max(2100, 190 + len(primary.columns) * 91)
     header = "".join(f"<th>{year}</th>" for year in primary.columns)
     rows: list[str] = []
 
@@ -173,6 +174,11 @@ def render_comparison_html(
     title = f"{html.escape(name)}：{heading}（{start_year}–{end_year} 年）"
     first_date = pd.Timestamp(annual["date"].min()).date().isoformat()
     last_date = pd.Timestamp(annual["date"].max()).date().isoformat()
+    coverage_text = (
+        f"{start_year}–{end_year} 年度收益"
+        if source_text.startswith("Total Real Returns")
+        else f"{first_date} 至 {last_date}"
+    )
     adjustment_html = ""
     if adjustment_notes:
         adjustment_html = '<div class="data-note">数据修正：' + html.escape(
@@ -198,18 +204,26 @@ tr:nth-child(5n) th,tr:nth-child(5n) td{{border-bottom-color:#71809a}} small{{di
 .tooltip strong{{display:block;margin-bottom:10px}} .grid{{display:grid;grid-template-columns:auto auto;gap:6px 18px;font-size:14px}} .grid span:nth-child(odd){{color:#bac5d9}} .grid span:nth-child(even){{text-align:right;font-weight:600}}
 .hint{{margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,.16);color:#aebbd1;font-size:12px}} .source{{margin:18px 8px 0;color:#7b8497;font-size:13px}}
 .source a{{color:rgb(83,106,145)}} .brand-footer{{margin:12px 8px 0;color:rgb(83,97,122);font-size:14px;font-weight:600}}
-body.poster main{{width:2100px;max-width:none;padding:34px 26px 42px}} body.poster .table-wrap{{max-height:none;overflow:visible}} body.poster .nav{{display:none}}
+body.poster{{position:relative;overflow:hidden}} body.poster main{{width:{poster_width}px;max-width:none;padding:34px 26px 42px}} body.poster .table-wrap{{max-height:none;overflow:visible}} body.poster .nav{{display:none}}
+.watermark-layer{{position:absolute;inset:140px 0 0;z-index:6;display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(12,1fr);align-items:center;justify-items:center;overflow:hidden;pointer-events:none;color:rgba(40,57,84,.13);font-size:25px;font-weight:700;letter-spacing:.08em}} .watermark-layer span{{white-space:nowrap;transform:rotate(-16deg)}}
 @media(max-width:700px){{main{{padding:20px 14px}}h1{{font-size:24px}}th,td{{min-width:78px;height:52px;font-size:15px}}}}
 </style></head><body><main>
 <h1>{title}</h1><nav class="nav">{nav}</nav>
 <div class="note">当前单元格指标：<strong>{metric_label}</strong>。{explanation}<br>鼠标悬浮可同时查看一次投入、定投及差值；点击可固定信息卡。</div>
 {adjustment_html}
 <div class="table-wrap"><table><thead><tr><th>起始年份</th>{header}</tr></thead><tbody>{''.join(rows)}</tbody></table></div>
-<div class="source">数据来源：{html.escape(source_text)}；标的：{html.escape(name)}（{html.escape(symbol)}）；数据覆盖 {first_date} 至 {last_date}。参考资料：<a href="https://youzhiyouxing.cn/sbbi2025/annual-rolling-returns/" target="_blank" rel="noopener">有知有行《中国大类资产投资2025年报》滚动年化收益</a>。</div>
-<div class="brand-footer">更多长期投资研究，欢迎关注公众号：炼金魔女笔记</div>
+<div class="source">数据来源：{html.escape(source_text)}；标的：{html.escape(name)}（{html.escape(symbol)}）；数据覆盖 {coverage_text}。参考资料：<a href="https://youzhiyouxing.cn/sbbi2025/annual-rolling-returns/" target="_blank" rel="noopener">有知有行《中国大类资产投资2025年报》滚动年化收益</a>。</div>
+<div class="brand-footer">更多长期投资研究，欢迎关注公众号：炼金魔女手记</div>
 <div id="tooltip" class="tooltip" role="status" aria-live="polite"></div>
 </main><script>
-if(new URLSearchParams(location.search).get("poster")==="1")document.body.classList.add("poster");
+if(new URLSearchParams(location.search).get("poster")==="1"){{
+  document.body.classList.add("poster");
+  const watermark=document.createElement("div");
+  watermark.className="watermark-layer";
+  watermark.setAttribute("aria-hidden","true");
+  watermark.innerHTML=Array.from({{length:60}},()=>"<span>炼金魔女手记</span>").join("");
+  document.body.prepend(watermark);
+}}
 const tip=document.getElementById("tooltip"),cells=document.querySelectorAll("td.metric");let pinned=null;
 const signed=v=>`${{Number(v)>=0?"+":""}}${{Number(v).toFixed(2)}}%`;
 function fill(c){{const d=c.dataset;tip.innerHTML=`<strong>${{d.start}}–${{d.finish}} · 持有 ${{d.years}} 年</strong><div class="grid"><span>一次投入 CAGR</span><span>${{signed(d.lump)}}</span><span>一次投入累计收益</span><span>${{signed(d.lumpTotal)}}</span><span>定投 IRR</span><span>${{signed(d.dca)}}</span><span>定投 − 一次投入</span><span>${{signed(d.diff)}}</span><span>定投累计投入</span><span>${{Number(d.years).toFixed(0)}} 份</span><span>定投期末资产</span><span>${{Number(d.terminal).toFixed(2)}} 份</span><span>定投累计收益</span><span>${{signed(d.totalReturn)}}</span></div><div class="hint">点击单元格可固定 / 取消固定</div>`}}
@@ -222,7 +236,7 @@ document.addEventListener("click",()=>{{if(pinned)pinned.classList.remove("pinne
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="比较一次投入 CAGR 与年度定投 IRR")
-    parser.add_argument("--start-year", type=int, default=2005)
+    parser.add_argument("--start-year", type=int, default=None, help="覆盖标的默认起始年份")
     parser.add_argument("--end-year", type=int, default=2025)
     parser.add_argument(
         "--assets",
@@ -242,15 +256,16 @@ def parse_args() -> argparse.Namespace:
 
 
 def run_asset(args: argparse.Namespace, asset: AssetDefinition) -> dict[str, str]:
-    closes = fetch_asset_closes(asset, args.start_year, args.end_year)
+    start_year = args.start_year if args.start_year is not None else asset.start_year
+    closes = fetch_asset_closes(asset, start_year, args.end_year)
     annual = year_end_closes(closes)
     adjustment_notes: list[str] = []
     if not args.no_known_adjustments:
         annual, adjustment_notes = apply_known_adjustments(annual, asset.symbol)
-    lump_sum, warnings = build_matrix(annual, args.start_year, args.end_year)
+    lump_sum, warnings = build_matrix(annual, start_year, args.end_year)
     if warnings:
         raise RuntimeError("；".join(warnings))
-    dca, terminal_values = build_dca_matrices(annual, args.start_year, args.end_year)
+    dca, terminal_values = build_dca_matrices(annual, start_year, args.end_year)
     difference = dca - lump_sum
     slug = asset.symbol.lower()
 
@@ -266,7 +281,7 @@ def run_asset(args: argparse.Namespace, asset: AssetDefinition) -> dict[str, str
             render_comparison_html(
                 matrix, lump_sum, dca, difference, terminal_values,
                 mode=mode, annual=annual, symbol=asset.symbol, name=asset.name,
-                start_year=args.start_year, end_year=args.end_year,
+                start_year=start_year, end_year=args.end_year,
                 adjustment_notes=adjustment_notes,
                 source_text=source_label(asset),
             ),
@@ -279,7 +294,7 @@ def run_asset(args: argparse.Namespace, asset: AssetDefinition) -> dict[str, str
 
 
 def render_asset_index(
-    results: list[tuple[AssetDefinition, dict[str, str]]], start_year: int, end_year: int
+    results: list[tuple[AssetDefinition, dict[str, str]]], end_year: int
 ) -> str:
     cards = []
     for asset, links in results:
@@ -296,7 +311,7 @@ def render_asset_index(
     return f"""<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>投资标的收益对比</title>
 <style>*{{box-sizing:border-box}}body{{margin:0;background:#f5f7fb;color:#273249;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}}main{{max-width:1080px;margin:auto;padding:42px 28px}}h1{{margin:0 0 8px;font:600 32px Georgia,"Songti SC",serif}}.intro{{color:#69758a;margin-bottom:28px}}.grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(285px,1fr));gap:18px}}article{{position:relative;padding:22px;border:1px solid #dce2ed;border-radius:14px;background:white;box-shadow:0 8px 28px rgba(35,45,75,.06)}}.category{{color:#77839a;font-size:13px}}h2{{margin:7px 0 5px;font-size:21px}}.code{{color:#8a94a7;font-family:ui-monospace,monospace}}.badge{{display:inline-block;margin-top:10px;padding:3px 8px;border-radius:12px;background:#fff1c7;color:#795d13;font-size:12px}}nav{{display:flex;gap:8px;margin-top:20px;flex-wrap:wrap}}a{{padding:8px 11px;border-radius:8px;background:#405477;color:white;text-decoration:none;font-size:14px}}a:hover{{background:#2f405f}}</style></head><body><main>
-<h1>投资标的收益对比</h1><p class="intro">{start_year}–{end_year} 年 · 选择标的与分析方式</p>
+<h1>投资标的收益对比</h1><p class="intro">各标的按默认历史起点统计至 {end_year} 年 · 选择标的与分析方式</p>
 <div class="grid">{''.join(cards)}</div></main></body></html>"""
 
 
@@ -305,7 +320,7 @@ def main() -> int:
     if args.list_assets:
         print(asset_help())
         return 0
-    if args.start_year > args.end_year:
+    if args.start_year is not None and args.start_year > args.end_year:
         raise SystemExit("--start-year 不能晚于 --end-year")
     if args.symbol:
         selected = [
@@ -321,7 +336,7 @@ def main() -> int:
     results = [(asset, run_asset(args, asset)) for asset in selected]
     index_path = args.output_dir / "index.html"
     index_path.write_text(
-        render_asset_index(results, args.start_year, args.end_year), encoding="utf-8"
+        render_asset_index(results, args.end_year), encoding="utf-8"
     )
     print(f"index: {index_path.resolve()}")
     return 0
