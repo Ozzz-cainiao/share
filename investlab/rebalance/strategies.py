@@ -192,7 +192,9 @@ class FixedRatioStrategy:
             parts = [f"{k}={v:.0%}" for k, v in sorted(self.target.items())]
             self.name = "fixed_" + "_".join(p.replace("%","") for p in parts).replace("=","")
         if not self.display_name:
-            parts = [f"{k[-3:]}{v:.0%}" for k, v in sorted(self.target.items())]
+            label_map = {"H00300": "沪深300", "H00905": "中证500", "H00852": "中证1000"}
+            order = ["H00300", "H00905", "H00852"]
+            parts = [f"{label_map.get(k, k[-3:])}{self.target[k]:.0%}" for k in order if k in self.target]
             self.display_name = "固定比例(" + "/".join(parts) + ")"
         self.meta = StrategyMeta(
             self.name, self.display_name, "fixed_ratio",
@@ -226,7 +228,9 @@ class FixedRatioRebalanceStrategy:
                 f"{k}{int(v*100)}" for k, v in sorted(self.target.items())
             )
         if not self.display_name:
-            parts = [f"{k[-3:]}{v:.0%}" for k, v in sorted(self.target.items())]
+            label_map = {"H00300": "沪深300", "H00905": "中证500", "H00852": "中证1000"}
+            order = ["H00300", "H00905", "H00852"]
+            parts = [f"{label_map.get(k, k[-3:])}{self.target[k]:.0%}" for k in order if k in self.target]
             self.display_name = "固定比例月度再平衡(" + "/".join(parts) + ")"
         self.meta = StrategyMeta(
             self.name, self.display_name, "fixed_ratio",
