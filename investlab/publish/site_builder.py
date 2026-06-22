@@ -102,7 +102,7 @@ def home(
         )
     body = f"""<main class="shell"><div class="eyebrow">Index Return Lab</div><h1>中美指数长期收益实验室</h1>
 <p class="lead">比较中美宽基资产在不同起始年份和持有期限下的一次投入 CAGR、年度定投 IRR，以及二者的差值。各标的从可用历史起点统计至 {end_year} 年。</p>
-<nav class="topnav"><a href="methodology.html">方法与数据说明</a><a href="assets/index.html">标的目录</a></nav>
+<nav class="topnav"><a href="methodology.html">方法与数据说明</a><a href="assets/index.html">标的目录</a><a href="rebalance/index.html">再平衡研究</a></nav>
 <h2 class="section-title">投资标的</h2><div class="grid">{''.join(cards)}</div>
 <div class="footer">中国资产使用中证全收益指数，经 AkShare 获取；美股标普500使用 Total Real Returns 的 SPY 分红再投资年度总收益，纳指100使用 FRED 的纳斯达克100全收益指数（XNDX，含股息再投资）。沪深300包含2005年分红估算修正。<br>参考资料：<a href="https://youzhiyouxing.cn/sbbi2025/annual-rolling-returns/" target="_blank" rel="noopener">有知有行《中国大类资产投资2025年报》滚动年化收益</a><br>更多长期投资研究，欢迎关注公众号：炼金魔女手记<br>历史收益不代表未来表现，不构成投资建议。</div></main>"""
     return page("中美指数长期收益实验室", body)
@@ -165,6 +165,27 @@ def build_asset_site(
     )
 
 
+
+def build_rebalance_section(site_dir: Path, rebalance_html_source: str | None = None) -> None:
+    """Copy rebalance report into the static site. Skips gracefully if source missing."""
+    rebalance_dir = site_dir / "rebalance"
+    if rebalance_html_source and Path(rebalance_html_source).exists():
+        rebalance_dir.mkdir(parents=True, exist_ok=True)
+        import shutil
+        shutil.copy(rebalance_html_source, rebalance_dir / "index.html")
+        print(f"rebalance: {rebalance_dir / 'index.html'}")
+    else:
+        # Create a placeholder page
+        rebalance_dir.mkdir(parents=True, exist_ok=True)
+        placeholder = page("再平衡研究｜中美指数长期收益实验室", """<main class="shell"><div class="eyebrow">Rebalance Research</div>
+<h1>再平衡研究</h1><p class="lead">等权再平衡 vs 动量叠加策略对比。运行 <code>python -m investlab.cli run rebalance</code> 生成报告。</p>
+<nav class="topnav"><a href="../index.html">← 返回首页</a></nav>
+<div class="notice">尚未生成再平衡回测数据。请先运行再平衡场景：<br><code>uv run python -m investlab.cli run rebalance --assets H00300,H00905,H00852</code></div>
+</main>""", depth=1)
+        (rebalance_dir / "index.html").write_text(placeholder, encoding="utf-8")
+        print("rebalance: placeholder (no data)")
+
+
 def build_site(args: argparse.Namespace) -> int:
     selected = resolve_assets(args.assets)
     site_dir: Path = args.site_dir
@@ -175,6 +196,7 @@ def build_site(args: argparse.Namespace) -> int:
         home(selected, args.start_year, args.end_year), encoding="utf-8"
     )
     (site_dir / "methodology.html").write_text(methodology(), encoding="utf-8")
+    build_rebalance_section(site_dir, "output/qa_rebalance/rebalance_comparison.html")
     directory_links = "".join(
         f'<li><a href="{asset.key}/index.html">{html.escape(asset.category)} · '
         f'{html.escape(asset.name)}（{asset.symbol}，'
