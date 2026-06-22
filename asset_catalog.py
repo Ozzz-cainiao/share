@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Final
+
+from investlab.core.asset_registry import REGISTRY
 
 
 @dataclass(frozen=True)
@@ -13,22 +16,22 @@ class AssetDefinition:
     start_year: int = 2005
 
 
-ASSETS: tuple[AssetDefinition, ...] = (
-    AssetDefinition("all-a", "H00985", "中证全指全收益", "中国A股整体"),
-    AssetDefinition("large-cap", "H00300", "沪深300全收益", "中国大盘股"),
-    AssetDefinition("csi800", "H00906", "中证800全收益", "中国大中盘股"),
-    AssetDefinition("mid-cap", "H00905", "中证500全收益", "中国中小盘股"),
-    AssetDefinition("small-cap", "H00852", "中证1000全收益", "中国小盘股"),
+ASSETS: Final[tuple[AssetDefinition, ...]] = tuple(
     AssetDefinition(
-        "sp500", "SPY", "标普500（SPY含息）", "美国大盘股", "us_etf_total_return", 1993
-    ),
-    AssetDefinition(
-        "nasdaq100", "QQQ", "纳指100（QQQ含息）", "美国科技大盘股", "us_etf_total_return", 1999
-    ),
+        key=entry.publish_key,
+        symbol=entry.publish_symbol,
+        name=entry.publish_name,
+        category=entry.publish_category,
+        source=entry.publish_source,
+        start_year=entry.publish_start_year,
+    )
+    for entry in REGISTRY
 )
 
-_BY_KEY = {asset.key: asset for asset in ASSETS}
-_BY_SYMBOL = {asset.symbol.upper(): asset for asset in ASSETS}
+_BY_KEY: Final[dict[str, AssetDefinition]] = {asset.key: asset for asset in ASSETS}
+_BY_SYMBOL: Final[dict[str, AssetDefinition]] = {
+    asset.symbol.upper(): asset for asset in ASSETS
+}
 
 
 def asset_help() -> str:
