@@ -173,3 +173,150 @@ from investlab.strategies import (  # noqa: E402, F401
     NoRebalanceStrategy,
     ThresholdRebalanceStrategy,
 )
+
+
+# ── Hybrid blend strategies ────────────────────────────
+
+def _blend_targets(
+    base: dict[str, float],
+    momentum: dict[str, float],
+    lam: float,
+    assets: list[str],
+) -> dict[str, float]:
+    """Convex blend: (1-lam)*base + lam*momentum, projected to simplex."""
+    blended = {}
+    for k in assets:
+        b = base.get(k, 0.0)
+        m = momentum.get(k, 0.0)
+        blended[k] = (1.0 - lam) * b + lam * m
+    total = sum(blended.values())
+    if total > 1e-12:
+        return {k: v / total for k, v in blended.items()}
+    n = len(assets)
+    return {k: 1.0 / n for k in assets}
+
+
+def _apply_bands(
+    target: dict[str, float],
+    current: dict[str, float],
+    band: float,
+) -> dict[str, float]:
+    """Only move to target if deviation > band; otherwise stay."""
+    result = {}
+    has_move = False
+    for k in target:
+        t = target.get(k, 0.0)
+        c = current.get(k, 0.0)
+        if abs(t - c) > band:
+            result[k] = t
+            has_move = True
+        else:
+            result[k] = c
+    return result if has_move else current
+
+
+@dataclass
+class FixedBlendStrategy:
+    """Fixed convex blend of equal-weight base and momentum rank target."""
+    lam: float = 0.5
+    band: float = 0.05
+    momentum_lookback: int = 6
+
+    def __post_init__(self):
+        bp = int(self.band * 100)
+        self.name = f"blend_{self.lam:.2f}_{bp}bp"
+        self.display_name = f"固定混合(λ={self.lam:.2f}/{bp}bp)"
+        self.family = "blend"
+        self.meta = StrategyMeta(
+            self.name, self.display_name, "blend",
+            f"target=(1-{self.lam})*等权+{self.lam}*动量排名, {bp}bp免调带",
+            "monthly",
+            {"lambda": self.lam, "band": self.band, "lookback": self.momentum_lookback},
+        )
+
+    def reset(self): pass
+
+    def get_target_weights(self, ctx):
+        from investlab.rebalance.signals import momentum_rank_target
+        assets = list(ctx.prices.keys())
+        base = {k: 1.0 / len(assets) for k in assets} if assets else {}
+        momentum = momentum_rank_target(ctx.price_history)
+        if not momentum:
+            return base
+        blended = _blend_targets(base, momentum, self.lam, assets)
+        return _apply_bands(blended, ctx.current_weights, self.band)
+
+
+@dataclass
+class RegimeAdaptiveStrategy:
+    """Structural-bull adaptive: higher lambda + wider sell band for leader."""
+    momentum_lookback: int = 6
+
+    def __post_init__(self):
+        self.name = "regime_adaptive"
+        self.display_name = "结构牛市自适应"
+        self.family = "regime"
+        self.meta = StrategyMeta(
+            self.name, self.display_name, "regime",
+            "结构牛市λ=0.75/15pp卖带，其他上升λ=0.50，其他λ=0.25",
+            "monthly",
+            {"lookback": self.momentum_lookback},
+            ["结构牛市判定依赖历史统计，小样本不可靠"]
+        )
+
+    def reset(self): pass
+
+    def get_target_weights(self, ctx):
+        from investlab.rebalance.signals import (
+            classify_regime,
+            momentum_rank_target,
+            momentum_score,
+        )
+        assets = list(ctx.prices.keys())
+        n = len(assets)
+        if n == 0:
+            return {}
+
+        base = {k: 1.0 / n for k in assets}
+        momentum = momentum_rank_target(ctx.price_history)
+        if not momentum:
+            return base
+
+        regime = classify_regime(ctx.price_history)
+        scores = momentum_score(ctx.price_history)
+
+        # Determine lambda and sell band
+        if regime.is_structural_bull:
+            lam = 0.75
+            sell_band = 0.15
+            lead_band = 0.15
+        elif regime.is_uptrend:
+            lam = 0.50
+            sell_band = 0.05
+            lead_band = 0.05
+        else:
+            lam = 0.25
+            sell_band = 0.05
+            lead_band = 0.05
+
+        # Leading asset with positive momentum gets wider sell band
+        ranked = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+        leader = ranked[0][0] if ranked and ranked[0][1] > 0 else None
+
+        blended = _blend_targets(base, momentum, lam, assets)
+
+        # Apply bands: leader gets wider sell band in structural bull
+        result = {}
+        for k in assets:
+            t = blended.get(k, 0.0)
+            c = ctx.current_weights.get(k, 0.0)
+            if abs(t - c) > (lead_band if k == leader and regime.is_structural_bull else sell_band):
+                result[k] = t
+            else:
+                result[k] = c
+
+        # Normalize
+        total = sum(result.values())
+        if total > 1e-12:
+            return {k: v / total for k, v in result.items()}
+        return base
