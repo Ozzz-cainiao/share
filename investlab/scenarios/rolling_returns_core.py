@@ -1,42 +1,23 @@
-#!/usr/bin/env python3
-"""Generate a rolling annualized-return matrix for a supported investment asset.
-
-The return in column Y and row N is the CAGR from the last close before year Y
-to the last close in year Y + N - 1.  Thus a one-year holding period for 2005
-is the 2005 calendar-year total return.
-"""
-
 from __future__ import annotations
 
 import argparse
 import html
+import re
 import sys
 from io import StringIO
-from pathlib import Path
 
 import akshare as ak
 import numpy as np
 import pandas as pd
 import requests
 
-from asset_catalog import AssetDefinition, asset_help, resolve_assets
-
-
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="生成指数滚动年化收益率矩阵（CSV + HTML）")
-    parser.add_argument("--start-year", type=int, default=None, help="覆盖标的默认起始年份")
-    parser.add_argument("--end-year", type=int, default=2025, help="终止年份，默认 2025")
-    parser.add_argument("--assets", default="all-a", help="逗号分隔的标的 key 或代码；all 表示全部")
-    parser.add_argument("--list-assets", action="store_true", help="列出内置投资标的后退出")
-    parser.add_argument("--symbol", default=None, help="自定义中证指数代码（覆盖 --assets）")
-    parser.add_argument("--name", default=None, help="自定义指数显示名称")
-    parser.add_argument("--output-dir", type=Path, default=Path("output/rolling_returns"))
-    parser.add_argument(
-        "--no-known-adjustments",
-        action="store_true",
-        help="关闭已知的数据质量修正，使用数据源原始点位",
-    )
-    return parser.parse_args()
+from asset_catalog import AssetDefinition, resolve_assets
+from investlab.core.price_loading import fetch_fred_closes, fetch_yahoo_index_closes
+from investlab.scenarios.annual_matrix import (
+    apply_known_adjustments,
+    build_matrix,
+    year_end_closes,
+)
 
 
 def fetch_csindex_closes(symbol: str, start_year: int, end_year: int) -> pd.Series:
@@ -113,81 +94,29 @@ def fetch_us_etf_closes(symbol: str, start_year: int, end_year: int) -> pd.Serie
 def fetch_asset_closes(
     asset: AssetDefinition, start_year: int, end_year: int
 ) -> pd.Series:
-    if asset.source == "csindex":
-        return fetch_csindex_closes(asset.symbol, start_year, end_year)
-    if asset.source == "us_etf_total_return":
-        return fetch_us_etf_closes(asset.symbol, start_year, end_year)
-    raise ValueError(f"不支持的数据源：{asset.source}")
+    match asset.source:
+        case "csindex":
+            return fetch_csindex_closes(asset.symbol, start_year, end_year)
+        case "us_etf_total_return":
+            return fetch_us_etf_closes(asset.symbol, start_year, end_year)
+        case "fred":
+            return fetch_fred_closes(asset.symbol, start_year, end_year)
+        case "yahoo_index":
+            return fetch_yahoo_index_closes(asset.symbol, start_year, end_year)
+        case _:
+            raise ValueError(f"不支持的数据源：{asset.source}")
 
 
 def source_label(asset: AssetDefinition) -> str:
-    if asset.source == "us_etf_total_return":
-        return "Total Real Returns / ETF 分红再投资年度总收益"
-    return "AkShare / 中证指数"
-
-
-def year_end_closes(closes: pd.Series) -> pd.DataFrame:
-    """Return the actual final observation and close for every calendar year."""
-    frame = closes.rename("close").to_frame()
-    grouped = frame.groupby(frame.index.year, sort=True)
-    return pd.DataFrame(
-        {
-            "date": grouped.apply(lambda x: x.index[-1], include_groups=False),
-            "close": grouped["close"].last(),
-        }
-    )
-
-
-def apply_known_adjustments(
-    annual: pd.DataFrame, symbol: str
-) -> tuple[pd.DataFrame, list[str]]:
-    """Apply documented corrections to incomplete vendor total-return data."""
-    adjusted = annual.copy()
-    notes: list[str] = []
-    if symbol.upper() == "H00300" and 2005 in adjusted.index:
-        # H00300's published 2005 year-end level equals the price index and
-        # omits dividends. SBBI estimates a 2.6% gross dividend yield from
-        # constituent weights and ex-dividend dates. Scaling the wealth series
-        # from 2005 onward preserves every later calendar-year return.
-        adjusted.loc[adjusted.index >= 2005, "close"] *= 1.026
-        notes.append(
-            "H00300 已应用2005年分红估算修正：2005年及以后财富指数乘以1.026，"
-            "2005年收益由-7.65%修正为约-5.25%"
-        )
-    return adjusted, notes
-
-
-def build_matrix(
-    annual: pd.DataFrame, start_year: int, end_year: int
-) -> tuple[pd.DataFrame, list[str]]:
-    """Build a triangular matrix of CAGR percentages and collect data warnings."""
-    starts = list(range(start_year, end_year + 1))
-    holding_periods = list(range(1, end_year - start_year + 2))
-    matrix = pd.DataFrame(index=holding_periods, columns=starts, dtype=float)
-    warnings: list[str] = []
-
-    available = set(int(y) for y in annual.index)
-    required = set(range(start_year - 1, end_year + 1))
-    missing = sorted(required - available)
-    if missing:
-        warnings.append("缺少年末数据：" + "、".join(map(str, missing)))
-
-    for start in starts:
-        base_year = start - 1
-        if base_year not in available:
-            continue
-        base = float(annual.at[base_year, "close"])
-        for years in holding_periods:
-            finish = start + years - 1
-            if finish > end_year or finish not in available:
-                continue
-            terminal = float(annual.at[finish, "close"])
-            if base > 0 and terminal > 0:
-                matrix.at[years, start] = ((terminal / base) ** (1.0 / years) - 1.0) * 100.0
-
-    if matrix.notna().sum().sum() == 0:
-        raise RuntimeError("无法计算任何收益率，请检查年份范围和指数历史数据")
-    return matrix, warnings
+    match asset.source:
+        case "us_etf_total_return":
+            return "Total Real Returns / ETF 分红再投资年度总收益"
+        case "fred":
+            return "FRED（美联储经济数据）/ 纳斯达克100全收益指数（XNDX，含股息）"
+        case "yahoo_index":
+            return "Yahoo Finance / 纳斯达克100指数（^NDX 价格指数，不含股息）"
+        case _:
+            return "AkShare / 中证指数"
 
 
 def cell_style(value: float, scale: float) -> str:
@@ -400,7 +329,7 @@ def run_asset(args: argparse.Namespace, asset: AssetDefinition) -> str:
     matrix, warnings = build_matrix(annual, start_year, args.end_year)
     warnings = adjustment_notes + warnings
 
-    slug = asset.symbol.lower()
+    slug = re.sub(r"[^a-z0-9]", "", asset.symbol.lower()) or asset.key
     csv_path = args.output_dir / f"{slug}_rolling_annualized_returns.csv"
     html_path = args.output_dir / f"{slug}_rolling_annualized_returns.html"
     csv_frame = matrix.copy()
@@ -422,11 +351,7 @@ def run_asset(args: argparse.Namespace, asset: AssetDefinition) -> str:
     return html_path.name
 
 
-def main() -> int:
-    args = parse_args()
-    if args.list_assets:
-        print(asset_help())
-        return 0
+def run_with_args(args: argparse.Namespace) -> int:
     if args.start_year is not None and args.start_year > args.end_year:
         raise SystemExit("--start-year 不能晚于 --end-year")
     if (args.start_year is not None and args.start_year < 1990) or args.end_year > 2100:
@@ -458,7 +383,3 @@ def main() -> int:
         encoding="utf-8",
     )
     return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

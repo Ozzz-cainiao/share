@@ -1,0 +1,61 @@
+name: Publish site
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install uv
+        run: pip install uv
+      - name: Sync dependencies
+        run: uv sync
+      - name: Build rolling-returns scenario outputs
+        run: |
+          uv run python -m investlab.cli run rolling-returns --assets all --end-year 2025 --output-dir tmp/rolling
+      - name: Build dca-comparison scenario outputs
+        run: |
+          uv run python -m investlab.cli run dca-comparison --assets all --end-year 2025 --output-dir tmp/dca
+      - name: Build static site
+        run: |
+          uv run python -m investlab.cli publish site --assets all --end-year 2025 --input-root tmp --site-dir dist/site
+      - name: Install Playwright
+        run: |
+          npm install playwright
+          npx playwright install --with-deps chromium
+      - name: Export watermarked long images
+        run: |
+          node scripts/export_watermarked_tables.mjs --site-dir dist/site --assets all --output-dir dist/site/downloads/wechat
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

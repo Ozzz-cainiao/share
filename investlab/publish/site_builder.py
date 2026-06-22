@@ -1,46 +1,22 @@
-#!/usr/bin/env python3
-"""Build the static GitHub Pages site under docs/.
-
-New table families can be added to REPORTS and emitted from build_asset_site.
-The public site deliberately contains generated HTML/CSV only; research code
-and dependencies remain at the repository root.
-"""
-
 from __future__ import annotations
 
 import argparse
 import html
-from dataclasses import dataclass
 from pathlib import Path
 
-from asset_catalog import ASSETS, AssetDefinition, asset_help, resolve_assets
-from dca_comparison import build_dca_matrices, render_comparison_html
-from rolling_returns import (
+from asset_catalog import AssetDefinition, resolve_assets
+from investlab.publish.report_registry import REPORT_REGISTRY, ReportDefinition
+from investlab.scenarios.annual_matrix import (
     apply_known_adjustments,
     build_matrix,
-    fetch_asset_closes,
-    source_label,
     year_end_closes,
 )
-
-
-@dataclass(frozen=True)
-class ReportDefinition:
-    mode: str
-    filename: str
-    title: str
-    description: str
-
-
-# Extend this catalog when a new table family becomes publishable.
-REPORTS: tuple[ReportDefinition, ...] = (
-    ReportDefinition("lump", "lump-sum.html", "一次投入", "一次投入后的滚动 CAGR"),
-    ReportDefinition("dca", "dca.html", "年度定投", "每年年初等额投入的滚动 IRR"),
-    ReportDefinition(
-        "difference", "difference.html", "定投与一次投入之差", "定投 IRR 减一次投入 CAGR"
-    ),
+from investlab.scenarios.dca_comparison_core import render_comparison_html
+from investlab.scenarios.dca_matrix import build_dca_matrices
+from investlab.scenarios.rolling_returns_core import (
+    fetch_asset_closes,
+    source_label,
 )
-
 
 SITE_CSS = """
 :root{--ink:#26304a;--muted:#68758b;--line:#dce2ed;--paper:#f5f7fb;--brand:#405477;--card:#fff}
@@ -80,7 +56,8 @@ def asset_landing(
     adjustment_notes: list[str],
 ) -> str:
     report_links = "".join(
-        f'<a href="{report.filename}">{report.title}</a>' for report in REPORTS
+        f'<a href="{report.filename}">{report.title}</a>'
+        for report in REPORT_REGISTRY.entries()
     )
     adjustment = ""
     if adjustment_notes:
@@ -89,6 +66,12 @@ def asset_landing(
         adjustment += '<div class="notice">口径说明：使用美股 ETF 分红再投资年度总收益作为可投资代理；它与官方指数点位可能存在跟踪误差、费率和税务差异。</div>'
         if asset.key in {"sp500", "nasdaq100"}:
             adjustment += f'<div class="notice">起点说明：{start_year} 年为 ETF 上市后的不完整自然年，仍按数据可用起点纳入展示。</div>'
+    if asset.source == "fred":
+        adjustment += '<div class="notice">口径说明：使用 FRED 公布的纳斯达克100全收益指数（XNDX / 系列 NASDAQXNDX，来源 Nasdaq, Inc.），含股息再投资，为全收益口径。</div>'
+        adjustment += f'<div class="notice">起点说明：FRED 全收益数据始于 1999-03-04，1999 年不完整；滚动收益以 1999 年末为基期，完整年度自 {start_year} 年起。</div>'
+    if asset.source == "yahoo_index":
+        adjustment += '<div class="notice">口径说明：使用 Yahoo Finance 纳斯达克100价格指数（^NDX），为价格指数、不含股息，与含息全收益指数存在口径差异。参考 stock.laoqianriritan.com 的数据源与口径。</div>'
+        adjustment += f'<div class="notice">起点说明：^NDX 数据始于 1985-10-01；滚动收益以 {start_year - 1} 年末为基期，自 {start_year} 年起。</div>'
     adjustment += (
         '<section><h2 class="section-title">公众号完整表格长图</h2><div class="links">'
         f'<a href="../../downloads/wechat/{asset.key}-lump-sum.jpg" download>一次投入 JPG</a>'
@@ -121,7 +104,7 @@ def home(
 <p class="lead">比较中美宽基资产在不同起始年份和持有期限下的一次投入 CAGR、年度定投 IRR，以及二者的差值。各标的从可用历史起点统计至 {end_year} 年。</p>
 <nav class="topnav"><a href="methodology.html">方法与数据说明</a><a href="assets/index.html">标的目录</a></nav>
 <h2 class="section-title">投资标的</h2><div class="grid">{''.join(cards)}</div>
-<div class="footer">中国资产使用中证全收益指数，经 AkShare 获取；美股使用 Total Real Returns 的 SPY、QQQ 分红再投资年度总收益。沪深300包含2005年分红估算修正。<br>参考资料：<a href="https://youzhiyouxing.cn/sbbi2025/annual-rolling-returns/" target="_blank" rel="noopener">有知有行《中国大类资产投资2025年报》滚动年化收益</a><br>更多长期投资研究，欢迎关注公众号：炼金魔女手记<br>历史收益不代表未来表现，不构成投资建议。</div></main>"""
+<div class="footer">中国资产使用中证全收益指数，经 AkShare 获取；美股标普500使用 Total Real Returns 的 SPY 分红再投资年度总收益，纳指100使用 FRED 的纳斯达克100全收益指数（XNDX，含股息再投资）。沪深300包含2005年分红估算修正。<br>参考资料：<a href="https://youzhiyouxing.cn/sbbi2025/annual-rolling-returns/" target="_blank" rel="noopener">有知有行《中国大类资产投资2025年报》滚动年化收益</a><br>更多长期投资研究，欢迎关注公众号：炼金魔女手记<br>历史收益不代表未来表现，不构成投资建议。</div></main>"""
     return page("中美指数长期收益实验室", body)
 
 
@@ -131,16 +114,16 @@ def methodology() -> str:
 <h2>一次投入</h2><p>在起始年份前一年度最后一个可用收盘点位投入并持有 N 年，以终止年度最后一个可用收盘点位估值。年化收益使用复合年化收益率：</p><p><code>CAGR = (终点指数 / 起点指数) ^ (1 / N) - 1</code></p>
 <h2>年度定投</h2><p>每年年初等额投入一份，共投入 N 次，在第 N 年年末估值。年化收益使用等间隔年度现金流 IRR；累计收益以期末资产相对累计投入计算。</p>
 <h2>差值</h2><p><code>定投 IRR − 一次投入 CAGR</code>。正数表示该历史区间内定投的年化收益更高，负数表示一次投入更高。</p>
-<h2>数据与修正</h2><p>中国宽基指数使用全收益口径。H00300 在2005年公布的全收益点位与价格指数相同，缺少分红；本站按《中国大类资产投资 2025 年报》披露的方法，将2005年及以后财富序列乘以1.026，使2005年收益由约−7.65%修正为约−5.25%。</p><p>标普500和纳指100分别使用 Total Real Returns 公布的 SPY、QQQ 分红再投资年度总收益作为可投资代理，默认分别从 1993 年和 1999 年开始。两个起始年度均为 ETF 上市后的不完整自然年。ETF 代理会包含管理费、跟踪误差及数据商口径影响，因此不等同于官方全收益指数。</p>
+<h2>数据与修正</h2><p>中国宽基指数使用全收益口径。H00300 在2005年公布的全收益点位与价格指数相同，缺少分红；本站按《中国大类资产投资 2025 年报》披露的方法，将2005年及以后财富序列乘以1.026，使2005年收益由约−7.65%修正为约−5.25%。</p><p>标普500使用 Total Real Returns 公布的 SPY 分红再投资年度总收益作为可投资代理，默认从 1993 年起（ETF 上市后的不完整自然年），会包含管理费、跟踪误差及数据商口径影响，不等同于官方全收益指数。</p><p>纳指100使用 FRED 公布的纳斯达克100全收益指数（XNDX / 系列 NASDAQXNDX，来源 Nasdaq, Inc.），含股息再投资。数据始于 1999-03-04，1999 年不完整；滚动收益矩阵以 1999 年末为基期、完整年度自 2000 年起。</p>
 <h2>参考资料</h2><p><a href="https://youzhiyouxing.cn/sbbi2025/annual-rolling-returns/" target="_blank" rel="noopener">有知有行《中国大类资产投资2025年报》滚动年化收益</a>。本站在其滚动收益展示思路基础上独立实现计算与交互展示。</p><p><strong>更多长期投资研究，欢迎关注公众号：炼金魔女手记</strong></p>
 <h2>限制</h2><p>指数历史数据、回溯数据和估算值可能与其他数据商存在差异。页面不计交易费用、税费、滑点和实际申赎约束，仅供研究，不构成投资建议。</p></article></main>"""
     return page("方法与数据说明｜中美指数长期收益实验室", body)
 
 
 def build_asset_site(
-    docs_dir: Path, asset: AssetDefinition, start_year: int, end_year: int
+    site_dir: Path, asset: AssetDefinition, start_year: int, end_year: int
 ) -> None:
-    asset_dir = docs_dir / "assets" / asset.key
+    asset_dir = site_dir / "assets" / asset.key
     asset_dir.mkdir(parents=True, exist_ok=True)
     closes = fetch_asset_closes(asset, start_year, end_year)
     annual = year_end_closes(closes)
@@ -151,9 +134,9 @@ def build_asset_site(
     dca, terminal_values = build_dca_matrices(annual, start_year, end_year)
     difference = dca - lump
     matrices = {"lump": lump, "dca": dca, "difference": difference}
-    page_names = {report.mode: report.filename for report in REPORTS}
+    page_names = {report.mode: report.filename for report in REPORT_REGISTRY.entries()}
 
-    for report in REPORTS:
+    for report in REPORT_REGISTRY.entries():
         target = asset_dir / report.filename
         target.write_text(
             render_comparison_html(
@@ -182,47 +165,37 @@ def build_asset_site(
     )
 
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="构建 docs/ GitHub Pages 静态站点")
-    parser.add_argument("--assets", default="all", help="逗号分隔的资产 key/code；默认 all")
-    parser.add_argument("--list-assets", action="store_true")
-    parser.add_argument("--start-year", type=int, default=None, help="覆盖所有标的的默认起始年份")
-    parser.add_argument("--end-year", type=int, default=2025)
-    parser.add_argument("--output-dir", type=Path, default=Path("docs"))
-    return parser.parse_args()
-
-
-def main() -> int:
-    args = parse_args()
-    if args.list_assets:
-        print(asset_help())
-        return 0
+def build_site(args: argparse.Namespace) -> int:
     selected = resolve_assets(args.assets)
-    docs_dir = args.output_dir
-    (docs_dir / "assets").mkdir(parents=True, exist_ok=True)
-    (docs_dir / "assets" / "site.css").write_text(SITE_CSS.strip() + "\n", encoding="utf-8")
-    (docs_dir / ".nojekyll").write_text("", encoding="utf-8")
-    (docs_dir / "index.html").write_text(home(selected, args.start_year, args.end_year), encoding="utf-8")
-    (docs_dir / "methodology.html").write_text(methodology(), encoding="utf-8")
+    site_dir: Path = args.site_dir
+    (site_dir / "assets").mkdir(parents=True, exist_ok=True)
+    (site_dir / "assets" / "site.css").write_text(SITE_CSS.strip() + "\n", encoding="utf-8")
+    (site_dir / ".nojekyll").write_text("", encoding="utf-8")
+    (site_dir / "index.html").write_text(
+        home(selected, args.start_year, args.end_year), encoding="utf-8"
+    )
+    (site_dir / "methodology.html").write_text(methodology(), encoding="utf-8")
     directory_links = "".join(
-        f'<li><a href="{asset.key}/index.html">{html.escape(asset.category)} · {html.escape(asset.name)}（{asset.symbol}，{effective_start_year(asset, args.start_year)}–{args.end_year}）</a></li>'
+        f'<li><a href="{asset.key}/index.html">{html.escape(asset.category)} · '
+        f'{html.escape(asset.name)}（{asset.symbol}，'
+        f'{effective_start_year(asset, args.start_year)}–{args.end_year}）</a></li>'
         for asset in selected
     )
-    directory_body = f'<main class="shell"><h1>标的目录</h1><nav class="topnav"><a href="../index.html">← 返回首页</a></nav><div class="prose"><ul>{directory_links}</ul></div></main>'
-    (docs_dir / "assets" / "index.html").write_text(
+    directory_body = (
+        '<main class="shell"><h1>标的目录</h1><nav class="topnav">'
+        '<a href="../index.html">← 返回首页</a></nav>'
+        f'<div class="prose"><ul>{directory_links}</ul></div></main>'
+    )
+    (site_dir / "assets" / "index.html").write_text(
         page("标的目录｜中美指数长期收益实验室", directory_body, depth=1), encoding="utf-8"
     )
     for asset in selected:
         print(f"building {asset.key} ({asset.symbol})")
         build_asset_site(
-            docs_dir,
+            site_dir,
             asset,
             effective_start_year(asset, args.start_year),
             args.end_year,
         )
-    print(f"site: {(docs_dir / 'index.html').resolve()}")
+    print(f"site: {(site_dir / 'index.html').resolve()}")
     return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

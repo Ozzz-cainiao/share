@@ -1,9 +1,6 @@
 ﻿# 投资策略研究仓库（可长期维护）
 
-这个仓库现在有两套入口：
-
-- `main.py`：一键生成你当前文章型回测结果（含图表/文章）
-- `investlab`：可复用框架入口，方便后续持续加策略、加回测
+这个仓库统一入口为 `investlab` 包，通过 `python -m investlab.cli` 运行所有回测与发布流程。旧的顶层脚本（`main.py`、`rolling_returns.py`、`dca_comparison.py`、`build_site.py`）已删除，所有逻辑已迁入 `investlab/` 包。
 
 ## 1. 环境准备
 
@@ -13,30 +10,19 @@ uv sync
 
 Python 版本与依赖由 `pyproject.toml` + `uv.lock` 固定。
 
-## 2. 旧入口（保持兼容）
+## 2. 统一命令入口
 
 ```bash
-uv run python main.py
+uv run python -m investlab.cli --help
+uv run python -m investlab.cli scenarios list
 ```
 
-用途：快速生成当前这套“定投 vs 等低点”完整产物。
+所有回测、滚动收益、定投对比、站点构建都通过 `python -m investlab.cli` 子命令运行。旧顶层脚本直接运行会打印弃用提示并退出。
 
-## 3. 新框架入口（推荐后续都用这个）
-
-### 3.1 运行方式
+### 2.1 框架回测
 
 ```bash
-# 方式1：直接用框架入口
-uv run python -m investlab.cli
-
-# 方式2：沿用 main.py，但切到框架模式
-uv run python main.py --framework
-```
-
-### 3.2 常用参数
-
-```bash
-uv run python -m investlab.cli \
+uv run python -m investlab.cli run framework \
   --start 2005-01-01 \
   --end 2026-03-09 \
   --assets H00300,H00906,H00905,SPY,QQQ \
@@ -47,7 +33,7 @@ uv run python -m investlab.cli \
   --output-dir output/framework
 ```
 
-### 3.3 框架输出
+### 2.2 框架输出
 
 - `output/framework/summary_long.csv`：长表（每个标的 × 每个策略）
 - `output/framework/summary_xirr_wide.csv`：XIRR 宽表
@@ -56,11 +42,14 @@ uv run python -m investlab.cli \
 
 ## 4. 目录说明（后续维护重点）
 
+- `investlab/core/`：资产注册表（`asset_registry.py`）与价格加载（`price_loading.py`）等共享计算基元
+- `investlab/scenarios/`：场景注册表（`registry.py`）与各结果家族模块（`framework_scenario.py`、`rolling_returns_scenario.py`、`dca_comparison_scenario.py`）及共享矩阵工具（`annual_matrix.py`、`dca_matrix.py`）
+- `investlab/publish/`：报告注册表（`report_registry.py`）、站点构建（`site_builder.py`）与长图导出契约（`export_contract.py`）
 - `investlab/data.py`：数据源与标的选择
 - `investlab/strategies.py`：策略定义（定投、回撤择时）
 - `investlab/engine.py`：统一回测引擎
 - `investlab/metrics.py`：指标计算
-- `investlab/cli.py`：命令行入口与结果导出
+- `investlab/cli.py`：统一命令入口（scenarios / run / publish）
 - `investlab/strategy_template.py`：新增策略模板
 
 ## 5. 以后如何“加策略”
@@ -77,13 +66,16 @@ uv run python -m investlab.cli \
 4. 跑命令验证：
    - `uv run python -m investlab.cli --drawdown-rules ...`
 
-## 6. 以后如何“加回测场景”
+## 6. 以后如何“加回测场景（result family）”
 
-推荐做法：
+新结果家族通过 `investlab/scenarios/` 的场景注册表接入，无需改 `investlab/cli.py` 的 dispatch：
 
-1. 在 `investlab/cli.py` 新增参数（例如不同手续费、现金收益、调仓频率）。
-2. 通过 `--output-dir` 区分不同实验，避免结果互相覆盖。
-3. 用 `summary_long.csv` 作为统一对比底表。
+1. 在 `investlab/scenarios/` 新建 `<name>_scenario.py`，定义 `add_arguments(parser)` 和 `run(args)`，复用 `investlab.scenarios.annual_matrix` / `dca_matrix` 等共享矩阵工具。
+2. 用 `ScenarioEntry(name=..., description=..., add_arguments=..., run=...)` 构造条目，并调用 `SCENARIO_REGISTRY.register(entry)`。
+3. 在 `investlab/scenarios/__init__.py` 导入该模块以触发注册。
+4. 验证：`uv run python -m investlab.cli run <name> --help` 自动出现新子命令；`uv run python -m investlab.cli scenarios list` 仍正常。
+
+CLI 的 `run <scenario>` 子命令由 `SCENARIO_REGISTRY.entries()` 动态生成，新家族是增量工作，不需要克隆顶层脚本。
 
 ## 7. 维护提醒（请固定执行）
 
@@ -106,9 +98,9 @@ git push -u origin feat/<strategy-or-backtest-name>
 
 ## 9. 滚动年化收益率矩阵
 
-`rolling_returns.py` 使用 AkShare 获取中证指数日线，或读取美股 ETF 分红再投资年度总收益，并生成滚动年化收益率矩阵。默认标的是中证全指全收益指数 `H00985`。
+`rolling-returns` 场景使用 AkShare 获取中证指数日线，或读取美股 ETF 分红再投资年度总收益，并生成滚动年化收益率矩阵。默认标的是中证全指全收益指数 `H00985`。
 
-未传入 `--start-year` 时，各标的使用自己的默认历史起点：中国指数从 2005 年开始，SPY 从 1993 年开始，QQQ 从 1999 年开始。SPY 与 QQQ 的起始年度是 ETF 上市后的不完整自然年；如需统一比较区间，可显式传入 `--start-year` 覆盖。
+未传入 `--start-year` 时，各标的使用自己的默认历史起点：中国指数从 2005 年开始，SPY 从 1993 年开始，纳指100从 2000 年开始（FRED 全收益指数 `XNDX` 数据始于 1999-03-04，1999 年不完整，以 1999 年末为基期）。SPY 的起始年度是 ETF 上市后的不完整自然年；如需统一比较区间，可显式传入 `--start-year` 覆盖。
 
 计算口径：起始年以前一年度最后一个可用收盘价为起点，持有 N 年以后第 N 个年度最后一个可用收盘价为终点，按复合年化收益率计算：
 
@@ -121,7 +113,7 @@ CAGR = (终点指数 / 起点指数) ^ (1 / 持有年数) - 1
 运行：
 
 ```bash
-uv run python rolling_returns.py \
+uv run python -m investlab.cli run rolling-returns \
   --start-year 2005 \
   --end-year 2025 \
   --symbol H00985 \
@@ -138,14 +130,14 @@ uv run python rolling_returns.py \
 
 ## 10. 一次投入与年度定投对比
 
-`dca_comparison.py` 比较两种投入方式：
+`dca-comparison` 场景比较两种投入方式：
 
 - 一次投入：起始年前一年度末投入，持有 N 年，指标为 CAGR。
 - 年度定投：每年年初等额投入一份，共投入 N 次，第 N 年年末估值，指标为年度 IRR。
 - 差值：`定投 IRR - 一次投入 CAGR`；正数代表定投占优，负数代表一次投入占优。
 
 ```bash
-uv run python dca_comparison.py \
+uv run python -m investlab.cli run dca-comparison \
   --start-year 2005 \
   --end-year 2025 \
   --symbol H00985 \
@@ -153,47 +145,63 @@ uv run python dca_comparison.py \
   --output-dir output/dca_comparison
 ```
 
-脚本分别生成一次投入、定投和差值 HTML。三个页面可互相切换；悬浮单元格可同时查看两种年化收益、差值、定投累计投入、期末资产与累计收益。
+场景分别生成一次投入、定投和差值 HTML。三个页面可互相切换；悬浮单元格可同时查看两种年化收益、差值、定投累计投入、期末资产与累计收益。
 
-数据说明：当指数为 `H00300` 时，脚本默认应用《中国大类资产投资 2025 年报》披露的2005年分红估算，将2005年及以后财富指数乘以 `1.026`，使2005年收益由 `-7.65%` 修正为约 `-5.25%`。如需查看数据源未经修正的原始结果，可增加参数 `--no-known-adjustments`。
+数据说明：当指数为 `H00300` 时，场景默认应用《中国大类资产投资 2025 年报》披露的2005年分红估算，将2005年及以后财富指数乘以 `1.026`，使2005年收益由 `-7.65%` 修正为约 `-5.25%`。如需查看数据源未经修正的原始结果，可增加参数 `--no-known-adjustments`。
 
 ### 选择或批量生成投资标的
 
 ```bash
 # 查看全部内置标的
-uv run python dca_comparison.py --list-assets
+uv run python -m investlab.cli scenarios list
 
 # 生成单个标的
-uv run python dca_comparison.py --assets large-cap
+uv run python -m investlab.cli run dca-comparison --assets large-cap
 
 # 一次生成多个标的
-uv run python dca_comparison.py --assets all-a,large-cap,small-cap
+uv run python -m investlab.cli run dca-comparison --assets all-a,large-cap,small-cap
 
 # 生成全部内置标的
-uv run python dca_comparison.py --assets all
+uv run python -m investlab.cli run dca-comparison --assets all
 ```
 
-内置标的包括：中证全指全收益（`all-a/H00985`）、沪深300全收益（`large-cap/H00300`）、中证800全收益（`csi800/H00906`）、中证500全收益（`mid-cap/H00905`）、中证1000全收益（`small-cap/H00852`）、标普500 ETF 代理（`sp500/SPY`）和纳斯达克100 ETF 代理（`nasdaq100/QQQ`）。也可继续使用 `--symbol CODE --name 名称` 运行自定义中证指数。
+内置标的包括：中证全指全收益（`all-a/H00985`）、沪深300全收益（`large-cap/H00300`）、中证800全收益（`csi800/H00906`）、中证500全收益（`mid-cap/H00905`）、中证1000全收益（`small-cap/H00852`）、标普500 ETF 代理（`sp500/SPY`）和纳斯达克100全收益指数（`nasdaq100/NASDAQXNDX`）。也可继续使用 `--symbol CODE --name 名称` 运行自定义中证指数。
 
-美股表格使用 Total Real Returns 公布的 SPY、QQQ 分红再投资年度总收益。它们是可投资 ETF 代理，并非官方指数点位，因此会包含管理费、跟踪误差及数据商口径影响。
+美股表格：标普500使用 Total Real Returns 公布的 SPY 分红再投资年度总收益（可投资 ETF 代理，含管理费、跟踪误差及数据商口径影响）；纳指100使用 FRED 公布的纳斯达克100全收益指数（XNDX / 系列 `NASDAQXNDX`，来源 Nasdaq, Inc.），含股息再投资，数据始于 1999-03-04，完整年度自 2000 年起。
 
 展示思路参考：[有知有行《中国大类资产投资2025年报》滚动年化收益](https://youzhiyouxing.cn/sbbi2025/annual-rolling-returns/)。更多长期投资研究，欢迎关注公众号：**炼金魔女手记**。
 
 批量运行会额外生成 `index.html`，作为不同投资标的和三种分析页面的统一入口。
 
-## 11. 构建公开网站（GitHub Pages）
+## 11. 构建公开网站（GitHub Pages，CI 自动部署）
+
+本地构建静态站点到 `dist/site`：
 
 ```bash
-uv run python build_site.py --assets all --output-dir docs
+uv run python -m investlab.cli publish site --assets all --end-year 2025 --site-dir dist/site
 ```
 
-`docs/` 是可直接由 GitHub Pages 发布的静态站点：
+`dist/site/` 是可直接由 GitHub Pages 发布的静态站点：
 
-- `docs/index.html`：网站总入口；
-- `docs/methodology.html`：计算公式、数据来源、修正和限制；
-- `docs/assets/<asset-key>/index.html`：单个投资标的入口；
+- `dist/site/index.html`：网站总入口；
+- `dist/site/methodology.html`：计算公式、数据来源、修正和限制；
+- `dist/site/assets/<asset-key>/index.html`：单个投资标的入口；
 - 每个标的目录下包含一次投入、年度定投、差值 HTML 以及对应 CSV；
-- `docs/downloads/wechat/`：全部标的三类表格的带水印公众号长图；
-- `docs/.nojekyll`：要求 GitHub Pages 原样发布静态文件。
+- `dist/site/.nojekyll`：要求 GitHub Pages 原样发布静态文件。
 
-新增标的时编辑 `asset_catalog.py`；新增公开表格类型时在 `build_site.py` 的 `REPORTS` 目录中登记，并在 `build_asset_site()` 中生成对应矩阵。构建完成后提交 `docs/`，即可更新公开网站。
+构建后可导出全部带水印长图。Node 脚本会自动启动本地服务、校验“炼金魔女手记”水印，并按页面完整尺寸截图：
+
+```bash
+node scripts/export_watermarked_tables.mjs \
+  --site-dir dist/site \
+  --assets all \
+  --output-dir dist/site/downloads/wechat
+```
+
+也可以只导出部分内容，例如 `--assets sp500,nasdaq100 --pages lump-sum,dca`。运行 `node scripts/export_watermarked_tables.mjs --help` 查看完整参数。导出文件命名契约（`<asset-key>-<page-name>.jpg`）由 `investlab/publish/export_contract.py` 定义并校验。
+
+### CI 自动部署
+
+`.github/workflows/publish.yml` 在推送到 `main` 时自动：构建 rolling-returns 与 dca-comparison 场景输出 → 构建 `dist/site` → 导出带水印长图 → 通过 `actions/upload-pages-artifact` 与 `actions/deploy-pages` 部署到 GitHub Pages。仓库不再依赖手动提交的 `docs/` 作为发布源（`docs/index.html` 已标注 `GENERATED`，仅作历史快照保留）。
+
+新增标的时编辑 `asset_catalog.py`；新增公开表格类型时在 `investlab/publish/report_registry.py` 的 `REPORT_REGISTRY` 中登记。

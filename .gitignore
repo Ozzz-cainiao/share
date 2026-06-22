@@ -12,3 +12,15 @@ wheels/
 
 # Generated outputs (articles/charts/data exports)
 output/
+
+# Local scenario + site build scratch (CI rebuilds these)
+tmp/
+dist/site/
+dist/downloads/
+
+# Agent workflow state (not product source)
+.omo/
+.playwright-mcp/
+
+# macOS
+.DS_Store

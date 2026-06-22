@@ -1,85 +1,25 @@
-#!/usr/bin/env python3
-"""Compare lump-sum CAGR with equal annual contribution IRR."""
-
 from __future__ import annotations
 
 import argparse
 import html
+import re
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-from asset_catalog import AssetDefinition, asset_help, resolve_assets
-from rolling_returns import (
+from asset_catalog import AssetDefinition, resolve_assets
+from investlab.scenarios.annual_matrix import (
     apply_known_adjustments,
     build_matrix,
+    year_end_closes,
+)
+from investlab.scenarios.dca_matrix import build_dca_matrices
+from investlab.scenarios.rolling_returns_core import (
     cell_style,
     fetch_asset_closes,
     source_label,
-    year_end_closes,
 )
-
-
-def periodic_irr(cashflows: list[float]) -> float:
-    """Return the annual IRR for equally spaced yearly cash flows."""
-    if not cashflows or not any(value < 0 for value in cashflows) or not any(
-        value > 0 for value in cashflows
-    ):
-        return float("nan")
-
-    def npv(rate: float) -> float:
-        return sum(value / (1.0 + rate) ** period for period, value in enumerate(cashflows))
-
-    low, high = -0.999999, 1.0
-    low_value, high_value = npv(low), npv(high)
-    while low_value * high_value > 0 and high < 1_000_000:
-        high = high * 2.0 + 1.0
-        high_value = npv(high)
-    if low_value * high_value > 0:
-        return float("nan")
-
-    for _ in range(200):
-        middle = (low + high) / 2.0
-        middle_value = npv(middle)
-        if abs(middle_value) < 1e-12:
-            return middle
-        if low_value * middle_value <= 0:
-            high, high_value = middle, middle_value
-        else:
-            low, low_value = middle, middle_value
-    return (low + high) / 2.0
-
-
-def build_dca_matrices(
-    annual: pd.DataFrame, start_year: int, end_year: int
-) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Build annual DCA IRR and terminal-value matrices.
-
-    One unit is invested at each year start. For an N-year period there are N
-    equal contributions, followed by liquidation at the end of year N.
-    """
-    starts = list(range(start_year, end_year + 1))
-    periods = list(range(1, end_year - start_year + 2))
-    irr = pd.DataFrame(index=periods, columns=starts, dtype=float)
-    terminal_values = pd.DataFrame(index=periods, columns=starts, dtype=float)
-    available = set(int(year) for year in annual.index)
-
-    for start in starts:
-        for years in periods:
-            finish = start + years - 1
-            contribution_years = list(range(start - 1, finish))
-            if finish > end_year or finish not in available:
-                continue
-            if any(year not in available for year in contribution_years):
-                continue
-            terminal_price = float(annual.at[finish, "close"])
-            shares = sum(1.0 / float(annual.at[year, "close"]) for year in contribution_years)
-            terminal_value = shares * terminal_price
-            cashflows = [-1.0] * years + [terminal_value]
-            irr.at[years, start] = periodic_irr(cashflows) * 100.0
-            terminal_values.at[years, start] = terminal_value
-    return irr, terminal_values
 
 
 def _scale(matrix: pd.DataFrame) -> float:
@@ -229,30 +169,9 @@ const signed=v=>`${{Number(v)>=0?"+":""}}${{Number(v).toFixed(2)}}%`;
 function fill(c){{const d=c.dataset;tip.innerHTML=`<strong>${{d.start}}–${{d.finish}} · 持有 ${{d.years}} 年</strong><div class="grid"><span>一次投入 CAGR</span><span>${{signed(d.lump)}}</span><span>一次投入累计收益</span><span>${{signed(d.lumpTotal)}}</span><span>定投 IRR</span><span>${{signed(d.dca)}}</span><span>定投 − 一次投入</span><span>${{signed(d.diff)}}</span><span>定投累计投入</span><span>${{Number(d.years).toFixed(0)}} 份</span><span>定投期末资产</span><span>${{Number(d.terminal).toFixed(2)}} 份</span><span>定投累计收益</span><span>${{signed(d.totalReturn)}}</span></div><div class="hint">点击单元格可固定 / 取消固定</div>`}}
 function place(x,y){{const g=16;tip.style.left=`${{Math.max(10,Math.min(x+g,innerWidth-tip.offsetWidth-10))}}px`;tip.style.top=`${{Math.max(10,Math.min(y+g,innerHeight-tip.offsetHeight-10))}}px`}}
 function show(c,x,y){{fill(c);tip.classList.add("show");place(x,y)}}
-cells.forEach(c=>{{c.addEventListener("mouseenter",e=>{{if(!pinned)show(c,e.clientX,e.clientY)}});c.addEventListener("mousemove",e=>{{if(!pinned)place(e.clientX,e.clientY)}});c.addEventListener("mouseleave",()=>{{if(!pinned)tip.classList.remove("show")}});c.addEventListener("focus",()=>{{if(!pinned){{const r=c.getBoundingClientRect();show(c,r.right,r.top)}}}});c.addEventListener("blur",()=>{{if(!pinned)tip.classList.remove("show")}});c.addEventListener("click",e=>{{e.stopPropagation();if(pinned===c){{c.classList.remove("pinned");pinned=null;tip.classList.remove("show");return}}if(pinned)pinned.classList.remove("pinned");pinned=c;c.classList.add("pinned");const r=c.getBoundingClientRect();show(c,r.right,r.top)}})}});
+cells.forEach(c=>{{c.addEventListener("mouseenter",e=>{{if(!pinned)show(c,e.clientX,e.clientY)}});c.addEventListener("mousemove",e=>{{if(!pinned)place(e.clientX,e.clientY)}});c.addEventListener("mouseleave",()=>{{if(!pinned)tip.classList.remove("show")}});c.addEventListener("focus",()=>{{if(!pinned){{const r=c.getBoundingClientRect();show(c,r.right,r.top)}}}});c.addEventListener("blur",()=>{{if(!pinned)tip.classList.remove("show")}});c.addEventListener("click",e=>{{e.stopPropagation();if(pinned===c){{c.classList.remove("pinned");pinned=null;tip.classList.remove("show");return}}if(pinned)pinned.remove("pinned");pinned=c;c.classList.add("pinned");const r=c.getBoundingClientRect();show(c,r.right,r.top)}})}});
 document.addEventListener("click",()=>{{if(pinned)pinned.classList.remove("pinned");pinned=null;tip.classList.remove("show")}});
 </script></body></html>"""
-
-
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="比较一次投入 CAGR 与年度定投 IRR")
-    parser.add_argument("--start-year", type=int, default=None, help="覆盖标的默认起始年份")
-    parser.add_argument("--end-year", type=int, default=2025)
-    parser.add_argument(
-        "--assets",
-        default="all-a",
-        help="逗号分隔的标的 key 或指数代码；使用 all 生成全部内置标的",
-    )
-    parser.add_argument("--list-assets", action="store_true", help="列出内置投资标的后退出")
-    parser.add_argument("--symbol", default=None, help="自定义中证指数代码（覆盖 --assets）")
-    parser.add_argument("--name", default=None, help="自定义指数显示名称，与 --symbol 配合")
-    parser.add_argument("--output-dir", type=Path, default=Path("output/dca_comparison"))
-    parser.add_argument(
-        "--no-known-adjustments",
-        action="store_true",
-        help="关闭已知的数据质量修正，使用数据源原始点位",
-    )
-    return parser.parse_args()
 
 
 def run_asset(args: argparse.Namespace, asset: AssetDefinition) -> dict[str, str]:
@@ -267,7 +186,7 @@ def run_asset(args: argparse.Namespace, asset: AssetDefinition) -> dict[str, str
         raise RuntimeError("；".join(warnings))
     dca, terminal_values = build_dca_matrices(annual, start_year, args.end_year)
     difference = dca - lump_sum
-    slug = asset.symbol.lower()
+    slug = re.sub(r"[^a-z0-9]", "", asset.symbol.lower()) or asset.key
 
     outputs = {
         "lump": (lump_sum, f"{slug}_lump_sum_annualized_returns.html"),
@@ -315,11 +234,7 @@ def render_asset_index(
 <div class="grid">{''.join(cards)}</div></main></body></html>"""
 
 
-def main() -> int:
-    args = parse_args()
-    if args.list_assets:
-        print(asset_help())
-        return 0
+def run_with_args(args: argparse.Namespace) -> int:
     if args.start_year is not None and args.start_year > args.end_year:
         raise SystemExit("--start-year 不能晚于 --end-year")
     if args.symbol:
@@ -340,7 +255,3 @@ def main() -> int:
     )
     print(f"index: {index_path.resolve()}")
     return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
