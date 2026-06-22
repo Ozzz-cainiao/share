@@ -209,6 +209,20 @@ def run(args) -> int:
     print(f"  Full sample: {output_dir / 'summary_full_sample.csv'}")
     if oos_results:
         print(f"  OOS:         {output_dir / 'summary_oos.csv'}")
+
+    # Generate self-contained HTML report
+    import html as html_mod
+    drift_twr = next((r['ann_return_twr'] for r in results if r.get('strategy_name') == 'drift'), 0)
+    html_rows = ""
+    for r in sorted(results, key=lambda x: x.get('ann_return_twr', -999), reverse=True):
+        twr = r.get('ann_return_twr', 0)
+        excess = twr - drift_twr
+        cls = "positive" if excess > 0 else "negative"
+        html_rows += f"<tr><td>{html_mod.escape(str(r.get('strategy_display', r.get('strategy_name',''))))}</td><td class='num'>{twr*100:+.2f}%</td><td class='num {cls}'>{excess*100:+.2f}%</td><td class='num'>{r.get('sharpe_twr',0):.3f}</td><td class='num'>{r.get('max_drawdown_twr',0)*100:.1f}%</td><td class='num'>{r.get('avg_turnover',0)*100:.1f}%</td></tr>"
+    report_html = f"""<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>再平衡策略对比</title><style>:root{{--ink:#26304a;--muted:#68758b;--line:#dce2ed;--paper:#f5f7fb}}*{{box-sizing:border-box}}body{{margin:0;background:var(--paper);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}}.shell{{max-width:960px;margin:auto;padding:44px 28px 60px}}h1{{font:600 34px Georgia,"Songti SC",serif}}.sub{{color:var(--muted);font-size:15px;margin-bottom:24px}}table{{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(35,45,75,.06)}}th,td{{padding:12px 16px;border-bottom:1px solid var(--line);font-size:14px}}th{{background:#eef2f8;font-weight:600;font-size:13px}}.num{{text-align:right;font-variant-numeric:tabular-nums}}.positive{{color:#1a7a3a;font-weight:600}}.negative{{color:#b53636}}tr:hover{{background:#f8fafd}}.footer{{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}}.note{{margin:16px 0;padding:12px 16px;border-radius:10px;background:#fff8dc;border:1px solid #dfc578;color:#665629;font-size:13px}}.topnav a{{padding:8px 14px;border-radius:9px;background:#405477;color:#fff;text-decoration:none;font-size:14px}}</style></head><body><main class="shell"><h1>再平衡策略对比</h1><p class="sub">沪深300+中证500+中证1000 · 一次性投入 · TWR口径</p><div class="topnav"><a href="../index.html">← 返回首页</a></div><p class="note">超额收益=策略TWR−自然漂移baseline({drift_twr*100:+.2f}%)</p><table><thead><tr><th>策略</th><th>年化TWR</th><th>超额收益</th><th>Sharpe</th><th>最大回撤</th><th>换手率</th></tr></thead><tbody>{html_rows}</tbody></table><div class="footer">中证全收益指数(AkShare) · 历史收益不代表未来 · 公众号:炼金魔女手记</div></main></body></html>"""
+    (output_dir / "rebalance_comparison.html").write_text(report_html, encoding="utf-8")
+    print(f"  HTML report: {output_dir / 'rebalance_comparison.html'}")
+
     return 0
 
 
