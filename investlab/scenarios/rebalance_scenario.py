@@ -176,6 +176,25 @@ def generate_rich_report(results, output_dir, drift_twr):
         "regime_adaptive": ("结构牛市自适应", "regime",
             "根据市场状态自动切换参数：<b>结构牛市</b>（趋势向上 + 指数间收益分化大）→ 偏向动量（λ=0.75），<b>普通上升</b>→ 均衡（λ=0.50），<b>下跌/震荡</b>→ 偏向再平衡（λ=0.25）。结构牛市中动量领先者的卖出容忍度放宽到 15pp。",
             "市场好时让赢家跑，市场差时严格再平衡。全程动态调整。"),
+        "fixed_H0030050_H0090530_H0085220": ("固定比例·大盘倾斜 50/30/20", "fixed_ratio",
+            "初始按<b>50%沪深300 + 30%中证500 + 20%中证1000</b>买入后永不调仓。近似市值加权，大盘主导。",
+            "50% 沪深300 / 30% 中证500 / 20% 中证1000，买入后不调整。"),
+        "fixed_rebal_H0030050_H0090530_H0085220": ("固定比例月度再平衡·大盘倾斜", "fixed_ratio",
+            "每月恢复<b>50/30/20</b>目标比例。大盘倾斜 + 月度纪律。",
+            "每月强制恢复 50/30/20。"),
+        "fixed_H0085220_H0090530_H0030050": ("固定比例·小盘倾斜 20/30/50", "fixed_ratio",
+            "初始按<b>20%沪深300 + 30%中证500 + 50%中证1000</b>买入。大幅超配小盘。",
+            "20% 沪深300 / 30% 中证500 / 50% 中证1000。"),
+        "fixed_rebal_H0085220_H0090530_H0030050": ("固定比例月度再平衡·小盘倾斜", "fixed_ratio",
+            "每月恢复<b>20/30/50</b>目标。超配小盘 + 月度纪律。",
+            "每月强制恢复 20/30/50。"),
+        "fixed_H0030040_H0085240_H0090520": ("固定比例·哑铃 40/20/40", "fixed_ratio",
+            "初始按<b>40%沪深300 + 20%中证500 + 40%中证1000</b>买入。两头重中间轻。",
+            "40% 沪深300 / 20% 中证500 / 40% 中证1000。"),
+        "fixed_rebal_H0030040_H0085240_H0090520": ("固定比例月度再平衡·哑铃", "fixed_ratio",
+            "每月恢复<b>40/20/40</b>目标。哑铃配置 + 月度再平衡。",
+            "每月强制恢复 40/20/40。"),
+
     }
 
     cards = ""
@@ -221,6 +240,7 @@ def run(args) -> int:
     from investlab.rebalance.statistics import parameter_surface
     from investlab.rebalance.strategies import (
         CalendarEqualWeight, DriftStrategy, FixedBlendStrategy,
+        FixedRatioStrategy, FixedRatioRebalanceStrategy,
         InverseVolatility, RegimeAdaptiveStrategy, ThresholdEqualWeight,
     )
 
@@ -240,6 +260,12 @@ def run(args) -> int:
         InverseVolatility(),
         FixedBlendStrategy(lam=0.50, band=0.05),
         RegimeAdaptiveStrategy(),
+        FixedRatioStrategy(target={"H00300": 0.50, "H00905": 0.30, "H00852": 0.20}),
+        FixedRatioRebalanceStrategy(target={"H00300": 0.50, "H00905": 0.30, "H00852": 0.20}),
+        FixedRatioStrategy(target={"H00300": 0.20, "H00905": 0.30, "H00852": 0.50}),
+        FixedRatioRebalanceStrategy(target={"H00300": 0.20, "H00905": 0.30, "H00852": 0.50}),
+        FixedRatioStrategy(target={"H00300": 0.40, "H00905": 0.20, "H00852": 0.40}),
+        FixedRatioRebalanceStrategy(target={"H00300": 0.40, "H00905": 0.20, "H00852": 0.40}),
     ]
 
     results = run_full_sample(df, strategies, initial_capital=getattr(args, 'initial_capital', 1.0),
@@ -275,6 +301,7 @@ def run(args) -> int:
     if oos_results:
         print(f"  OOS:         {output_dir / 'summary_oos.csv'}")
 
+    drift_twr = next((r["ann_return_twr"] for r in results if r.get("strategy_name") == "drift"), 0)
     generate_rich_report(results, output_dir, drift_twr)
 
     return 0

@@ -172,6 +172,72 @@ class InverseVolatility:
         return _inverse_vol_target(ctx, self.lookback)
 
 
+
+
+# ── Fixed-ratio strategies (alternative base weights) ──
+
+@dataclass
+class FixedRatioStrategy:
+    """Buy-and-hold with fixed target weights. Never rebalances after initial buy."""
+    target: dict[str, float] = None
+    name: str = ""
+    display_name: str = ""
+    family: str = "fixed_ratio"
+    _first: bool = True
+
+    def __post_init__(self):
+        if self.target is None:
+            self.target = {}
+        if not self.name:
+            parts = [f"{k}={v:.0%}" for k, v in sorted(self.target.items())]
+            self.name = "fixed_" + "_".join(p.replace("%","") for p in parts).replace("=","")
+        if not self.display_name:
+            parts = [f"{k[-3:]}{v:.0%}" for k, v in sorted(self.target.items())]
+            self.display_name = "固定比例(" + "/".join(parts) + ")"
+        self.meta = StrategyMeta(
+            self.name, self.display_name, "fixed_ratio",
+            "初始按固定比例买入后永不调仓", "monthly",
+            {"target": self.target},
+            ["权重偏离目标后不纠正"]
+        )
+
+    def reset(self): self._first = True
+    def get_target_weights(self, ctx):
+        if self._first:
+            self._first = False
+            return dict(self.target)
+        return ctx.current_weights
+
+
+@dataclass
+class FixedRatioRebalanceStrategy:
+    """Monthly rebalance to fixed target weights."""
+    target: dict[str, float] = None
+    name: str = ""
+    display_name: str = ""
+    family: str = "fixed_ratio"
+    meta: StrategyMeta | None = None
+
+    def __post_init__(self):
+        if self.target is None:
+            self.target = {}
+        if not self.name:
+            self.name = "fixed_rebal_" + "_".join(
+                f"{k}{int(v*100)}" for k, v in sorted(self.target.items())
+            )
+        if not self.display_name:
+            parts = [f"{k[-3:]}{v:.0%}" for k, v in sorted(self.target.items())]
+            self.display_name = "固定比例月度再平衡(" + "/".join(parts) + ")"
+        self.meta = StrategyMeta(
+            self.name, self.display_name, "fixed_ratio",
+            "每月恢复目标比例", "monthly",
+            {"target": self.target, "rebalance": True},
+        )
+
+    def reset(self): pass
+    def get_target_weights(self, ctx):
+        return dict(self.target)
+
 # Backwards compatibility re-exports
 from investlab.strategies import (  # noqa: E402, F401
     EqualWeightCalendarStrategy,
