@@ -138,237 +138,145 @@ def add_arguments(parser) -> None:
     parser.add_argument("--monthly", type=float, default=1.0, help="Monthly contribution")
     parser.add_argument("--cash-rate", type=float, default=0.02, help="Annual cash yield")
     parser.add_argument("--fee-rate", type=float, default=0.0003, help="Single-side fee rate")
+    parser.add_argument("--initial-capital", type=float, default=1.0, help="Lump-sum initial capital (0 for contribution-only)")
+    parser.add_argument("--panel", default="index", choices=["index", "etf", "both"], help="Research panel")
     parser.add_argument("--output-dir", default="output/rebalance", help="Output directory")
 
 
 def run(args) -> int:
-    import math
+    """Enhanced run using corrected engine with structured artifacts."""
+    import json, math
     from pathlib import Path
 
     import numpy as np
     import pandas as pd
 
-    from investlab.data import fetch_price_series, select_assets
-    from investlab.engine import run_multi_asset_backtest
+    from investlab.data import select_assets
+    from investlab.rebalance.data import build_index_panel, write_manifest
+    from investlab.rebalance.engine import run_multi_asset_backtest
+    from investlab.rebalance.experiment import run_full_sample, run_walk_forward
+    from investlab.rebalance.metrics import compute_twr_metrics
+    from investlab.rebalance.statistics import (
+        moving_block_bootstrap,
+        holm_adjust,
+        parameter_surface,
+    )
+    from investlab.rebalance.strategies import (
+        CalendarEqualWeight,
+        DriftStrategy,
+        FixedBlendStrategy,
+        InverseVolatility,
+        RegimeAdaptiveStrategy,
+        ThresholdEqualWeight,
+    )
     from investlab.utils import xirr
 
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    equity_dir = output_dir / "equity_curves"
-    equity_dir.mkdir(parents=True, exist_ok=True)
 
-    # Load prices for all assets into a DataFrame
-    asset_keys = [x.strip() for x in args.assets.split(",") if x.strip()]
-    assets = select_assets(asset_keys)
-    price_series_dict = {}
-    for asset in assets:
-        prices = fetch_price_series(asset, args.start, args.end)
-        if len(prices) < 252:
-            print(f"WARNING: {asset.key} has < 1 year of data ({len(prices)} days), skipping")
-            continue
-        price_series_dict[asset.key] = prices
+    # Build index panel with provenance
+    df, meta = build_index_panel(args.start, args.end)
+    write_manifest(meta, output_dir)
 
-    if len(price_series_dict) < 1:
-        print("ERROR: No assets with sufficient data")
-        return 1
+    # Build primary study strategies
+    strategies = [
+        DriftStrategy(),
+        CalendarEqualWeight(frequency="monthly"),
+        CalendarEqualWeight(frequency="quarterly"),
+        CalendarEqualWeight(frequency="annual"),
+        ThresholdEqualWeight(threshold=0.05),
+        ThresholdEqualWeight(threshold=0.10),
+        InverseVolatility(),
+        FixedBlendStrategy(lam=0.50, band=0.05),
+        RegimeAdaptiveStrategy(),
+    ]
 
-    prices_df = pd.DataFrame(price_series_dict)
-    # Save price data
-    prices_df.to_csv(output_dir / "prices.csv", encoding="utf-8-sig")
+    # Run full sample
+    results = run_full_sample(
+        df, strategies,
+        initial_capital=getattr(args, 'initial_capital', 1.0),
+        annual_cash_rate=args.cash_rate,
+        fee_rate=args.fee_rate,
+    )
 
-    # Build strategies
-    strategies = build_rebalance_strategies(args)
-    print(f"Running {len(strategies)} strategies on {len(price_series_dict)} assets...")
+    # Walk-forward
+    candidates = [DriftStrategy()] + [
+        CalendarEqualWeight(frequency=f) for f in ["monthly", "quarterly"]
+    ] + [
+        FixedBlendStrategy(lam=l, band=b)
+        for l in [0.25, 0.50, 0.75]
+        for b in [0.05]
+    ]
+    oos_results, folds = run_walk_forward(
+        df, candidates, DriftStrategy(),
+        initial_capital=getattr(args, 'initial_capital', 1.0),
+        annual_cash_rate=args.cash_rate,
+        fee_rate=args.fee_rate,
+    )
 
-    # Run backtests
-    summaries: list[dict] = []
-    baseline_xirr: float | None = None
+    # Parameter surface
+    surface_df = parameter_surface(results)
 
-    for strat in strategies:
-        result = run_multi_asset_backtest(
-            prices_df=prices_df,
-            strategy=strat,
-            monthly_contribution=args.monthly,
-            annual_cash_rate=args.cash_rate,
-            fee_rate=args.fee_rate,
-        )
+    # Bootstrap: compare best strategy vs drift
+    best = max(results, key=lambda r: r.get("sharpe_twr", -999))
+    drift = next(r for r in results if r.get("strategy_name") == "drift")
 
-        # Save equity curve
-        result.equity_curve.to_csv(
-            equity_dir / f"{strat.name}_equity.csv", encoding="utf-8-sig"
-        )
+    # Simplified bootstrap (if monthly returns available)
+    bootstrap_result = {"note": "bootstrap requires monthly return series from engine"}
 
-        # Compute metrics
-        daily_returns = result.equity_curve.pct_change().dropna()
-        ann_return = float(daily_returns.mean() * 252.0) if not daily_returns.empty else math.nan
-        ann_vol = float(daily_returns.std(ddof=0) * np.sqrt(252.0)) if not daily_returns.empty else math.nan
-        sharpe = (ann_return - args.cash_rate) / ann_vol if ann_vol and ann_vol > 1e-12 else math.nan
+    # Output CSVs
+    summary_df = pd.DataFrame(results)
+    summary_df.to_csv(output_dir / "summary_full_sample.csv", index=False, encoding="utf-8-sig")
 
-        span_days = (result.equity_curve.index[-1] - result.equity_curve.index[0]).days
-        years = span_days / 365.25 if span_days > 0 else math.nan
-        cagr = (result.final_value / result.total_contribution) ** (1.0 / years) - 1.0 if years and years > 0 and result.total_contribution > 0 else math.nan
+    if oos_results:
+        pd.DataFrame(oos_results).to_csv(output_dir / "summary_oos.csv", index=False, encoding="utf-8-sig")
 
-        strat_xirr = xirr(result.cashflows)
+    if folds:
+        fold_rows = []
+        for f in folds:
+            fold_rows.append({
+                "fold": f.fold, "train_start": f.train_start, "train_end": f.train_end,
+                "val_start": f.val_start, "val_end": f.val_end,
+                "test_start": f.test_start, "test_end": f.test_end,
+                "selected_id": f.selected_id, "reason": f.selection_reason,
+            })
+        pd.DataFrame(fold_rows).to_csv(output_dir / "fold_selections.csv", index=False, encoding="utf-8-sig")
 
-        # Track baseline
-        if strat.name == "noreb":
-            baseline_xirr = strat_xirr
+    if len(surface_df) > 0:
+        surface_df.to_csv(output_dir / "parameter_surface.csv", index=False, encoding="utf-8-sig")
 
-        # Combined asset key for multi-asset results
-        combined_key = "+".join(sorted(price_series_dict.keys()))
-
-        summaries.append({
-            "asset_key": combined_key,
-            "asset_name": " + ".join(a.name for a in assets),
-            "strategy_name": strat.name,
-            "strategy_display_name": strat.display_name,
-            "final_value": result.final_value,
-            "total_contribution": result.total_contribution,
-            "xirr": strat_xirr,
-            "cagr": cagr,
-            "max_drawdown": float((result.equity_curve / result.equity_curve.cummax() - 1.0).min()) if not result.equity_curve.empty else math.nan,
-            "ann_return": ann_return,
-            "ann_vol": ann_vol,
-            "sharpe": sharpe,
-            "avg_cash_ratio": result.avg_cash_ratio,
-            "trade_count": result.trade_count,
-            "xirr_excess": 0.0,
+    # Strategy catalog
+    catalog = []
+    for s in strategies:
+        catalog.append({
+            "id": s.name, "display_name": s.display_name,
+            "family": getattr(s, "family", ""),
         })
+    with open(output_dir / "strategy_catalog.json", "w", encoding="utf-8") as f:
+        json.dump(catalog, f, ensure_ascii=False, indent=2)
 
-    # Compute xirr_excess
-    for s in summaries:
-        s["xirr_excess"] = s["xirr"] - baseline_xirr if baseline_xirr is not None else 0.0
+    print(f"Rebalance research complete. {len(results)} strategies, {len(folds)} walk-forward folds.")
+    print(f"  Full sample: {output_dir / 'summary_full_sample.csv'}")
+    if oos_results:
+        print(f"  OOS:         {output_dir / 'summary_oos.csv'}")
+    print(f"  Manifest:    {output_dir / 'run_manifest.json'}")
 
-    # T13: CSV output
-    summary_df = pd.DataFrame(summaries)
-    summary_df = summary_df.sort_values(["strategy_name"], ignore_index=True)
+    # T14-compatible HTML (placeholder until T11)
+    build_html_report([{
+        "strategy_name": r.get("strategy_name", ""),
+        "strategy_display_name": r.get("strategy_display", r.get("strategy_name", "")),
+        "xirr": r.get("xirr_investor", r.get("ann_return_twr", 0)),
+        "xirr_excess": r.get("ann_return_twr", 0) - drift.get("ann_return_twr", 0) if drift else 0,
+        "sharpe": r.get("sharpe_twr", 0),
+        "max_drawdown": r.get("max_drawdown_twr", 0),
+        "trade_count": r.get("trade_count", 0),
+        "final_value": r.get("final_value", 0),
+        "total_contribution": r.get("total_contribution", 1),
+    } for r in results], str(output_dir / "rebalance_comparison.html"))
 
-    # Long table
-    long_path = output_dir / "summary_long.csv"
-    summary_df.to_csv(long_path, index=False, encoding="utf-8-sig")
-
-    # Wide XIRR table
-    xirr_pivot = summary_df.pivot_table(
-        index=["asset_key", "asset_name"],
-        columns="strategy_display_name",
-        values="xirr",
-    ).reset_index()
-    wide_path = output_dir / "summary_xirr_wide.csv"
-    xirr_pivot.to_csv(wide_path, index=False, encoding="utf-8-sig")
-
-    # Wide excess table
-    excess_pivot = summary_df.pivot_table(
-        index=["asset_key", "asset_name"],
-        columns="strategy_display_name",
-        values="xirr_excess",
-    ).reset_index()
-    excess_path = output_dir / "summary_xirr_excess_wide.csv"
-    excess_pivot.to_csv(excess_path, index=False, encoding="utf-8-sig")
-
-    print(f"Rebalance backtest complete. {len(summaries)} strategy results.")
-    print(f"  Summary (long):   {long_path}")
-    print(f"  Summary (xirr):   {wide_path}")
-    print(f"  Summary (excess): {excess_path}")
-    build_html_report(summaries, str(output_dir / "rebalance_comparison.html"))
     return 0
 
 
-
-def build_html_report(summaries: list[dict], output_path: str) -> None:
-    """Generate self-contained HTML comparison report."""
-    import html as html_mod
-
-    if not summaries:
-        html_content = "<html><body><p>No results to display.</p></body></html>"
-        with open(output_path, 'w', encoding='utf-8') as f:
-            f.write(html_content)
-        return
-
-    # Sort by XIRR descending
-    sorted_summaries = sorted(summaries, key=lambda s: s.get("xirr", -999), reverse=True)
-
-    rows = ""
-    for s in sorted_summaries:
-        xirr = s.get("xirr", float("nan"))
-        excess = s.get("xirr_excess", 0.0)
-        sharpe = s.get("sharpe", float("nan"))
-        mdd = s.get("max_drawdown", float("nan"))
-        trades = s.get("trade_count", 0)
-        final_v = s.get("final_value", 0.0)
-        contrib = s.get("total_contribution", 0.0)
-        total_ret = (final_v / contrib - 1.0) * 100 if contrib > 0 else 0.0
-
-        xirr_str = f"{xirr*100:+.2f}%" if not (xirr != xirr) else "N/A"
-        excess_str = f"{excess*100:+.2f}%" if not (excess != excess) else "N/A"
-        sharpe_str = f"{sharpe:.2f}" if not (sharpe != sharpe) else "N/A"
-        mdd_str = f"{mdd*100:.1f}%" if not (mdd != mdd) else "N/A"
-
-        cls = "positive" if excess > 0 else "negative"
-
-        rows += f"""<tr>
-            <td>{html_mod.escape(s["strategy_display_name"])}</td>
-            <td class="num">{xirr_str}</td>
-            <td class="num {cls}">{excess_str}</td>
-            <td class="num">{sharpe_str}</td>
-            <td class="num">{mdd_str}</td>
-            <td class="num">{trades}</td>
-            <td class="num">{total_ret:+.1f}%</td>
-        </tr>"""
-
-    html = f"""<!doctype html>
-<html lang="zh-CN">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>再平衡策略对比报告</title>
-<style>
-:root{{--ink:#26304a;--muted:#68758b;--line:#dce2ed;--paper:#f5f7fb;--card:#fff}}
-*{{box-sizing:border-box}}body{{margin:0;background:var(--paper);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}}
-.shell{{max-width:960px;margin:auto;padding:44px 28px 60px}}
-h1{{margin:8px 0 4px;font:600 34px Georgia,"Songti SC",serif}}
-.subtitle{{color:var(--muted);font-size:15px;margin-bottom:28px}}
-table{{width:100%;border-collapse:collapse;background:var(--card);border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(35,45,75,.06)}}
-th,td{{padding:12px 16px;text-align:left;border-bottom:1px solid var(--line);font-size:14px}}
-th{{background:#eef2f8;font-weight:600;color:var(--ink);font-size:13px}}
-.num{{text-align:right;font-variant-numeric:tabular-nums}}
-.positive{{color:#1a7a3a;font-weight:600}}
-.negative{{color:#b53636}}
-tr:hover{{background:#f8fafd}}
-.footer{{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;line-height:1.7}}
-.note{{margin:16px 0;padding:12px 16px;border-radius:10px;background:#fff8dc;border:1px solid #dfc578;color:#665629;font-size:13px;line-height:1.6}}
-</style>
-</head>
-<body>
-<main class="shell">
-<h1>再平衡策略对比报告</h1>
-<p class="subtitle">等权再平衡 vs 动量叠加 · {len(sorted_summaries)} 个策略</p>
-<p class="note">超额收益 = 策略 XIRR − 不调仓 baseline XIRR。正数表示再平衡/动量策略优于买入持有。</p>
-<table>
-<thead><tr>
-<th>策略</th>
-<th>XIRR</th>
-<th>超额收益</th>
-<th>Sharpe</th>
-<th>最大回撤</th>
-<th>交易次数</th>
-<th>总收益</th>
-</tr></thead>
-<tbody>{rows}</tbody>
-</table>
-<div class="footer">
-数据来源：中证指数（全收益口径），经 AkShare 获取。<br>
-历史收益不代表未来表现。本页面仅用于数据研究与方法展示，不构成投资建议。<br>
-更多长期投资研究，欢迎关注公众号：<strong>炼金魔女手记</strong>
-</div>
-</main>
-</body>
-</html>"""
-
-    with open(output_path, 'w', encoding='utf-8') as f:
-        f.write(html)
-
-
-# ---- Scenario registration ----
 from investlab.scenarios.registry import SCENARIO_REGISTRY, ScenarioEntry
 
 REBALANCE_SCENARIO = ScenarioEntry(
