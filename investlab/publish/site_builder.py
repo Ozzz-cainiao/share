@@ -91,20 +91,26 @@ def asset_landing(
 def home(
     selected: list[AssetDefinition], start_year_override: int | None, end_year: int
 ) -> str:
-    cards = []
-    for asset in selected:
-        cards.append(
-            f'<article class="card"><div class="category">{html.escape(asset.category)}</div>'
-            f'<h2>{html.escape(asset.name)}</h2><div class="code">{asset.symbol}</div>'
-            f'<div class="meta">{effective_start_year(asset, start_year_override)}–{end_year} 年</div>'
-            f'<div class="links"><a href="assets/{asset.key}/index.html">进入该标的</a>'
-            f'<a href="assets/{asset.key}/difference.html">直接看差值</a></div></article>'
-        )
-    body = f"""<main class="shell"><div class="eyebrow">Index Return Lab</div><h1>中美指数长期收益实验室</h1>
-<p class="lead">比较中美宽基资产在不同起始年份和持有期限下的一次投入 CAGR、年度定投 IRR，以及二者的差值。各标的从可用历史起点统计至 {end_year} 年。</p>
-<nav class="topnav"><a href="methodology.html">方法与数据说明</a><a href="assets/index.html">标的目录</a><a href="rebalance/index.html">再平衡研究</a></nav>
-<h2 class="section-title">投资标的</h2><div class="grid">{''.join(cards)}</div>
-<div class="footer">中国资产使用中证全收益指数，经 AkShare 获取；美股标普500使用 Total Real Returns 的 SPY 分红再投资年度总收益，纳指100使用 FRED 的纳斯达克100全收益指数（XNDX，含股息再投资）。沪深300包含2005年分红估算修正。<br>参考资料：<a href="https://youzhiyouxing.cn/sbbi2025/annual-rolling-returns/" target="_blank" rel="noopener">有知有行《中国大类资产投资2025年报》滚动年化收益</a><br>更多长期投资研究，欢迎关注公众号：炼金魔女手记<br>历史收益不代表未来表现，不构成投资建议。</div></main>"""
+    asset_count = len(selected)
+    body = f"""<main class="shell"><div class="eyebrow">Index Return Lab</div>
+<h1>中美指数长期收益实验室</h1>
+<p class="lead">探索两个核心研究主题：指数间再平衡是否有效，以及不同买入时点和持有期限下的长期收益表现。</p>
+<nav class="topnav"><a href="methodology.html">方法与数据说明</a></nav>
+<div class="grid">
+<article class="card feature">
+  <div class="category">核心研究</div>
+  <h2>📊 再平衡研究</h2>
+  <p>沪深300、中证500、中证1000 之间需要再平衡吗？15 种策略对比，含动量叠加与结构牛市自适应。TWR 口径，2012-2025 年数据。</p>
+  <div class="links"><a href="rebalance/index.html">进入研究 →</a></div>
+</article>
+<article class="card feature">
+  <div class="category">基础数据</div>
+  <h2>📈 滚动收益矩阵</h2>
+  <p>共 {asset_count} 个标的，从各指数可用历史起点统计至 {end_year} 年。含一次投入 CAGR、年度定投 IRR 及二者差值的热力矩阵。</p>
+  <div class="links"><a href="assets/index.html">浏览全部标的 →</a></div>
+</article>
+</div>
+<div class="footer">中国资产使用中证全收益指数，经 AkShare 获取；美股使用 ETF 分红再投资总收益。<br>参考资料：<a href="https://youzhiyouxing.cn/sbbi2025/annual-rolling-returns/">有知有行《中国大类资产投资2025年报》</a><br>更多长期投资研究，欢迎关注公众号：<strong>炼金魔女手记</strong><br>历史收益不代表未来表现，不构成投资建议。</div></main>"""
     return page("中美指数长期收益实验室", body)
 
 
