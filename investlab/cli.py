@@ -51,6 +51,10 @@ def build_parser() -> argparse.ArgumentParser:
     site_parser.add_argument(
         "--site-dir", type=Path, default=Path("dist/site"), help="Site output directory"
     )
+    site_parser.add_argument(
+        "--rebalance-html", type=str, default=None,
+        help="Path to rebalance comparison HTML (e.g. tmp/rebalance/rebalance_comparison.html)"
+    )
 
     return parser
 
