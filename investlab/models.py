@@ -66,3 +66,44 @@ class StrategySummary:
     avg_invest_ratio: float
     trade_count: int
     xirr_excess: float = 0.0
+
+
+
+@dataclass(frozen=True)
+class MultiAssetContext:
+    """Context passed to multi-asset strategies on each evaluation day."""
+    date: pd.Timestamp
+    prices: dict[str, float]
+    current_weights: dict[str, float]
+    current_values: dict[str, float]
+    cash: float
+    total_value: float
+    price_history: pd.DataFrame
+    is_month_start: bool
+
+
+class MultiAssetStrategyProtocol(Protocol):
+    """Interface for multi-asset rebalancing strategies."""
+    name: str
+    display_name: str
+
+    def reset(self) -> None:
+        ...
+
+    def get_target_weights(self, ctx: MultiAssetContext) -> dict[str, float]:
+        """Return target weights {asset_key: weight}. Should sum to <= 1.0."""
+        ...
+
+
+@dataclass
+class MultiAssetBacktestResult:
+    strategy_name: str
+    display_name: str
+    equity_curve: pd.Series
+    final_value: float
+    total_contribution: float
+    trade_count: int
+    avg_cash_ratio: float
+    cashflows: list[tuple[pd.Timestamp, float]]
+    rebalance_dates: list[pd.Timestamp]
+    asset_equity_curves: dict[str, pd.Series]

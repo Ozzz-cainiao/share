@@ -51,7 +51,16 @@ REGISTRY: Final[tuple[AssetRegistryEntry, ...]] = (
         compute_source="csindex_tri",
         compute_symbol="H00905",
     ),
-    AssetRegistryEntry("small-cap", "H00852", "中证1000全收益", "中国小盘股"),
+    AssetRegistryEntry(
+    "small-cap",
+    "H00852",
+    "中证1000全收益",
+    "中国小盘股",
+    compute_key="H00852",
+    compute_name="中证1000全收益",
+    compute_source="csindex_tri",
+    compute_symbol="H00852",
+),
     AssetRegistryEntry(
         "sp500",
         "SPY",
