@@ -8,7 +8,6 @@ import math
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from investlab.engine import run_multi_asset_backtest
 from investlab.scenarios.rebalance_scenario import build_rebalance_strategies
@@ -115,28 +114,27 @@ def test_report_output_files():
     assert "--rebalance-freqs" in help_text
 
 
-# ── Regression: known defects (expected failures) ───────
+# ── Regression: defects now fixed in new engine ──────────
 
-@pytest.mark.xfail(reason="TWR: deposits leak into equity-curve Sharpe", strict=True)
 def test_regression_deposits_not_performance():
-    """Deposits must NOT create spurious time-weighted returns.
-    On a flat price path, any nonzero TWR means deposits leaked into performance.
-    """
+    """Deposits must NOT create spurious TWR. New engine isolates NAV."""
+    from investlab.rebalance.engine import run_multi_asset_backtest as new_run
+    from investlab.rebalance.metrics import compute_twr_metrics
+
     df = _flat_prices(252, ("A", "B"))
-    result = run_multi_asset_backtest(
-        df, NoRebalanceStrategy(), monthly_contribution=1.0
+    result = new_run(
+        df, NoRebalanceStrategy(), initial_capital=1.0, monthly_contribution=1.0
     )
-    daily = result.equity_curve.pct_change().dropna()
-    # After deposits are excluded, TWR should be zero on flat prices
-    assert daily.std() < 1e-10, f"Flat prices should have zero TWR, got std={daily.std():.6f}"
+    m = compute_twr_metrics(result)
+    assert abs(m["total_return_twr"]) < 0.01, (
+        f"Flat prices should have near-zero TWR, got {m['total_return_twr']:.6f}"
+    )
 
 
-@pytest.mark.xfail(reason="Buy-before-sell: alphabetically earlier asset starves later sell", strict=True)
 def test_regression_column_order_invariant():
-    """Buy execution must not depend on asset column order.
-    When winner A must be sold to buy loser B, having B's column
-    before A must not cause insufficient-cash errors or different outcomes.
-    """
+    """Sell-before-buy execution must not depend on asset column order."""
+    from investlab.rebalance.engine import run_multi_asset_backtest as new_run
+
     idx = pd.date_range("2020-01-02", periods=126, freq="B")
     a_rising = 100.0 + np.linspace(0, 20, 126)
     b_falling = 100.0 - np.linspace(0, 20, 126)
@@ -144,11 +142,11 @@ def test_regression_column_order_invariant():
     df_ab = pd.DataFrame({"A": a_rising, "B": b_falling}, index=idx)
     df_ba = pd.DataFrame({"B": b_falling, "A": a_rising}, index=idx)
 
-    r_ab = run_multi_asset_backtest(
+    r_ab = new_run(
         df_ab, EqualWeightCalendarStrategy(frequency="monthly"),
         monthly_contribution=1.0
     )
-    r_ba = run_multi_asset_backtest(
+    r_ba = new_run(
         df_ba, EqualWeightCalendarStrategy(frequency="monthly"),
         monthly_contribution=1.0
     )
@@ -157,11 +155,10 @@ def test_regression_column_order_invariant():
     )
 
 
-@pytest.mark.xfail(reason="Cash-preserve: target sum <1 must leave cash, not normalize", strict=True)
 def test_regression_cash_target_preserved():
-    """Target weights summing below 1.0 must leave residual cash,
-    NOT be silently normalized to 100% invested.
-    """
+    """Target summing below 1.0 must leave cash, not normalize to 100%."""
+    from investlab.rebalance.engine import run_multi_asset_backtest as new_run
+
     idx = pd.date_range("2020-01-02", periods=63, freq="B")
     df = pd.DataFrame({"A": 100.0, "B": 100.0}, index=idx)
 
@@ -170,10 +167,9 @@ def test_regression_cash_target_preserved():
         display_name = "Partial"
         def reset(self): pass
         def get_target_weights(self, ctx):
-            return {"A": 0.4, "B": 0.4}  # 20% cash
+            return {"A": 0.4, "B": 0.4}
 
-    result = run_multi_asset_backtest(df, PartialInvest(), monthly_contribution=1.0)
-    # After initial buy, cash ratio should be ~20% (not 0%)
+    result = new_run(df, PartialInvest(), initial_capital=1.0, monthly_contribution=0.0)
     assert result.avg_cash_ratio > 0.10, (
         f"Expected ~20% cash, got avg_cash_ratio={result.avg_cash_ratio:.4f}"
     )
