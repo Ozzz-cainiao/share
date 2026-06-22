@@ -269,7 +269,103 @@ def run(args) -> int:
     print(f"  Summary (long):   {long_path}")
     print(f"  Summary (xirr):   {wide_path}")
     print(f"  Summary (excess): {excess_path}")
+    build_html_report(summaries, str(output_dir / "rebalance_comparison.html"))
     return 0
+
+
+
+def build_html_report(summaries: list[dict], output_path: str) -> None:
+    """Generate self-contained HTML comparison report."""
+    import html as html_mod
+
+    if not summaries:
+        html_content = "<html><body><p>No results to display.</p></body></html>"
+        with open(output_path, 'w', encoding='utf-8') as f:
+            f.write(html_content)
+        return
+
+    # Sort by XIRR descending
+    sorted_summaries = sorted(summaries, key=lambda s: s.get("xirr", -999), reverse=True)
+
+    rows = ""
+    for s in sorted_summaries:
+        xirr = s.get("xirr", float("nan"))
+        excess = s.get("xirr_excess", 0.0)
+        sharpe = s.get("sharpe", float("nan"))
+        mdd = s.get("max_drawdown", float("nan"))
+        trades = s.get("trade_count", 0)
+        final_v = s.get("final_value", 0.0)
+        contrib = s.get("total_contribution", 0.0)
+        total_ret = (final_v / contrib - 1.0) * 100 if contrib > 0 else 0.0
+
+        xirr_str = f"{xirr*100:+.2f}%" if not (xirr != xirr) else "N/A"
+        excess_str = f"{excess*100:+.2f}%" if not (excess != excess) else "N/A"
+        sharpe_str = f"{sharpe:.2f}" if not (sharpe != sharpe) else "N/A"
+        mdd_str = f"{mdd*100:.1f}%" if not (mdd != mdd) else "N/A"
+
+        cls = "positive" if excess > 0 else "negative"
+
+        rows += f"""<tr>
+            <td>{html_mod.escape(s["strategy_display_name"])}</td>
+            <td class="num">{xirr_str}</td>
+            <td class="num {cls}">{excess_str}</td>
+            <td class="num">{sharpe_str}</td>
+            <td class="num">{mdd_str}</td>
+            <td class="num">{trades}</td>
+            <td class="num">{total_ret:+.1f}%</td>
+        </tr>"""
+
+    html = f"""<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>再平衡策略对比报告</title>
+<style>
+:root{{--ink:#26304a;--muted:#68758b;--line:#dce2ed;--paper:#f5f7fb;--card:#fff}}
+*{{box-sizing:border-box}}body{{margin:0;background:var(--paper);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}}
+.shell{{max-width:960px;margin:auto;padding:44px 28px 60px}}
+h1{{margin:8px 0 4px;font:600 34px Georgia,"Songti SC",serif}}
+.subtitle{{color:var(--muted);font-size:15px;margin-bottom:28px}}
+table{{width:100%;border-collapse:collapse;background:var(--card);border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(35,45,75,.06)}}
+th,td{{padding:12px 16px;text-align:left;border-bottom:1px solid var(--line);font-size:14px}}
+th{{background:#eef2f8;font-weight:600;color:var(--ink);font-size:13px}}
+.num{{text-align:right;font-variant-numeric:tabular-nums}}
+.positive{{color:#1a7a3a;font-weight:600}}
+.negative{{color:#b53636}}
+tr:hover{{background:#f8fafd}}
+.footer{{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;line-height:1.7}}
+.note{{margin:16px 0;padding:12px 16px;border-radius:10px;background:#fff8dc;border:1px solid #dfc578;color:#665629;font-size:13px;line-height:1.6}}
+</style>
+</head>
+<body>
+<main class="shell">
+<h1>再平衡策略对比报告</h1>
+<p class="subtitle">等权再平衡 vs 动量叠加 · {len(sorted_summaries)} 个策略</p>
+<p class="note">超额收益 = 策略 XIRR − 不调仓 baseline XIRR。正数表示再平衡/动量策略优于买入持有。</p>
+<table>
+<thead><tr>
+<th>策略</th>
+<th>XIRR</th>
+<th>超额收益</th>
+<th>Sharpe</th>
+<th>最大回撤</th>
+<th>交易次数</th>
+<th>总收益</th>
+</tr></thead>
+<tbody>{rows}</tbody>
+</table>
+<div class="footer">
+数据来源：中证指数（全收益口径），经 AkShare 获取。<br>
+历史收益不代表未来表现。本页面仅用于数据研究与方法展示，不构成投资建议。<br>
+更多长期投资研究，欢迎关注公众号：<strong>炼金魔女手记</strong>
+</div>
+</main>
+</body>
+</html>"""
+
+    with open(output_path, 'w', encoding='utf-8') as f:
+        f.write(html)
 
 
 # ---- Scenario registration ----
