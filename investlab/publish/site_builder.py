@@ -196,7 +196,7 @@ def build_site(args: argparse.Namespace) -> int:
         home(selected, args.start_year, args.end_year), encoding="utf-8"
     )
     (site_dir / "methodology.html").write_text(methodology(), encoding="utf-8")
-    build_rebalance_section(site_dir, "output/qa_rebalance/rebalance_comparison.html")
+    build_rebalance_section(site_dir, getattr(args, "rebalance_html", None) or "output/rebalance_full/rebalance_comparison.html")
     directory_links = "".join(
         f'<li><a href="{asset.key}/index.html">{html.escape(asset.category)} · '
         f'{html.escape(asset.name)}（{asset.symbol}，'

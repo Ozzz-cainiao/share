@@ -35,6 +35,9 @@ jobs:
       - name: Build dca-comparison scenario outputs
         run: |
           uv run python -m investlab.cli run dca-comparison --assets all --end-year 2025 --output-dir tmp/dca
+      - name: Build rebalance scenario outputs
+        run: |
+          uv run python -m investlab.cli run rebalance --start 2015-01-01 --end 2025-12-31 --assets H00300,H00905,H00852 --rebalance-freqs monthly,quarterly --momentum-lookbacks 6,12 --momentum-modes filter,weight --output-dir tmp/rebalance
       - name: Build static site
         run: |
           uv run python -m investlab.cli publish site --assets all --end-year 2025 --input-root tmp --site-dir dist/site
