@@ -26,3 +26,5 @@ __all__ = [
     "periodic_irr",
     "year_end_closes",
 ]
+
+from investlab.scenarios import rebalance_scenario  # noqa: F401

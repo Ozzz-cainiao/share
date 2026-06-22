@@ -98,3 +98,187 @@ def build_rebalance_strategies(args) -> list[MultiAssetStrategyProtocol]:
                 strategies.append(MomentumWeightStrategy(momentum_lookback=lb, top_n=tn))
 
     return strategies
+
+
+# ---- Scenario entry point ----
+
+def add_arguments(parser) -> None:
+    parser.add_argument("--start", default="2015-01-01", help="Start date YYYY-MM-DD")
+    parser.add_argument("--end", default="2025-12-31", help="End date YYYY-MM-DD")
+    parser.add_argument(
+        "--assets",
+        default="H00300,H00905,H00852",
+        help="Comma-separated asset keys",
+    )
+    parser.add_argument(
+        "--rebalance-freqs",
+        default="monthly,quarterly,annual",
+        help="Comma-separated: monthly,quarterly,annual",
+    )
+    parser.add_argument(
+        "--thresholds",
+        default="0.05,0.10",
+        help="Comma-separated deviation thresholds (e.g. 0.05,0.10)",
+    )
+    parser.add_argument(
+        "--momentum-lookbacks",
+        default="3,6,12",
+        help="Comma-separated lookback months",
+    )
+    parser.add_argument(
+        "--momentum-modes",
+        default="filter,weight",
+        help="Comma-separated: filter,weight",
+    )
+    parser.add_argument(
+        "--momentum-top-n",
+        default="2",
+        help="Comma-separated top-N values for MomentumWeightStrategy",
+    )
+    parser.add_argument("--monthly", type=float, default=1.0, help="Monthly contribution")
+    parser.add_argument("--cash-rate", type=float, default=0.02, help="Annual cash yield")
+    parser.add_argument("--fee-rate", type=float, default=0.0003, help="Single-side fee rate")
+    parser.add_argument("--output-dir", default="output/rebalance", help="Output directory")
+
+
+def run(args) -> int:
+    import math
+    from pathlib import Path
+
+    import numpy as np
+    import pandas as pd
+
+    from investlab.data import fetch_price_series, select_assets
+    from investlab.engine import run_multi_asset_backtest
+    from investlab.utils import xirr
+
+    output_dir = Path(args.output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    equity_dir = output_dir / "equity_curves"
+    equity_dir.mkdir(parents=True, exist_ok=True)
+
+    # Load prices for all assets into a DataFrame
+    asset_keys = [x.strip() for x in args.assets.split(",") if x.strip()]
+    assets = select_assets(asset_keys)
+    price_series_dict = {}
+    for asset in assets:
+        prices = fetch_price_series(asset, args.start, args.end)
+        if len(prices) < 252:
+            print(f"WARNING: {asset.key} has < 1 year of data ({len(prices)} days), skipping")
+            continue
+        price_series_dict[asset.key] = prices
+
+    if len(price_series_dict) < 1:
+        print("ERROR: No assets with sufficient data")
+        return 1
+
+    prices_df = pd.DataFrame(price_series_dict)
+    # Save price data
+    prices_df.to_csv(output_dir / "prices.csv", encoding="utf-8-sig")
+
+    # Build strategies
+    strategies = build_rebalance_strategies(args)
+    print(f"Running {len(strategies)} strategies on {len(price_series_dict)} assets...")
+
+    # Run backtests
+    summaries: list[dict] = []
+    baseline_xirr: float | None = None
+
+    for strat in strategies:
+        result = run_multi_asset_backtest(
+            prices_df=prices_df,
+            strategy=strat,
+            monthly_contribution=args.monthly,
+            annual_cash_rate=args.cash_rate,
+            fee_rate=args.fee_rate,
+        )
+
+        # Save equity curve
+        result.equity_curve.to_csv(
+            equity_dir / f"{strat.name}_equity.csv", encoding="utf-8-sig"
+        )
+
+        # Compute metrics
+        daily_returns = result.equity_curve.pct_change().dropna()
+        ann_return = float(daily_returns.mean() * 252.0) if not daily_returns.empty else math.nan
+        ann_vol = float(daily_returns.std(ddof=0) * np.sqrt(252.0)) if not daily_returns.empty else math.nan
+        sharpe = (ann_return - args.cash_rate) / ann_vol if ann_vol and ann_vol > 1e-12 else math.nan
+
+        span_days = (result.equity_curve.index[-1] - result.equity_curve.index[0]).days
+        years = span_days / 365.25 if span_days > 0 else math.nan
+        cagr = (result.final_value / result.total_contribution) ** (1.0 / years) - 1.0 if years and years > 0 and result.total_contribution > 0 else math.nan
+
+        strat_xirr = xirr(result.cashflows)
+
+        # Track baseline
+        if strat.name == "noreb":
+            baseline_xirr = strat_xirr
+
+        # Combined asset key for multi-asset results
+        combined_key = "+".join(sorted(price_series_dict.keys()))
+
+        summaries.append({
+            "asset_key": combined_key,
+            "asset_name": " + ".join(a.name for a in assets),
+            "strategy_name": strat.name,
+            "strategy_display_name": strat.display_name,
+            "final_value": result.final_value,
+            "total_contribution": result.total_contribution,
+            "xirr": strat_xirr,
+            "cagr": cagr,
+            "max_drawdown": float((result.equity_curve / result.equity_curve.cummax() - 1.0).min()) if not result.equity_curve.empty else math.nan,
+            "ann_return": ann_return,
+            "ann_vol": ann_vol,
+            "sharpe": sharpe,
+            "avg_cash_ratio": result.avg_cash_ratio,
+            "trade_count": result.trade_count,
+            "xirr_excess": 0.0,
+        })
+
+    # Compute xirr_excess
+    for s in summaries:
+        s["xirr_excess"] = s["xirr"] - baseline_xirr if baseline_xirr is not None else 0.0
+
+    # T13: CSV output
+    summary_df = pd.DataFrame(summaries)
+    summary_df = summary_df.sort_values(["strategy_name"], ignore_index=True)
+
+    # Long table
+    long_path = output_dir / "summary_long.csv"
+    summary_df.to_csv(long_path, index=False, encoding="utf-8-sig")
+
+    # Wide XIRR table
+    xirr_pivot = summary_df.pivot_table(
+        index=["asset_key", "asset_name"],
+        columns="strategy_display_name",
+        values="xirr",
+    ).reset_index()
+    wide_path = output_dir / "summary_xirr_wide.csv"
+    xirr_pivot.to_csv(wide_path, index=False, encoding="utf-8-sig")
+
+    # Wide excess table
+    excess_pivot = summary_df.pivot_table(
+        index=["asset_key", "asset_name"],
+        columns="strategy_display_name",
+        values="xirr_excess",
+    ).reset_index()
+    excess_path = output_dir / "summary_xirr_excess_wide.csv"
+    excess_pivot.to_csv(excess_path, index=False, encoding="utf-8-sig")
+
+    print(f"Rebalance backtest complete. {len(summaries)} strategy results.")
+    print(f"  Summary (long):   {long_path}")
+    print(f"  Summary (xirr):   {wide_path}")
+    print(f"  Summary (excess): {excess_path}")
+    return 0
+
+
+# ---- Scenario registration ----
+from investlab.scenarios.registry import SCENARIO_REGISTRY, ScenarioEntry
+
+REBALANCE_SCENARIO = ScenarioEntry(
+    name="rebalance",
+    description="Multi-asset rebalancing backtest (equal-weight, momentum filter, momentum weight)",
+    add_arguments=add_arguments,
+    run=run,
+)
+SCENARIO_REGISTRY.register(REBALANCE_SCENARIO)
