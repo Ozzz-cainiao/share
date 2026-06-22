@@ -46,7 +46,14 @@ def _inverse_vol_target(ctx, lookback: int = 63) -> dict[str, float]:
     for k in raw:
         bounded[k] = max(0.10, min(0.65, raw[k]))
     b_sum = sum(bounded.values())
-    return {k: v / b_sum for k, v in bounded.items()} if b_sum > 0 else _equal_target(ctx)
+    if b_sum > 0:
+        normalized = {k: v / b_sum for k, v in bounded.items()}
+        # Ensure float precision doesn't exceed 1.0
+        s = sum(normalized.values())
+        if s > 1.0001:
+            normalized = {k: v / s for k, v in normalized.items()}
+        return normalized
+    return _equal_target(ctx)
 
 
 # ── Strategies ────────────────────────────────────────
@@ -191,7 +198,12 @@ def _blend_targets(
         blended[k] = (1.0 - lam) * b + lam * m
     total = sum(blended.values())
     if total > 1e-12:
-        return {k: v / total for k, v in blended.items()}
+        # Normalize and ensure float precision
+        result = {k: v / total for k, v in blended.items()}
+        s = sum(result.values())
+        if abs(s - 1.0) > 1e-10:
+            result = {k: v / s for k, v in result.items()}
+        return result
     n = len(assets)
     return {k: 1.0 / n for k in assets}
 
@@ -212,7 +224,11 @@ def _apply_bands(
             has_move = True
         else:
             result[k] = c
-    return result if has_move else current
+    if has_move:
+        total = sum(result.values())
+        if total > 1e-12:
+            return {k: v / total for k, v in result.items()}
+    return current
 
 
 @dataclass

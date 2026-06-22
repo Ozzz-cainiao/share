@@ -34,7 +34,16 @@ class PanelMetadata:
     extra: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict:
-        return {k: v for k, v in self.__dict__.items() if v is not None}
+        result = {}
+        for k, v in self.__dict__.items():
+            if v is not None:
+                if hasattr(v, 'item'):
+                    result[k] = v.item()
+                elif isinstance(v, dict):
+                    result[k] = {kk: vv.item() if hasattr(vv, 'item') else vv for kk, vv in v.items()}
+                else:
+                    result[k] = v
+        return result
 
 
 def build_index_panel(start: str, end: str) -> tuple[pd.DataFrame, PanelMetadata]:

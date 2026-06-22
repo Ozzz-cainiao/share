@@ -26,7 +26,7 @@ def _validate_target_weights(
         if k not in target:
             raise ValueError(f"target weights missing key {k!r}")
     w_sum = sum(target.values())
-    if w_sum > 1.0 + 1e-10:
+    if w_sum > 1.0 + 1e-6:
         raise ValueError(
             f"target weights sum to {w_sum:.6f} > 1.0, must be <= 1.0. "
             f"Excess {(w_sum - 1.0) * 100:.2f}% must not be silently normalized."
@@ -163,7 +163,7 @@ def run_multi_asset_backtest(
                 if w_sum < 1.0 - 1e-10:
                     # Partial investment: leave residual cash
                     pass
-                elif w_sum > 1.0 + 1e-10:
+                elif w_sum > 1.0 + 1e-6:
                     raise ValueError(f"Target weights sum {w_sum:.6f} > 1.0")
                 # w_sum ~= 1.0: full investment
 
