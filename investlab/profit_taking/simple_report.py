@@ -23,8 +23,8 @@ def render_simple_report(
         "."
     )
     target_text = f"{result.config.target_return * 100:g}"
-    chart = _render_chart(result)
-    ledger = _render_ledger(result)
+    chart = render_simple_chart(result)
+    ledger = render_simple_ledger(result)
     return f"""<!doctype html>
 <html lang="zh-CN">
 <head>
@@ -151,7 +151,7 @@ def _metric(label: str, value: str, note: str) -> str:
     )
 
 
-def _render_chart(result: SimpleBacktestResult) -> str:
+def render_simple_chart(result: SimpleBacktestResult) -> str:
     rows = result.daily_rows
     maximum = max(row.total_assets for row in rows)
     width = 1_000.0
@@ -191,7 +191,7 @@ def _render_chart(result: SimpleBacktestResult) -> str:
 </figure>"""
 
 
-def _render_ledger(result: SimpleBacktestResult) -> str:
+def render_simple_ledger(result: SimpleBacktestResult) -> str:
     if not result.profit_takes:
         return '<p class="empty">回测区间内没有触发全部止盈。</p>'
     rows = "".join(

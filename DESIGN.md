@@ -119,6 +119,20 @@ All spacing derives from a base of 4px.
 - **Spacing**: `24px` inner spacing.
 - **States**: static content; positive and negative values retain explicit signs.
 - **Accessibility**: labels precede values in DOM order; color never carries meaning alone.
+
+### Scenario Section
+
+- **Structure**: numbered scenario label, H2 title, concise cash-flow rule, metrics, ledger, and methodology.
+- **Variants**: retained proceeds and recycled proceeds; later strategies append as the next numbered section.
+- **Spacing**: `80px` desktop and `64px` mobile before each scenario.
+- **Accessibility**: scenarios remain in chronological document order with unique heading IDs.
+
+### Strategy Comparison Table
+
+- **Structure**: metric rows with one column per scenario.
+- **Spacing**: follows Result Table cell spacing.
+- **States**: the preferable value may use success color plus stronger weight; the number remains explicit.
+- **Accessibility**: row and column headers use semantic table scopes; color is never the only distinction.
 - **Motion**: none.
 
 ### Research Figure

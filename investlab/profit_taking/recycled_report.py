@@ -23,7 +23,7 @@ def render_recycled_report(
         "."
     )
     target_text = f"{result.config.target_return * 100:g}"
-    ledger = _render_ledger(result)
+    ledger = render_recycled_ledger(result)
     return f"""<!doctype html>
 <html lang="zh-CN">
 <head>
@@ -138,7 +138,7 @@ def _write_csv(
     path.write_text(buffer.getvalue(), encoding="utf-8-sig")
 
 
-def _render_ledger(result: RecycledBacktestResult) -> str:
+def render_recycled_ledger(result: RecycledBacktestResult) -> str:
     rows = "".join(
         "<tr>"
         f"<td>{event.sequence}</td>"
