@@ -1,0 +1,4187 @@
+{
+  "cases": [
+    {
+      "actual_end": "2024-04-01",
+      "actual_start": "2023-12-29",
+      "config": {
+        "cadence": "daily",
+        "contribution_amount": 100.0,
+        "name": "daily-none",
+        "recycle_proceeds": false,
+        "sale_fraction": null,
+        "stop_family": "none",
+        "target_return": null,
+        "trailing_drawdown": null
+      },
+      "coverage": [
+        "matrix"
+      ],
+      "daily_states": [
+        {
+          "cycle_basis": 100.0,
+          "date": "2023-12-29",
+          "external_contribution": 100.0,
+          "holding_value": 100.0,
+          "nav": 1.0,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.0,
+          "total_assets": 100.0
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-01-02",
+          "external_contribution": 100.0,
+          "holding_value": 219.999999,
+          "nav": 1.19999999,
+          "pool_contribution": 0.0,
+          "price": 119.999999,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 219.999999
+        },
+        {
+          "cycle_basis": 300.0,
+          "date": "2024-01-08",
+          "external_contribution": 100.0,
+          "holding_value": 320.00000083333333,
+          "nav": 1.2,
+          "pool_contribution": 0.0,
+          "price": 120.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 2.666666673611111,
+          "total_assets": 320.00000083333333
+        },
+        {
+          "cycle_basis": 400.0,
+          "date": "2024-01-15",
+          "external_contribution": 100.0,
+          "holding_value": 446.6666675694444,
+          "nav": 1.2999999999999998,
+          "pool_contribution": 0.0,
+          "price": 130.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 3.4358974428418803,
+          "total_assets": 446.6666675694444
+        },
+        {
+          "cycle_basis": 500.0,
+          "date": "2024-02-01",
+          "external_contribution": 100.0,
+          "holding_value": 502.00000081249993,
+          "nav": 1.1699999999999997,
+          "pool_contribution": 0.0,
+          "price": 117.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 4.290598297542735,
+          "total_assets": 502.00000081249993
+        },
+        {
+          "cycle_basis": 600.0,
+          "date": "2024-02-15",
+          "external_contribution": 100.0,
+          "holding_value": 529.0598297542734,
+          "nav": 0.9999999999999998,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 5.290598297542735,
+          "total_assets": 529.0598297542734
+        },
+        {
+          "cycle_basis": 700.0,
+          "date": "2024-03-01",
+          "external_contribution": 100.0,
+          "holding_value": 734.8717957051281,
+          "nav": 1.1999999999999997,
+          "pool_contribution": 0.0,
+          "price": 120.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 6.123931630876068,
+          "total_assets": 734.8717957051281
+        },
+        {
+          "cycle_basis": 800.0,
+          "date": "2024-03-15",
+          "external_contribution": 100.0,
+          "holding_value": 761.3846161346153,
+          "nav": 1.0799999999999998,
+          "pool_contribution": 0.0,
+          "price": 108.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 7.049857556801993,
+          "total_assets": 761.3846161346153
+        },
+        {
+          "cycle_basis": 900.0,
+          "date": "2024-04-01",
+          "external_contribution": 100.0,
+          "holding_value": 1016.4814823842592,
+          "nav": 1.2999999999999998,
+          "pool_contribution": 0.0,
+          "price": 130.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 7.819088326032762,
+          "total_assets": 1016.4814823842592
+        }
+      ],
+      "events": [
+        {
+          "amount": 100.0,
+          "date": "2023-12-29",
+          "event_type": "contribution",
+          "price": 100.0,
+          "shares": 1.0
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-01-02",
+          "event_type": "contribution",
+          "price": 119.999999,
+          "shares": 0.8333333402777778
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-01-08",
+          "event_type": "contribution",
+          "price": 120.0,
+          "shares": 0.8333333333333334
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-01-15",
+          "event_type": "contribution",
+          "price": 130.0,
+          "shares": 0.7692307692307693
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-02-01",
+          "event_type": "contribution",
+          "price": 117.0,
+          "shares": 0.8547008547008547
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-02-15",
+          "event_type": "contribution",
+          "price": 100.0,
+          "shares": 1.0
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-03-01",
+          "event_type": "contribution",
+          "price": 120.0,
+          "shares": 0.8333333333333334
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-03-15",
+          "event_type": "contribution",
+          "price": 108.0,
+          "shares": 0.9259259259259259
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-04-01",
+          "event_type": "contribution",
+          "price": 130.0,
+          "shares": 0.7692307692307693
+        }
+      ],
+      "id": "matrix_daily_none",
+      "prices": [
+        {
+          "close": 100.0,
+          "date": "2023-12-29"
+        },
+        {
+          "close": 119.999999,
+          "date": "2024-01-02"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-01-08"
+        },
+        {
+          "close": 130.0,
+          "date": "2024-01-15"
+        },
+        {
+          "close": 117.0,
+          "date": "2024-02-01"
+        },
+        {
+          "close": 100.0,
+          "date": "2024-02-15"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-03-01"
+        },
+        {
+          "close": 108.0,
+          "date": "2024-03-15"
+        },
+        {
+          "close": 130.0,
+          "date": "2024-04-01"
+        }
+      ],
+      "requested_end": "2024-04-02",
+      "requested_start": "2023-12-28",
+      "summary": {
+        "cumulative_return": 0.12942386931584351,
+        "ending_holdings": 1016.4814823842592,
+        "external_invested": 900.0,
+        "maximum_drawdown": -0.23076923076923084,
+        "reserve": 0.0,
+        "reusable_pool": 0.0,
+        "scheduled_invested": 900.0,
+        "stop_count": 0,
+        "time_in_market": 1.0,
+        "total_assets": 1016.4814823842592,
+        "total_profit": 116.48148238425915,
+        "xirr": 1.1952045430062657
+      }
+    },
+    {
+      "actual_end": "2024-04-01",
+      "actual_start": "2023-12-29",
+      "config": {
+        "cadence": "daily",
+        "contribution_amount": 100.0,
+        "name": "daily-target_return",
+        "recycle_proceeds": false,
+        "sale_fraction": 0.01,
+        "stop_family": "target_return",
+        "target_return": 0.2,
+        "trailing_drawdown": null
+      },
+      "coverage": [
+        "matrix"
+      ],
+      "daily_states": [
+        {
+          "cycle_basis": 100.0,
+          "date": "2023-12-29",
+          "external_contribution": 100.0,
+          "holding_value": 100.0,
+          "nav": 1.0,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.0,
+          "total_assets": 100.0
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-01-02",
+          "external_contribution": 100.0,
+          "holding_value": 219.999999,
+          "nav": 1.19999999,
+          "pool_contribution": 0.0,
+          "price": 119.999999,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 219.999999
+        },
+        {
+          "cycle_basis": 300.0,
+          "date": "2024-01-08",
+          "external_contribution": 100.0,
+          "holding_value": 320.00000083333333,
+          "nav": 1.2,
+          "pool_contribution": 0.0,
+          "price": 120.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 2.666666673611111,
+          "total_assets": 320.00000083333333
+        },
+        {
+          "cycle_basis": 400.0,
+          "date": "2024-01-15",
+          "external_contribution": 100.0,
+          "holding_value": 446.6666675694444,
+          "nav": 1.2999999999999998,
+          "pool_contribution": 0.0,
+          "price": 130.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 3.4358974428418803,
+          "total_assets": 446.6666675694444
+        },
+        {
+          "cycle_basis": 500.0,
+          "date": "2024-02-01",
+          "external_contribution": 100.0,
+          "holding_value": 502.00000081249993,
+          "nav": 1.1699999999999997,
+          "pool_contribution": 0.0,
+          "price": 117.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 4.290598297542735,
+          "total_assets": 502.00000081249993
+        },
+        {
+          "cycle_basis": 600.0,
+          "date": "2024-02-15",
+          "external_contribution": 100.0,
+          "holding_value": 529.0598297542734,
+          "nav": 0.9999999999999998,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 5.290598297542735,
+          "total_assets": 529.0598297542734
+        },
+        {
+          "cycle_basis": 700.0,
+          "date": "2024-03-01",
+          "external_contribution": 100.0,
+          "holding_value": 734.8717957051281,
+          "nav": 1.1999999999999997,
+          "pool_contribution": 0.0,
+          "price": 120.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 6.123931630876068,
+          "total_assets": 734.8717957051281
+        },
+        {
+          "cycle_basis": 800.0,
+          "date": "2024-03-15",
+          "external_contribution": 100.0,
+          "holding_value": 761.3846161346153,
+          "nav": 1.0799999999999998,
+          "pool_contribution": 0.0,
+          "price": 108.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 7.049857556801993,
+          "total_assets": 761.3846161346153
+        },
+        {
+          "cycle_basis": 900.0,
+          "date": "2024-04-01",
+          "external_contribution": 100.0,
+          "holding_value": 1016.4814823842592,
+          "nav": 1.2999999999999998,
+          "pool_contribution": 0.0,
+          "price": 130.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 7.819088326032762,
+          "total_assets": 1016.4814823842592
+        }
+      ],
+      "events": [
+        {
+          "amount": 100.0,
+          "date": "2023-12-29",
+          "event_type": "contribution",
+          "price": 100.0,
+          "shares": 1.0
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-01-02",
+          "event_type": "contribution",
+          "price": 119.999999,
+          "shares": 0.8333333402777778
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-01-08",
+          "event_type": "contribution",
+          "price": 120.0,
+          "shares": 0.8333333333333334
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-01-15",
+          "event_type": "contribution",
+          "price": 130.0,
+          "shares": 0.7692307692307693
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-02-01",
+          "event_type": "contribution",
+          "price": 117.0,
+          "shares": 0.8547008547008547
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-02-15",
+          "event_type": "contribution",
+          "price": 100.0,
+          "shares": 1.0
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-03-01",
+          "event_type": "contribution",
+          "price": 120.0,
+          "shares": 0.8333333333333334
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-03-15",
+          "event_type": "contribution",
+          "price": 108.0,
+          "shares": 0.9259259259259259
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-04-01",
+          "event_type": "contribution",
+          "price": 130.0,
+          "shares": 0.7692307692307693
+        }
+      ],
+      "id": "matrix_daily_target_return",
+      "prices": [
+        {
+          "close": 100.0,
+          "date": "2023-12-29"
+        },
+        {
+          "close": 119.999999,
+          "date": "2024-01-02"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-01-08"
+        },
+        {
+          "close": 130.0,
+          "date": "2024-01-15"
+        },
+        {
+          "close": 117.0,
+          "date": "2024-02-01"
+        },
+        {
+          "close": 100.0,
+          "date": "2024-02-15"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-03-01"
+        },
+        {
+          "close": 108.0,
+          "date": "2024-03-15"
+        },
+        {
+          "close": 130.0,
+          "date": "2024-04-01"
+        }
+      ],
+      "requested_end": "2024-04-02",
+      "requested_start": "2023-12-28",
+      "summary": {
+        "cumulative_return": 0.12942386931584351,
+        "ending_holdings": 1016.4814823842592,
+        "external_invested": 900.0,
+        "maximum_drawdown": -0.23076923076923084,
+        "reserve": 0.0,
+        "reusable_pool": 0.0,
+        "scheduled_invested": 900.0,
+        "stop_count": 0,
+        "time_in_market": 1.0,
+        "total_assets": 1016.4814823842592,
+        "total_profit": 116.48148238425915,
+        "xirr": 1.1952045430062657
+      }
+    },
+    {
+      "actual_end": "2024-04-01",
+      "actual_start": "2023-12-29",
+      "config": {
+        "cadence": "daily",
+        "contribution_amount": 100.0,
+        "name": "daily-trailing_drawdown",
+        "recycle_proceeds": true,
+        "sale_fraction": 0.5,
+        "stop_family": "trailing_drawdown",
+        "target_return": 0.2,
+        "trailing_drawdown": 0.1
+      },
+      "coverage": [
+        "matrix"
+      ],
+      "daily_states": [
+        {
+          "cycle_basis": 100.0,
+          "date": "2023-12-29",
+          "external_contribution": 100.0,
+          "holding_value": 100.0,
+          "nav": 1.0,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.0,
+          "total_assets": 100.0
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-01-02",
+          "external_contribution": 100.0,
+          "holding_value": 219.999999,
+          "nav": 1.19999999,
+          "pool_contribution": 0.0,
+          "price": 119.999999,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 219.999999
+        },
+        {
+          "cycle_basis": 300.0,
+          "date": "2024-01-08",
+          "external_contribution": 100.0,
+          "holding_value": 320.00000083333333,
+          "nav": 1.2,
+          "pool_contribution": 0.0,
+          "price": 120.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 2.666666673611111,
+          "total_assets": 320.00000083333333
+        },
+        {
+          "cycle_basis": 400.0,
+          "date": "2024-01-15",
+          "external_contribution": 100.0,
+          "holding_value": 446.6666675694444,
+          "nav": 1.2999999999999998,
+          "pool_contribution": 0.0,
+          "price": 130.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 3.4358974428418803,
+          "total_assets": 446.6666675694444
+        },
+        {
+          "cycle_basis": 500.0,
+          "date": "2024-02-01",
+          "external_contribution": 100.0,
+          "holding_value": 502.00000081249993,
+          "nav": 1.1699999999999997,
+          "pool_contribution": 0.0,
+          "price": 117.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 4.290598297542735,
+          "total_assets": 502.00000081249993
+        },
+        {
+          "cycle_basis": 600.0,
+          "date": "2024-02-15",
+          "external_contribution": 100.0,
+          "holding_value": 529.0598297542734,
+          "nav": 0.9999999999999998,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 5.290598297542735,
+          "total_assets": 529.0598297542734
+        },
+        {
+          "cycle_basis": 700.0,
+          "date": "2024-03-01",
+          "external_contribution": 100.0,
+          "holding_value": 734.8717957051281,
+          "nav": 1.1999999999999997,
+          "pool_contribution": 0.0,
+          "price": 120.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 6.123931630876068,
+          "total_assets": 734.8717957051281
+        },
+        {
+          "cycle_basis": 800.0,
+          "date": "2024-03-15",
+          "external_contribution": 100.0,
+          "holding_value": 761.3846161346153,
+          "nav": 1.0799999999999998,
+          "pool_contribution": 0.0,
+          "price": 108.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 7.049857556801993,
+          "total_assets": 761.3846161346153
+        },
+        {
+          "cycle_basis": 900.0,
+          "date": "2024-04-01",
+          "external_contribution": 100.0,
+          "holding_value": 1016.4814823842592,
+          "nav": 1.2999999999999998,
+          "pool_contribution": 0.0,
+          "price": 130.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 7.819088326032762,
+          "total_assets": 1016.4814823842592
+        }
+      ],
+      "events": [
+        {
+          "amount": 100.0,
+          "date": "2023-12-29",
+          "event_type": "contribution",
+          "price": 100.0,
+          "shares": 1.0
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-01-02",
+          "event_type": "contribution",
+          "price": 119.999999,
+          "shares": 0.8333333402777778
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-01-08",
+          "event_type": "contribution",
+          "price": 120.0,
+          "shares": 0.8333333333333334
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-01-15",
+          "event_type": "contribution",
+          "price": 130.0,
+          "shares": 0.7692307692307693
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-02-01",
+          "event_type": "contribution",
+          "price": 117.0,
+          "shares": 0.8547008547008547
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-02-15",
+          "event_type": "contribution",
+          "price": 100.0,
+          "shares": 1.0
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-03-01",
+          "event_type": "contribution",
+          "price": 120.0,
+          "shares": 0.8333333333333334
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-03-15",
+          "event_type": "contribution",
+          "price": 108.0,
+          "shares": 0.9259259259259259
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-04-01",
+          "event_type": "contribution",
+          "price": 130.0,
+          "shares": 0.7692307692307693
+        }
+      ],
+      "id": "matrix_daily_trailing_drawdown",
+      "prices": [
+        {
+          "close": 100.0,
+          "date": "2023-12-29"
+        },
+        {
+          "close": 119.999999,
+          "date": "2024-01-02"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-01-08"
+        },
+        {
+          "close": 130.0,
+          "date": "2024-01-15"
+        },
+        {
+          "close": 117.0,
+          "date": "2024-02-01"
+        },
+        {
+          "close": 100.0,
+          "date": "2024-02-15"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-03-01"
+        },
+        {
+          "close": 108.0,
+          "date": "2024-03-15"
+        },
+        {
+          "close": 130.0,
+          "date": "2024-04-01"
+        }
+      ],
+      "requested_end": "2024-04-02",
+      "requested_start": "2023-12-28",
+      "summary": {
+        "cumulative_return": 0.12942386931584351,
+        "ending_holdings": 1016.4814823842592,
+        "external_invested": 900.0,
+        "maximum_drawdown": -0.23076923076923084,
+        "reserve": 0.0,
+        "reusable_pool": 0.0,
+        "scheduled_invested": 900.0,
+        "stop_count": 0,
+        "time_in_market": 1.0,
+        "total_assets": 1016.4814823842592,
+        "total_profit": 116.48148238425915,
+        "xirr": 1.1952045430062657
+      }
+    },
+    {
+      "actual_end": "2024-04-01",
+      "actual_start": "2023-12-29",
+      "config": {
+        "cadence": "weekly",
+        "contribution_amount": 100.0,
+        "name": "weekly-none",
+        "recycle_proceeds": false,
+        "sale_fraction": null,
+        "stop_family": "none",
+        "target_return": null,
+        "trailing_drawdown": null
+      },
+      "coverage": [
+        "matrix"
+      ],
+      "daily_states": [
+        {
+          "cycle_basis": 100.0,
+          "date": "2023-12-29",
+          "external_contribution": 100.0,
+          "holding_value": 100.0,
+          "nav": 1.0,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.0,
+          "total_assets": 100.0
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-01-02",
+          "external_contribution": 100.0,
+          "holding_value": 219.999999,
+          "nav": 1.19999999,
+          "pool_contribution": 0.0,
+          "price": 119.999999,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 219.999999
+        },
+        {
+          "cycle_basis": 300.0,
+          "date": "2024-01-08",
+          "external_contribution": 100.0,
+          "holding_value": 320.00000083333333,
+          "nav": 1.2,
+          "pool_contribution": 0.0,
+          "price": 120.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 2.666666673611111,
+          "total_assets": 320.00000083333333
+        },
+        {
+          "cycle_basis": 400.0,
+          "date": "2024-01-15",
+          "external_contribution": 100.0,
+          "holding_value": 446.6666675694444,
+          "nav": 1.2999999999999998,
+          "pool_contribution": 0.0,
+          "price": 130.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 3.4358974428418803,
+          "total_assets": 446.6666675694444
+        },
+        {
+          "cycle_basis": 500.0,
+          "date": "2024-02-01",
+          "external_contribution": 100.0,
+          "holding_value": 502.00000081249993,
+          "nav": 1.1699999999999997,
+          "pool_contribution": 0.0,
+          "price": 117.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 4.290598297542735,
+          "total_assets": 502.00000081249993
+        },
+        {
+          "cycle_basis": 600.0,
+          "date": "2024-02-15",
+          "external_contribution": 100.0,
+          "holding_value": 529.0598297542734,
+          "nav": 0.9999999999999998,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 5.290598297542735,
+          "total_assets": 529.0598297542734
+        },
+        {
+          "cycle_basis": 700.0,
+          "date": "2024-03-01",
+          "external_contribution": 100.0,
+          "holding_value": 734.8717957051281,
+          "nav": 1.1999999999999997,
+          "pool_contribution": 0.0,
+          "price": 120.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 6.123931630876068,
+          "total_assets": 734.8717957051281
+        },
+        {
+          "cycle_basis": 800.0,
+          "date": "2024-03-15",
+          "external_contribution": 100.0,
+          "holding_value": 761.3846161346153,
+          "nav": 1.0799999999999998,
+          "pool_contribution": 0.0,
+          "price": 108.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 7.049857556801993,
+          "total_assets": 761.3846161346153
+        },
+        {
+          "cycle_basis": 900.0,
+          "date": "2024-04-01",
+          "external_contribution": 100.0,
+          "holding_value": 1016.4814823842592,
+          "nav": 1.2999999999999998,
+          "pool_contribution": 0.0,
+          "price": 130.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 7.819088326032762,
+          "total_assets": 1016.4814823842592
+        }
+      ],
+      "events": [
+        {
+          "amount": 100.0,
+          "date": "2023-12-29",
+          "event_type": "contribution",
+          "price": 100.0,
+          "shares": 1.0
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-01-02",
+          "event_type": "contribution",
+          "price": 119.999999,
+          "shares": 0.8333333402777778
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-01-08",
+          "event_type": "contribution",
+          "price": 120.0,
+          "shares": 0.8333333333333334
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-01-15",
+          "event_type": "contribution",
+          "price": 130.0,
+          "shares": 0.7692307692307693
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-02-01",
+          "event_type": "contribution",
+          "price": 117.0,
+          "shares": 0.8547008547008547
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-02-15",
+          "event_type": "contribution",
+          "price": 100.0,
+          "shares": 1.0
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-03-01",
+          "event_type": "contribution",
+          "price": 120.0,
+          "shares": 0.8333333333333334
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-03-15",
+          "event_type": "contribution",
+          "price": 108.0,
+          "shares": 0.9259259259259259
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-04-01",
+          "event_type": "contribution",
+          "price": 130.0,
+          "shares": 0.7692307692307693
+        }
+      ],
+      "id": "matrix_weekly_none",
+      "prices": [
+        {
+          "close": 100.0,
+          "date": "2023-12-29"
+        },
+        {
+          "close": 119.999999,
+          "date": "2024-01-02"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-01-08"
+        },
+        {
+          "close": 130.0,
+          "date": "2024-01-15"
+        },
+        {
+          "close": 117.0,
+          "date": "2024-02-01"
+        },
+        {
+          "close": 100.0,
+          "date": "2024-02-15"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-03-01"
+        },
+        {
+          "close": 108.0,
+          "date": "2024-03-15"
+        },
+        {
+          "close": 130.0,
+          "date": "2024-04-01"
+        }
+      ],
+      "requested_end": "2024-04-02",
+      "requested_start": "2023-12-28",
+      "summary": {
+        "cumulative_return": 0.12942386931584351,
+        "ending_holdings": 1016.4814823842592,
+        "external_invested": 900.0,
+        "maximum_drawdown": -0.23076923076923084,
+        "reserve": 0.0,
+        "reusable_pool": 0.0,
+        "scheduled_invested": 900.0,
+        "stop_count": 0,
+        "time_in_market": 1.0,
+        "total_assets": 1016.4814823842592,
+        "total_profit": 116.48148238425915,
+        "xirr": 1.1952045430062657
+      }
+    },
+    {
+      "actual_end": "2024-04-01",
+      "actual_start": "2023-12-29",
+      "config": {
+        "cadence": "weekly",
+        "contribution_amount": 100.0,
+        "name": "weekly-target_return",
+        "recycle_proceeds": false,
+        "sale_fraction": 1.0,
+        "stop_family": "target_return",
+        "target_return": 0.2,
+        "trailing_drawdown": null
+      },
+      "coverage": [
+        "matrix"
+      ],
+      "daily_states": [
+        {
+          "cycle_basis": 100.0,
+          "date": "2023-12-29",
+          "external_contribution": 100.0,
+          "holding_value": 100.0,
+          "nav": 1.0,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.0,
+          "total_assets": 100.0
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-01-02",
+          "external_contribution": 100.0,
+          "holding_value": 219.999999,
+          "nav": 1.19999999,
+          "pool_contribution": 0.0,
+          "price": 119.999999,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 219.999999
+        },
+        {
+          "cycle_basis": 300.0,
+          "date": "2024-01-08",
+          "external_contribution": 100.0,
+          "holding_value": 320.00000083333333,
+          "nav": 1.2,
+          "pool_contribution": 0.0,
+          "price": 120.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 2.666666673611111,
+          "total_assets": 320.00000083333333
+        },
+        {
+          "cycle_basis": 400.0,
+          "date": "2024-01-15",
+          "external_contribution": 100.0,
+          "holding_value": 446.6666675694444,
+          "nav": 1.2999999999999998,
+          "pool_contribution": 0.0,
+          "price": 130.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 3.4358974428418803,
+          "total_assets": 446.6666675694444
+        },
+        {
+          "cycle_basis": 500.0,
+          "date": "2024-02-01",
+          "external_contribution": 100.0,
+          "holding_value": 502.00000081249993,
+          "nav": 1.1699999999999997,
+          "pool_contribution": 0.0,
+          "price": 117.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 4.290598297542735,
+          "total_assets": 502.00000081249993
+        },
+        {
+          "cycle_basis": 600.0,
+          "date": "2024-02-15",
+          "external_contribution": 100.0,
+          "holding_value": 529.0598297542734,
+          "nav": 0.9999999999999998,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 5.290598297542735,
+          "total_assets": 529.0598297542734
+        },
+        {
+          "cycle_basis": 700.0,
+          "date": "2024-03-01",
+          "external_contribution": 100.0,
+          "holding_value": 734.8717957051281,
+          "nav": 1.1999999999999997,
+          "pool_contribution": 0.0,
+          "price": 120.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 6.123931630876068,
+          "total_assets": 734.8717957051281
+        },
+        {
+          "cycle_basis": 800.0,
+          "date": "2024-03-15",
+          "external_contribution": 100.0,
+          "holding_value": 761.3846161346153,
+          "nav": 1.0799999999999998,
+          "pool_contribution": 0.0,
+          "price": 108.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 7.049857556801993,
+          "total_assets": 761.3846161346153
+        },
+        {
+          "cycle_basis": 900.0,
+          "date": "2024-04-01",
+          "external_contribution": 100.0,
+          "holding_value": 1016.4814823842592,
+          "nav": 1.2999999999999998,
+          "pool_contribution": 0.0,
+          "price": 130.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 7.819088326032762,
+          "total_assets": 1016.4814823842592
+        }
+      ],
+      "events": [
+        {
+          "amount": 100.0,
+          "date": "2023-12-29",
+          "event_type": "contribution",
+          "price": 100.0,
+          "shares": 1.0
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-01-02",
+          "event_type": "contribution",
+          "price": 119.999999,
+          "shares": 0.8333333402777778
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-01-08",
+          "event_type": "contribution",
+          "price": 120.0,
+          "shares": 0.8333333333333334
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-01-15",
+          "event_type": "contribution",
+          "price": 130.0,
+          "shares": 0.7692307692307693
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-02-01",
+          "event_type": "contribution",
+          "price": 117.0,
+          "shares": 0.8547008547008547
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-02-15",
+          "event_type": "contribution",
+          "price": 100.0,
+          "shares": 1.0
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-03-01",
+          "event_type": "contribution",
+          "price": 120.0,
+          "shares": 0.8333333333333334
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-03-15",
+          "event_type": "contribution",
+          "price": 108.0,
+          "shares": 0.9259259259259259
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-04-01",
+          "event_type": "contribution",
+          "price": 130.0,
+          "shares": 0.7692307692307693
+        }
+      ],
+      "id": "matrix_weekly_target_return",
+      "prices": [
+        {
+          "close": 100.0,
+          "date": "2023-12-29"
+        },
+        {
+          "close": 119.999999,
+          "date": "2024-01-02"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-01-08"
+        },
+        {
+          "close": 130.0,
+          "date": "2024-01-15"
+        },
+        {
+          "close": 117.0,
+          "date": "2024-02-01"
+        },
+        {
+          "close": 100.0,
+          "date": "2024-02-15"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-03-01"
+        },
+        {
+          "close": 108.0,
+          "date": "2024-03-15"
+        },
+        {
+          "close": 130.0,
+          "date": "2024-04-01"
+        }
+      ],
+      "requested_end": "2024-04-02",
+      "requested_start": "2023-12-28",
+      "summary": {
+        "cumulative_return": 0.12942386931584351,
+        "ending_holdings": 1016.4814823842592,
+        "external_invested": 900.0,
+        "maximum_drawdown": -0.23076923076923084,
+        "reserve": 0.0,
+        "reusable_pool": 0.0,
+        "scheduled_invested": 900.0,
+        "stop_count": 0,
+        "time_in_market": 1.0,
+        "total_assets": 1016.4814823842592,
+        "total_profit": 116.48148238425915,
+        "xirr": 1.1952045430062657
+      }
+    },
+    {
+      "actual_end": "2024-04-01",
+      "actual_start": "2023-12-29",
+      "config": {
+        "cadence": "weekly",
+        "contribution_amount": 100.0,
+        "name": "weekly-trailing_drawdown",
+        "recycle_proceeds": true,
+        "sale_fraction": 0.01,
+        "stop_family": "trailing_drawdown",
+        "target_return": 0.2,
+        "trailing_drawdown": 0.1
+      },
+      "coverage": [
+        "matrix"
+      ],
+      "daily_states": [
+        {
+          "cycle_basis": 100.0,
+          "date": "2023-12-29",
+          "external_contribution": 100.0,
+          "holding_value": 100.0,
+          "nav": 1.0,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.0,
+          "total_assets": 100.0
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-01-02",
+          "external_contribution": 100.0,
+          "holding_value": 219.999999,
+          "nav": 1.19999999,
+          "pool_contribution": 0.0,
+          "price": 119.999999,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 219.999999
+        },
+        {
+          "cycle_basis": 300.0,
+          "date": "2024-01-08",
+          "external_contribution": 100.0,
+          "holding_value": 320.00000083333333,
+          "nav": 1.2,
+          "pool_contribution": 0.0,
+          "price": 120.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 2.666666673611111,
+          "total_assets": 320.00000083333333
+        },
+        {
+          "cycle_basis": 400.0,
+          "date": "2024-01-15",
+          "external_contribution": 100.0,
+          "holding_value": 446.6666675694444,
+          "nav": 1.2999999999999998,
+          "pool_contribution": 0.0,
+          "price": 130.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 3.4358974428418803,
+          "total_assets": 446.6666675694444
+        },
+        {
+          "cycle_basis": 500.0,
+          "date": "2024-02-01",
+          "external_contribution": 100.0,
+          "holding_value": 502.00000081249993,
+          "nav": 1.1699999999999997,
+          "pool_contribution": 0.0,
+          "price": 117.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 4.290598297542735,
+          "total_assets": 502.00000081249993
+        },
+        {
+          "cycle_basis": 600.0,
+          "date": "2024-02-15",
+          "external_contribution": 100.0,
+          "holding_value": 529.0598297542734,
+          "nav": 0.9999999999999998,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 5.290598297542735,
+          "total_assets": 529.0598297542734
+        },
+        {
+          "cycle_basis": 700.0,
+          "date": "2024-03-01",
+          "external_contribution": 100.0,
+          "holding_value": 734.8717957051281,
+          "nav": 1.1999999999999997,
+          "pool_contribution": 0.0,
+          "price": 120.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 6.123931630876068,
+          "total_assets": 734.8717957051281
+        },
+        {
+          "cycle_basis": 800.0,
+          "date": "2024-03-15",
+          "external_contribution": 100.0,
+          "holding_value": 761.3846161346153,
+          "nav": 1.0799999999999998,
+          "pool_contribution": 0.0,
+          "price": 108.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 7.049857556801993,
+          "total_assets": 761.3846161346153
+        },
+        {
+          "cycle_basis": 900.0,
+          "date": "2024-04-01",
+          "external_contribution": 100.0,
+          "holding_value": 1016.4814823842592,
+          "nav": 1.2999999999999998,
+          "pool_contribution": 0.0,
+          "price": 130.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 7.819088326032762,
+          "total_assets": 1016.4814823842592
+        }
+      ],
+      "events": [
+        {
+          "amount": 100.0,
+          "date": "2023-12-29",
+          "event_type": "contribution",
+          "price": 100.0,
+          "shares": 1.0
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-01-02",
+          "event_type": "contribution",
+          "price": 119.999999,
+          "shares": 0.8333333402777778
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-01-08",
+          "event_type": "contribution",
+          "price": 120.0,
+          "shares": 0.8333333333333334
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-01-15",
+          "event_type": "contribution",
+          "price": 130.0,
+          "shares": 0.7692307692307693
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-02-01",
+          "event_type": "contribution",
+          "price": 117.0,
+          "shares": 0.8547008547008547
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-02-15",
+          "event_type": "contribution",
+          "price": 100.0,
+          "shares": 1.0
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-03-01",
+          "event_type": "contribution",
+          "price": 120.0,
+          "shares": 0.8333333333333334
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-03-15",
+          "event_type": "contribution",
+          "price": 108.0,
+          "shares": 0.9259259259259259
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-04-01",
+          "event_type": "contribution",
+          "price": 130.0,
+          "shares": 0.7692307692307693
+        }
+      ],
+      "id": "matrix_weekly_trailing_drawdown",
+      "prices": [
+        {
+          "close": 100.0,
+          "date": "2023-12-29"
+        },
+        {
+          "close": 119.999999,
+          "date": "2024-01-02"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-01-08"
+        },
+        {
+          "close": 130.0,
+          "date": "2024-01-15"
+        },
+        {
+          "close": 117.0,
+          "date": "2024-02-01"
+        },
+        {
+          "close": 100.0,
+          "date": "2024-02-15"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-03-01"
+        },
+        {
+          "close": 108.0,
+          "date": "2024-03-15"
+        },
+        {
+          "close": 130.0,
+          "date": "2024-04-01"
+        }
+      ],
+      "requested_end": "2024-04-02",
+      "requested_start": "2023-12-28",
+      "summary": {
+        "cumulative_return": 0.12942386931584351,
+        "ending_holdings": 1016.4814823842592,
+        "external_invested": 900.0,
+        "maximum_drawdown": -0.23076923076923084,
+        "reserve": 0.0,
+        "reusable_pool": 0.0,
+        "scheduled_invested": 900.0,
+        "stop_count": 0,
+        "time_in_market": 1.0,
+        "total_assets": 1016.4814823842592,
+        "total_profit": 116.48148238425915,
+        "xirr": 1.1952045430062657
+      }
+    },
+    {
+      "actual_end": "2024-04-01",
+      "actual_start": "2023-12-29",
+      "config": {
+        "cadence": "biweekly",
+        "contribution_amount": 100.0,
+        "name": "biweekly-none",
+        "recycle_proceeds": false,
+        "sale_fraction": null,
+        "stop_family": "none",
+        "target_return": null,
+        "trailing_drawdown": null
+      },
+      "coverage": [
+        "matrix"
+      ],
+      "daily_states": [
+        {
+          "cycle_basis": 100.0,
+          "date": "2023-12-29",
+          "external_contribution": 100.0,
+          "holding_value": 100.0,
+          "nav": 1.0,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.0,
+          "total_assets": 100.0
+        },
+        {
+          "cycle_basis": 100.0,
+          "date": "2024-01-02",
+          "external_contribution": 0.0,
+          "holding_value": 119.999999,
+          "nav": 1.19999999,
+          "pool_contribution": 0.0,
+          "price": 119.999999,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 1.0,
+          "total_assets": 119.999999
+        },
+        {
+          "cycle_basis": 100.0,
+          "date": "2024-01-08",
+          "external_contribution": 0.0,
+          "holding_value": 120.0,
+          "nav": 1.2000000000000002,
+          "pool_contribution": 0.0,
+          "price": 120.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 1.0,
+          "total_assets": 120.0
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-01-15",
+          "external_contribution": 100.0,
+          "holding_value": 230.0,
+          "nav": 1.3000000000000003,
+          "pool_contribution": 0.0,
+          "price": 130.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.7692307692307692,
+          "total_assets": 230.0
+        },
+        {
+          "cycle_basis": 300.0,
+          "date": "2024-02-01",
+          "external_contribution": 100.0,
+          "holding_value": 307.0,
+          "nav": 1.1700000000000004,
+          "pool_contribution": 0.0,
+          "price": 117.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 2.623931623931624,
+          "total_assets": 307.0
+        },
+        {
+          "cycle_basis": 400.0,
+          "date": "2024-02-15",
+          "external_contribution": 100.0,
+          "holding_value": 362.3931623931624,
+          "nav": 1.0000000000000004,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 3.623931623931624,
+          "total_assets": 362.3931623931624
+        },
+        {
+          "cycle_basis": 500.0,
+          "date": "2024-03-01",
+          "external_contribution": 100.0,
+          "holding_value": 534.8717948717949,
+          "nav": 1.2000000000000006,
+          "pool_contribution": 0.0,
+          "price": 120.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 4.457264957264957,
+          "total_assets": 534.8717948717949
+        },
+        {
+          "cycle_basis": 600.0,
+          "date": "2024-03-15",
+          "external_contribution": 100.0,
+          "holding_value": 581.3846153846154,
+          "nav": 1.0800000000000003,
+          "pool_contribution": 0.0,
+          "price": 108.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 5.383190883190883,
+          "total_assets": 581.3846153846154
+        },
+        {
+          "cycle_basis": 700.0,
+          "date": "2024-04-01",
+          "external_contribution": 100.0,
+          "holding_value": 799.8148148148148,
+          "nav": 1.3000000000000003,
+          "pool_contribution": 0.0,
+          "price": 130.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 6.152421652421652,
+          "total_assets": 799.8148148148148
+        }
+      ],
+      "events": [
+        {
+          "amount": 100.0,
+          "date": "2023-12-29",
+          "event_type": "contribution",
+          "price": 100.0,
+          "shares": 1.0
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-01-15",
+          "event_type": "contribution",
+          "price": 130.0,
+          "shares": 0.7692307692307693
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-02-01",
+          "event_type": "contribution",
+          "price": 117.0,
+          "shares": 0.8547008547008547
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-02-15",
+          "event_type": "contribution",
+          "price": 100.0,
+          "shares": 1.0
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-03-01",
+          "event_type": "contribution",
+          "price": 120.0,
+          "shares": 0.8333333333333334
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-03-15",
+          "event_type": "contribution",
+          "price": 108.0,
+          "shares": 0.9259259259259259
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-04-01",
+          "event_type": "contribution",
+          "price": 130.0,
+          "shares": 0.7692307692307693
+        }
+      ],
+      "id": "matrix_biweekly_none",
+      "prices": [
+        {
+          "close": 100.0,
+          "date": "2023-12-29"
+        },
+        {
+          "close": 119.999999,
+          "date": "2024-01-02"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-01-08"
+        },
+        {
+          "close": 130.0,
+          "date": "2024-01-15"
+        },
+        {
+          "close": 117.0,
+          "date": "2024-02-01"
+        },
+        {
+          "close": 100.0,
+          "date": "2024-02-15"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-03-01"
+        },
+        {
+          "close": 108.0,
+          "date": "2024-03-15"
+        },
+        {
+          "close": 130.0,
+          "date": "2024-04-01"
+        }
+      ],
+      "requested_end": "2024-04-02",
+      "requested_start": "2023-12-28",
+      "summary": {
+        "cumulative_return": 0.14259259259259255,
+        "ending_holdings": 799.8148148148148,
+        "external_invested": 700.0,
+        "maximum_drawdown": -0.23076923076923062,
+        "reserve": 0.0,
+        "reusable_pool": 0.0,
+        "scheduled_invested": 700.0,
+        "stop_count": 0,
+        "time_in_market": 1.0,
+        "total_assets": 799.8148148148148,
+        "total_profit": 99.81481481481478,
+        "xirr": 1.7719798930606103
+      }
+    },
+    {
+      "actual_end": "2024-04-01",
+      "actual_start": "2023-12-29",
+      "config": {
+        "cadence": "biweekly",
+        "contribution_amount": 100.0,
+        "name": "biweekly-target_return",
+        "recycle_proceeds": false,
+        "sale_fraction": 0.5,
+        "stop_family": "target_return",
+        "target_return": 0.2,
+        "trailing_drawdown": null
+      },
+      "coverage": [
+        "matrix"
+      ],
+      "daily_states": [
+        {
+          "cycle_basis": 100.0,
+          "date": "2023-12-29",
+          "external_contribution": 100.0,
+          "holding_value": 100.0,
+          "nav": 1.0,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.0,
+          "total_assets": 100.0
+        },
+        {
+          "cycle_basis": 100.0,
+          "date": "2024-01-02",
+          "external_contribution": 0.0,
+          "holding_value": 119.999999,
+          "nav": 1.19999999,
+          "pool_contribution": 0.0,
+          "price": 119.999999,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 1.0,
+          "total_assets": 119.999999
+        },
+        {
+          "cycle_basis": 60.0,
+          "date": "2024-01-08",
+          "external_contribution": 0.0,
+          "holding_value": 60.0,
+          "nav": 1.2000000000000002,
+          "pool_contribution": 0.0,
+          "price": 120.0,
+          "reserve": 60.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 0.5,
+          "total_assets": 120.0
+        },
+        {
+          "cycle_basis": 160.0,
+          "date": "2024-01-15",
+          "external_contribution": 100.0,
+          "holding_value": 165.0,
+          "nav": 1.2500000000000002,
+          "pool_contribution": 0.0,
+          "price": 130.0,
+          "reserve": 60.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.2692307692307692,
+          "total_assets": 225.0
+        },
+        {
+          "cycle_basis": 260.0,
+          "date": "2024-02-01",
+          "external_contribution": 100.0,
+          "holding_value": 248.5,
+          "nav": 1.1583333333333337,
+          "pool_contribution": 0.0,
+          "price": 117.0,
+          "reserve": 60.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 2.123931623931624,
+          "total_assets": 308.5
+        },
+        {
+          "cycle_basis": 360.0,
+          "date": "2024-02-15",
+          "external_contribution": 100.0,
+          "holding_value": 312.3931623931624,
+          "nav": 1.0227620089856724,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 60.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 3.123931623931624,
+          "total_assets": 372.3931623931624
+        },
+        {
+          "cycle_basis": 460.0,
+          "date": "2024-03-01",
+          "external_contribution": 100.0,
+          "holding_value": 474.8717948717949,
+          "nav": 1.1943569202935738,
+          "pool_contribution": 0.0,
+          "price": 120.0,
+          "reserve": 60.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 3.9572649572649574,
+          "total_assets": 534.8717948717949
+        },
+        {
+          "cycle_basis": 560.0,
+          "date": "2024-03-15",
+          "external_contribution": 100.0,
+          "holding_value": 527.3846153846154,
+          "nav": 1.0883190959223514,
+          "pool_contribution": 0.0,
+          "price": 108.0,
+          "reserve": 60.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 4.883190883190883,
+          "total_assets": 587.3846153846154
+        },
+        {
+          "cycle_basis": 660.0,
+          "date": "2024-04-01",
+          "external_contribution": 100.0,
+          "holding_value": 734.8148148148148,
+          "nav": 1.2873681252233236,
+          "pool_contribution": 0.0,
+          "price": 130.0,
+          "reserve": 60.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 5.652421652421652,
+          "total_assets": 794.8148148148148
+        }
+      ],
+      "events": [
+        {
+          "amount": 100.0,
+          "date": "2023-12-29",
+          "event_type": "contribution",
+          "price": 100.0,
+          "shares": 1.0
+        },
+        {
+          "amount": 60.0,
+          "date": "2024-01-08",
+          "event_type": "sale",
+          "price": 120.0,
+          "shares": 0.5
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-01-15",
+          "event_type": "contribution",
+          "price": 130.0,
+          "shares": 0.7692307692307693
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-02-01",
+          "event_type": "contribution",
+          "price": 117.0,
+          "shares": 0.8547008547008547
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-02-15",
+          "event_type": "contribution",
+          "price": 100.0,
+          "shares": 1.0
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-03-01",
+          "event_type": "contribution",
+          "price": 120.0,
+          "shares": 0.8333333333333334
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-03-15",
+          "event_type": "contribution",
+          "price": 108.0,
+          "shares": 0.9259259259259259
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-04-01",
+          "event_type": "contribution",
+          "price": 130.0,
+          "shares": 0.7692307692307693
+        }
+      ],
+      "id": "matrix_biweekly_target_return",
+      "prices": [
+        {
+          "close": 100.0,
+          "date": "2023-12-29"
+        },
+        {
+          "close": 119.999999,
+          "date": "2024-01-02"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-01-08"
+        },
+        {
+          "close": 130.0,
+          "date": "2024-01-15"
+        },
+        {
+          "close": 117.0,
+          "date": "2024-02-01"
+        },
+        {
+          "close": 100.0,
+          "date": "2024-02-15"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-03-01"
+        },
+        {
+          "close": 108.0,
+          "date": "2024-03-15"
+        },
+        {
+          "close": 130.0,
+          "date": "2024-04-01"
+        }
+      ],
+      "requested_end": "2024-04-02",
+      "requested_start": "2023-12-28",
+      "summary": {
+        "cumulative_return": 0.1354497354497354,
+        "ending_holdings": 734.8148148148148,
+        "external_invested": 700.0,
+        "maximum_drawdown": -0.18179039281146225,
+        "reserve": 60.0,
+        "reusable_pool": 0.0,
+        "scheduled_invested": 700.0,
+        "stop_count": 1,
+        "time_in_market": 1.0,
+        "total_assets": 794.8148148148148,
+        "total_profit": 94.81481481481478,
+        "xirr": 1.645430446991238
+      }
+    },
+    {
+      "actual_end": "2024-04-01",
+      "actual_start": "2023-12-29",
+      "config": {
+        "cadence": "biweekly",
+        "contribution_amount": 100.0,
+        "name": "biweekly-trailing_drawdown",
+        "recycle_proceeds": true,
+        "sale_fraction": 1.0,
+        "stop_family": "trailing_drawdown",
+        "target_return": 0.2,
+        "trailing_drawdown": 0.1
+      },
+      "coverage": [
+        "matrix"
+      ],
+      "daily_states": [
+        {
+          "cycle_basis": 100.0,
+          "date": "2023-12-29",
+          "external_contribution": 100.0,
+          "holding_value": 100.0,
+          "nav": 1.0,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.0,
+          "total_assets": 100.0
+        },
+        {
+          "cycle_basis": 100.0,
+          "date": "2024-01-02",
+          "external_contribution": 0.0,
+          "holding_value": 119.999999,
+          "nav": 1.19999999,
+          "pool_contribution": 0.0,
+          "price": 119.999999,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 1.0,
+          "total_assets": 119.999999
+        },
+        {
+          "cycle_basis": 100.0,
+          "date": "2024-01-08",
+          "external_contribution": 0.0,
+          "holding_value": 120.0,
+          "nav": 1.2000000000000002,
+          "pool_contribution": 0.0,
+          "price": 120.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 1.0,
+          "total_assets": 120.0
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-01-15",
+          "external_contribution": 100.0,
+          "holding_value": 230.0,
+          "nav": 1.3000000000000003,
+          "pool_contribution": 0.0,
+          "price": 130.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.7692307692307692,
+          "total_assets": 230.0
+        },
+        {
+          "cycle_basis": 100.0,
+          "date": "2024-02-01",
+          "external_contribution": 0.0,
+          "holding_value": 100.0,
+          "nav": 1.1700000000000004,
+          "pool_contribution": 100.0,
+          "price": 117.0,
+          "reserve": 0.0,
+          "reusable_pool": 107.0,
+          "scheduled_contribution": 100.0,
+          "shares": 0.8547008547008547,
+          "total_assets": 207.0
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-02-15",
+          "external_contribution": 0.0,
+          "holding_value": 185.47008547008548,
+          "nav": 1.0878743961352662,
+          "pool_contribution": 100.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 7.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.8547008547008548,
+          "total_assets": 192.47008547008548
+        },
+        {
+          "cycle_basis": 300.0,
+          "date": "2024-03-01",
+          "external_contribution": 93.0,
+          "holding_value": 322.5641025641026,
+          "nav": 1.2975362318840586,
+          "pool_contribution": 7.0,
+          "price": 120.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 2.6880341880341883,
+          "total_assets": 322.5641025641026
+        },
+        {
+          "cycle_basis": 400.0,
+          "date": "2024-03-15",
+          "external_contribution": 100.0,
+          "holding_value": 390.3076923076923,
+          "nav": 1.1677826086956526,
+          "pool_contribution": 0.0,
+          "price": 108.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 3.6139601139601143,
+          "total_assets": 390.3076923076923
+        },
+        {
+          "cycle_basis": 500.0,
+          "date": "2024-04-01",
+          "external_contribution": 100.0,
+          "holding_value": 569.8148148148149,
+          "nav": 1.4056642512077302,
+          "pool_contribution": 0.0,
+          "price": 130.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 4.383190883190884,
+          "total_assets": 569.8148148148149
+        }
+      ],
+      "events": [
+        {
+          "amount": 100.0,
+          "date": "2023-12-29",
+          "event_type": "contribution",
+          "price": 100.0,
+          "shares": 1.0
+        },
+        {
+          "amount": 0.0,
+          "date": "2024-01-08",
+          "event_type": "stop_activation",
+          "price": 120.0,
+          "shares": 0.0
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-01-15",
+          "event_type": "contribution",
+          "price": 130.0,
+          "shares": 0.7692307692307693
+        },
+        {
+          "amount": 207.0,
+          "date": "2024-02-01",
+          "event_type": "sale",
+          "price": 117.0,
+          "shares": 1.7692307692307692
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-02-01",
+          "event_type": "contribution",
+          "price": 117.0,
+          "shares": 0.8547008547008547
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-02-15",
+          "event_type": "contribution",
+          "price": 100.0,
+          "shares": 1.0
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-03-01",
+          "event_type": "contribution",
+          "price": 120.0,
+          "shares": 0.8333333333333334
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-03-15",
+          "event_type": "contribution",
+          "price": 108.0,
+          "shares": 0.9259259259259259
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-04-01",
+          "event_type": "contribution",
+          "price": 130.0,
+          "shares": 0.7692307692307693
+        }
+      ],
+      "id": "matrix_biweekly_trailing_drawdown",
+      "prices": [
+        {
+          "close": 100.0,
+          "date": "2023-12-29"
+        },
+        {
+          "close": 119.999999,
+          "date": "2024-01-02"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-01-08"
+        },
+        {
+          "close": 130.0,
+          "date": "2024-01-15"
+        },
+        {
+          "close": 117.0,
+          "date": "2024-02-01"
+        },
+        {
+          "close": 100.0,
+          "date": "2024-02-15"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-03-01"
+        },
+        {
+          "close": 108.0,
+          "date": "2024-03-15"
+        },
+        {
+          "close": 130.0,
+          "date": "2024-04-01"
+        }
+      ],
+      "requested_end": "2024-04-02",
+      "requested_start": "2023-12-28",
+      "summary": {
+        "cumulative_return": 0.15581098339719046,
+        "ending_holdings": 569.8148148148149,
+        "external_invested": 493.0,
+        "maximum_drawdown": -0.16317354143441087,
+        "reserve": 0.0,
+        "reusable_pool": 0.0,
+        "scheduled_invested": 700.0,
+        "stop_count": 1,
+        "time_in_market": 1.0,
+        "total_assets": 569.8148148148149,
+        "total_profit": 76.8148148148149,
+        "xirr": 2.154181652460437
+      }
+    },
+    {
+      "actual_end": "2024-04-01",
+      "actual_start": "2023-12-29",
+      "config": {
+        "cadence": "monthly",
+        "contribution_amount": 100.0,
+        "name": "monthly-none",
+        "recycle_proceeds": false,
+        "sale_fraction": null,
+        "stop_family": "none",
+        "target_return": null,
+        "trailing_drawdown": null
+      },
+      "coverage": [
+        "matrix"
+      ],
+      "daily_states": [
+        {
+          "cycle_basis": 100.0,
+          "date": "2023-12-29",
+          "external_contribution": 100.0,
+          "holding_value": 100.0,
+          "nav": 1.0,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.0,
+          "total_assets": 100.0
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-01-02",
+          "external_contribution": 100.0,
+          "holding_value": 219.999999,
+          "nav": 1.19999999,
+          "pool_contribution": 0.0,
+          "price": 119.999999,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 219.999999
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-01-08",
+          "external_contribution": 0.0,
+          "holding_value": 220.00000083333333,
+          "nav": 1.2,
+          "pool_contribution": 0.0,
+          "price": 120.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 220.00000083333333
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-01-15",
+          "external_contribution": 0.0,
+          "holding_value": 238.3333342361111,
+          "nav": 1.2999999999999998,
+          "pool_contribution": 0.0,
+          "price": 130.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 238.3333342361111
+        },
+        {
+          "cycle_basis": 300.0,
+          "date": "2024-02-01",
+          "external_contribution": 100.0,
+          "holding_value": 314.5000008125,
+          "nav": 1.1699999999999997,
+          "pool_contribution": 0.0,
+          "price": 117.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 2.6880341949786324,
+          "total_assets": 314.5000008125
+        },
+        {
+          "cycle_basis": 300.0,
+          "date": "2024-02-15",
+          "external_contribution": 0.0,
+          "holding_value": 268.8034194978632,
+          "nav": 0.9999999999999997,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 2.6880341949786324,
+          "total_assets": 268.8034194978632
+        },
+        {
+          "cycle_basis": 400.0,
+          "date": "2024-03-01",
+          "external_contribution": 100.0,
+          "holding_value": 422.56410339743593,
+          "nav": 1.1999999999999997,
+          "pool_contribution": 0.0,
+          "price": 120.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 3.521367528311966,
+          "total_assets": 422.56410339743593
+        },
+        {
+          "cycle_basis": 400.0,
+          "date": "2024-03-15",
+          "external_contribution": 0.0,
+          "holding_value": 380.3076930576923,
+          "nav": 1.0799999999999996,
+          "pool_contribution": 0.0,
+          "price": 108.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 3.521367528311966,
+          "total_assets": 380.3076930576923
+        },
+        {
+          "cycle_basis": 500.0,
+          "date": "2024-04-01",
+          "external_contribution": 100.0,
+          "holding_value": 557.7777786805556,
+          "nav": 1.2999999999999996,
+          "pool_contribution": 0.0,
+          "price": 130.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 4.2905982975427355,
+          "total_assets": 557.7777786805556
+        }
+      ],
+      "events": [
+        {
+          "amount": 100.0,
+          "date": "2023-12-29",
+          "event_type": "contribution",
+          "price": 100.0,
+          "shares": 1.0
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-01-02",
+          "event_type": "contribution",
+          "price": 119.999999,
+          "shares": 0.8333333402777778
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-02-01",
+          "event_type": "contribution",
+          "price": 117.0,
+          "shares": 0.8547008547008547
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-03-01",
+          "event_type": "contribution",
+          "price": 120.0,
+          "shares": 0.8333333333333334
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-04-01",
+          "event_type": "contribution",
+          "price": 130.0,
+          "shares": 0.7692307692307693
+        }
+      ],
+      "id": "matrix_monthly_none",
+      "prices": [
+        {
+          "close": 100.0,
+          "date": "2023-12-29"
+        },
+        {
+          "close": 119.999999,
+          "date": "2024-01-02"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-01-08"
+        },
+        {
+          "close": 130.0,
+          "date": "2024-01-15"
+        },
+        {
+          "close": 117.0,
+          "date": "2024-02-01"
+        },
+        {
+          "close": 100.0,
+          "date": "2024-02-15"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-03-01"
+        },
+        {
+          "close": 108.0,
+          "date": "2024-03-15"
+        },
+        {
+          "close": 130.0,
+          "date": "2024-04-01"
+        }
+      ],
+      "requested_end": "2024-04-02",
+      "requested_start": "2023-12-28",
+      "summary": {
+        "cumulative_return": 0.11555555736111114,
+        "ending_holdings": 557.7777786805556,
+        "external_invested": 500.0,
+        "maximum_drawdown": -0.23076923076923095,
+        "reserve": 0.0,
+        "reusable_pool": 0.0,
+        "scheduled_invested": 500.0,
+        "stop_count": 0,
+        "time_in_market": 1.0,
+        "total_assets": 557.7777786805556,
+        "total_profit": 57.77777868055557,
+        "xirr": 1.0346647185312268
+      }
+    },
+    {
+      "actual_end": "2024-04-01",
+      "actual_start": "2023-12-29",
+      "config": {
+        "cadence": "monthly",
+        "contribution_amount": 100.0,
+        "name": "monthly-target_return",
+        "recycle_proceeds": false,
+        "sale_fraction": 0.01,
+        "stop_family": "target_return",
+        "target_return": 0.2,
+        "trailing_drawdown": null
+      },
+      "coverage": [
+        "matrix"
+      ],
+      "daily_states": [
+        {
+          "cycle_basis": 100.0,
+          "date": "2023-12-29",
+          "external_contribution": 100.0,
+          "holding_value": 100.0,
+          "nav": 1.0,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.0,
+          "total_assets": 100.0
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-01-02",
+          "external_contribution": 100.0,
+          "holding_value": 219.999999,
+          "nav": 1.19999999,
+          "pool_contribution": 0.0,
+          "price": 119.999999,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 219.999999
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-01-08",
+          "external_contribution": 0.0,
+          "holding_value": 220.00000083333333,
+          "nav": 1.2,
+          "pool_contribution": 0.0,
+          "price": 120.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 220.00000083333333
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-01-15",
+          "external_contribution": 0.0,
+          "holding_value": 238.3333342361111,
+          "nav": 1.2999999999999998,
+          "pool_contribution": 0.0,
+          "price": 130.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 238.3333342361111
+        },
+        {
+          "cycle_basis": 300.0,
+          "date": "2024-02-01",
+          "external_contribution": 100.0,
+          "holding_value": 314.5000008125,
+          "nav": 1.1699999999999997,
+          "pool_contribution": 0.0,
+          "price": 117.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 2.6880341949786324,
+          "total_assets": 314.5000008125
+        },
+        {
+          "cycle_basis": 300.0,
+          "date": "2024-02-15",
+          "external_contribution": 0.0,
+          "holding_value": 268.8034194978632,
+          "nav": 0.9999999999999997,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 2.6880341949786324,
+          "total_assets": 268.8034194978632
+        },
+        {
+          "cycle_basis": 400.0,
+          "date": "2024-03-01",
+          "external_contribution": 100.0,
+          "holding_value": 422.56410339743593,
+          "nav": 1.1999999999999997,
+          "pool_contribution": 0.0,
+          "price": 120.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 3.521367528311966,
+          "total_assets": 422.56410339743593
+        },
+        {
+          "cycle_basis": 400.0,
+          "date": "2024-03-15",
+          "external_contribution": 0.0,
+          "holding_value": 380.3076930576923,
+          "nav": 1.0799999999999996,
+          "pool_contribution": 0.0,
+          "price": 108.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 3.521367528311966,
+          "total_assets": 380.3076930576923
+        },
+        {
+          "cycle_basis": 500.0,
+          "date": "2024-04-01",
+          "external_contribution": 100.0,
+          "holding_value": 557.7777786805556,
+          "nav": 1.2999999999999996,
+          "pool_contribution": 0.0,
+          "price": 130.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 4.2905982975427355,
+          "total_assets": 557.7777786805556
+        }
+      ],
+      "events": [
+        {
+          "amount": 100.0,
+          "date": "2023-12-29",
+          "event_type": "contribution",
+          "price": 100.0,
+          "shares": 1.0
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-01-02",
+          "event_type": "contribution",
+          "price": 119.999999,
+          "shares": 0.8333333402777778
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-02-01",
+          "event_type": "contribution",
+          "price": 117.0,
+          "shares": 0.8547008547008547
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-03-01",
+          "event_type": "contribution",
+          "price": 120.0,
+          "shares": 0.8333333333333334
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-04-01",
+          "event_type": "contribution",
+          "price": 130.0,
+          "shares": 0.7692307692307693
+        }
+      ],
+      "id": "matrix_monthly_target_return",
+      "prices": [
+        {
+          "close": 100.0,
+          "date": "2023-12-29"
+        },
+        {
+          "close": 119.999999,
+          "date": "2024-01-02"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-01-08"
+        },
+        {
+          "close": 130.0,
+          "date": "2024-01-15"
+        },
+        {
+          "close": 117.0,
+          "date": "2024-02-01"
+        },
+        {
+          "close": 100.0,
+          "date": "2024-02-15"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-03-01"
+        },
+        {
+          "close": 108.0,
+          "date": "2024-03-15"
+        },
+        {
+          "close": 130.0,
+          "date": "2024-04-01"
+        }
+      ],
+      "requested_end": "2024-04-02",
+      "requested_start": "2023-12-28",
+      "summary": {
+        "cumulative_return": 0.11555555736111114,
+        "ending_holdings": 557.7777786805556,
+        "external_invested": 500.0,
+        "maximum_drawdown": -0.23076923076923095,
+        "reserve": 0.0,
+        "reusable_pool": 0.0,
+        "scheduled_invested": 500.0,
+        "stop_count": 0,
+        "time_in_market": 1.0,
+        "total_assets": 557.7777786805556,
+        "total_profit": 57.77777868055557,
+        "xirr": 1.0346647185312268
+      }
+    },
+    {
+      "actual_end": "2024-04-01",
+      "actual_start": "2023-12-29",
+      "config": {
+        "cadence": "monthly",
+        "contribution_amount": 100.0,
+        "name": "monthly-trailing_drawdown",
+        "recycle_proceeds": true,
+        "sale_fraction": 0.5,
+        "stop_family": "trailing_drawdown",
+        "target_return": 0.2,
+        "trailing_drawdown": 0.1
+      },
+      "coverage": [
+        "matrix"
+      ],
+      "daily_states": [
+        {
+          "cycle_basis": 100.0,
+          "date": "2023-12-29",
+          "external_contribution": 100.0,
+          "holding_value": 100.0,
+          "nav": 1.0,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.0,
+          "total_assets": 100.0
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-01-02",
+          "external_contribution": 100.0,
+          "holding_value": 219.999999,
+          "nav": 1.19999999,
+          "pool_contribution": 0.0,
+          "price": 119.999999,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 219.999999
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-01-08",
+          "external_contribution": 0.0,
+          "holding_value": 220.00000083333333,
+          "nav": 1.2,
+          "pool_contribution": 0.0,
+          "price": 120.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 220.00000083333333
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-01-15",
+          "external_contribution": 0.0,
+          "holding_value": 238.3333342361111,
+          "nav": 1.2999999999999998,
+          "pool_contribution": 0.0,
+          "price": 130.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 238.3333342361111
+        },
+        {
+          "cycle_basis": 300.0,
+          "date": "2024-02-01",
+          "external_contribution": 100.0,
+          "holding_value": 314.5000008125,
+          "nav": 1.1699999999999997,
+          "pool_contribution": 0.0,
+          "price": 117.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 2.6880341949786324,
+          "total_assets": 314.5000008125
+        },
+        {
+          "cycle_basis": 300.0,
+          "date": "2024-02-15",
+          "external_contribution": 0.0,
+          "holding_value": 268.8034194978632,
+          "nav": 0.9999999999999997,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 2.6880341949786324,
+          "total_assets": 268.8034194978632
+        },
+        {
+          "cycle_basis": 400.0,
+          "date": "2024-03-01",
+          "external_contribution": 100.0,
+          "holding_value": 422.56410339743593,
+          "nav": 1.1999999999999997,
+          "pool_contribution": 0.0,
+          "price": 120.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 3.521367528311966,
+          "total_assets": 422.56410339743593
+        },
+        {
+          "cycle_basis": 400.0,
+          "date": "2024-03-15",
+          "external_contribution": 0.0,
+          "holding_value": 380.3076930576923,
+          "nav": 1.0799999999999996,
+          "pool_contribution": 0.0,
+          "price": 108.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 3.521367528311966,
+          "total_assets": 380.3076930576923
+        },
+        {
+          "cycle_basis": 500.0,
+          "date": "2024-04-01",
+          "external_contribution": 100.0,
+          "holding_value": 557.7777786805556,
+          "nav": 1.2999999999999996,
+          "pool_contribution": 0.0,
+          "price": 130.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 4.2905982975427355,
+          "total_assets": 557.7777786805556
+        }
+      ],
+      "events": [
+        {
+          "amount": 100.0,
+          "date": "2023-12-29",
+          "event_type": "contribution",
+          "price": 100.0,
+          "shares": 1.0
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-01-02",
+          "event_type": "contribution",
+          "price": 119.999999,
+          "shares": 0.8333333402777778
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-02-01",
+          "event_type": "contribution",
+          "price": 117.0,
+          "shares": 0.8547008547008547
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-03-01",
+          "event_type": "contribution",
+          "price": 120.0,
+          "shares": 0.8333333333333334
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-04-01",
+          "event_type": "contribution",
+          "price": 130.0,
+          "shares": 0.7692307692307693
+        }
+      ],
+      "id": "matrix_monthly_trailing_drawdown",
+      "prices": [
+        {
+          "close": 100.0,
+          "date": "2023-12-29"
+        },
+        {
+          "close": 119.999999,
+          "date": "2024-01-02"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-01-08"
+        },
+        {
+          "close": 130.0,
+          "date": "2024-01-15"
+        },
+        {
+          "close": 117.0,
+          "date": "2024-02-01"
+        },
+        {
+          "close": 100.0,
+          "date": "2024-02-15"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-03-01"
+        },
+        {
+          "close": 108.0,
+          "date": "2024-03-15"
+        },
+        {
+          "close": 130.0,
+          "date": "2024-04-01"
+        }
+      ],
+      "requested_end": "2024-04-02",
+      "requested_start": "2023-12-28",
+      "summary": {
+        "cumulative_return": 0.11555555736111114,
+        "ending_holdings": 557.7777786805556,
+        "external_invested": 500.0,
+        "maximum_drawdown": -0.23076923076923095,
+        "reserve": 0.0,
+        "reusable_pool": 0.0,
+        "scheduled_invested": 500.0,
+        "stop_count": 0,
+        "time_in_market": 1.0,
+        "total_assets": 557.7777786805556,
+        "total_profit": 57.77777868055557,
+        "xirr": 1.0346647185312268
+      }
+    },
+    {
+      "actual_end": "2024-04-01",
+      "actual_start": "2023-12-29",
+      "config": {
+        "cadence": "quarterly",
+        "contribution_amount": 100.0,
+        "name": "quarterly-none",
+        "recycle_proceeds": false,
+        "sale_fraction": null,
+        "stop_family": "none",
+        "target_return": null,
+        "trailing_drawdown": null
+      },
+      "coverage": [
+        "matrix"
+      ],
+      "daily_states": [
+        {
+          "cycle_basis": 100.0,
+          "date": "2023-12-29",
+          "external_contribution": 100.0,
+          "holding_value": 100.0,
+          "nav": 1.0,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.0,
+          "total_assets": 100.0
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-01-02",
+          "external_contribution": 100.0,
+          "holding_value": 219.999999,
+          "nav": 1.19999999,
+          "pool_contribution": 0.0,
+          "price": 119.999999,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 219.999999
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-01-08",
+          "external_contribution": 0.0,
+          "holding_value": 220.00000083333333,
+          "nav": 1.2,
+          "pool_contribution": 0.0,
+          "price": 120.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 220.00000083333333
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-01-15",
+          "external_contribution": 0.0,
+          "holding_value": 238.3333342361111,
+          "nav": 1.2999999999999998,
+          "pool_contribution": 0.0,
+          "price": 130.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 238.3333342361111
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-02-01",
+          "external_contribution": 0.0,
+          "holding_value": 214.50000081250002,
+          "nav": 1.17,
+          "pool_contribution": 0.0,
+          "price": 117.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 214.50000081250002
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-02-15",
+          "external_contribution": 0.0,
+          "holding_value": 183.3333340277778,
+          "nav": 1.0,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 183.3333340277778
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-03-01",
+          "external_contribution": 0.0,
+          "holding_value": 220.00000083333333,
+          "nav": 1.2,
+          "pool_contribution": 0.0,
+          "price": 120.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 220.00000083333333
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-03-15",
+          "external_contribution": 0.0,
+          "holding_value": 198.00000075,
+          "nav": 1.08,
+          "pool_contribution": 0.0,
+          "price": 108.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 198.00000075
+        },
+        {
+          "cycle_basis": 300.0,
+          "date": "2024-04-01",
+          "external_contribution": 100.0,
+          "holding_value": 338.3333342361111,
+          "nav": 1.3,
+          "pool_contribution": 0.0,
+          "price": 130.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 2.602564109508547,
+          "total_assets": 338.3333342361111
+        }
+      ],
+      "events": [
+        {
+          "amount": 100.0,
+          "date": "2023-12-29",
+          "event_type": "contribution",
+          "price": 100.0,
+          "shares": 1.0
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-01-02",
+          "event_type": "contribution",
+          "price": 119.999999,
+          "shares": 0.8333333402777778
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-04-01",
+          "event_type": "contribution",
+          "price": 130.0,
+          "shares": 0.7692307692307693
+        }
+      ],
+      "id": "matrix_quarterly_none",
+      "prices": [
+        {
+          "close": 100.0,
+          "date": "2023-12-29"
+        },
+        {
+          "close": 119.999999,
+          "date": "2024-01-02"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-01-08"
+        },
+        {
+          "close": 130.0,
+          "date": "2024-01-15"
+        },
+        {
+          "close": 117.0,
+          "date": "2024-02-01"
+        },
+        {
+          "close": 100.0,
+          "date": "2024-02-15"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-03-01"
+        },
+        {
+          "close": 108.0,
+          "date": "2024-03-15"
+        },
+        {
+          "close": 130.0,
+          "date": "2024-04-01"
+        }
+      ],
+      "requested_end": "2024-04-02",
+      "requested_start": "2023-12-28",
+      "summary": {
+        "cumulative_return": 0.12777778078703705,
+        "ending_holdings": 338.3333342361111,
+        "external_invested": 300.0,
+        "maximum_drawdown": -0.23076923076923062,
+        "reserve": 0.0,
+        "reusable_pool": 0.0,
+        "scheduled_invested": 300.0,
+        "stop_count": 0,
+        "time_in_market": 1.0,
+        "total_assets": 338.3333342361111,
+        "total_profit": 38.333334236111114,
+        "xirr": 1.0059970021212918
+      }
+    },
+    {
+      "actual_end": "2024-04-01",
+      "actual_start": "2023-12-29",
+      "config": {
+        "cadence": "quarterly",
+        "contribution_amount": 100.0,
+        "name": "quarterly-target_return",
+        "recycle_proceeds": false,
+        "sale_fraction": 1.0,
+        "stop_family": "target_return",
+        "target_return": 0.2,
+        "trailing_drawdown": null
+      },
+      "coverage": [
+        "matrix"
+      ],
+      "daily_states": [
+        {
+          "cycle_basis": 100.0,
+          "date": "2023-12-29",
+          "external_contribution": 100.0,
+          "holding_value": 100.0,
+          "nav": 1.0,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.0,
+          "total_assets": 100.0
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-01-02",
+          "external_contribution": 100.0,
+          "holding_value": 219.999999,
+          "nav": 1.19999999,
+          "pool_contribution": 0.0,
+          "price": 119.999999,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 219.999999
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-01-08",
+          "external_contribution": 0.0,
+          "holding_value": 220.00000083333333,
+          "nav": 1.2,
+          "pool_contribution": 0.0,
+          "price": 120.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 220.00000083333333
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-01-15",
+          "external_contribution": 0.0,
+          "holding_value": 238.3333342361111,
+          "nav": 1.2999999999999998,
+          "pool_contribution": 0.0,
+          "price": 130.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 238.3333342361111
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-02-01",
+          "external_contribution": 0.0,
+          "holding_value": 214.50000081250002,
+          "nav": 1.17,
+          "pool_contribution": 0.0,
+          "price": 117.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 214.50000081250002
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-02-15",
+          "external_contribution": 0.0,
+          "holding_value": 183.3333340277778,
+          "nav": 1.0,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 183.3333340277778
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-03-01",
+          "external_contribution": 0.0,
+          "holding_value": 220.00000083333333,
+          "nav": 1.2,
+          "pool_contribution": 0.0,
+          "price": 120.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 220.00000083333333
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-03-15",
+          "external_contribution": 0.0,
+          "holding_value": 198.00000075,
+          "nav": 1.08,
+          "pool_contribution": 0.0,
+          "price": 108.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 198.00000075
+        },
+        {
+          "cycle_basis": 300.0,
+          "date": "2024-04-01",
+          "external_contribution": 100.0,
+          "holding_value": 338.3333342361111,
+          "nav": 1.3,
+          "pool_contribution": 0.0,
+          "price": 130.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 2.602564109508547,
+          "total_assets": 338.3333342361111
+        }
+      ],
+      "events": [
+        {
+          "amount": 100.0,
+          "date": "2023-12-29",
+          "event_type": "contribution",
+          "price": 100.0,
+          "shares": 1.0
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-01-02",
+          "event_type": "contribution",
+          "price": 119.999999,
+          "shares": 0.8333333402777778
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-04-01",
+          "event_type": "contribution",
+          "price": 130.0,
+          "shares": 0.7692307692307693
+        }
+      ],
+      "id": "matrix_quarterly_target_return",
+      "prices": [
+        {
+          "close": 100.0,
+          "date": "2023-12-29"
+        },
+        {
+          "close": 119.999999,
+          "date": "2024-01-02"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-01-08"
+        },
+        {
+          "close": 130.0,
+          "date": "2024-01-15"
+        },
+        {
+          "close": 117.0,
+          "date": "2024-02-01"
+        },
+        {
+          "close": 100.0,
+          "date": "2024-02-15"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-03-01"
+        },
+        {
+          "close": 108.0,
+          "date": "2024-03-15"
+        },
+        {
+          "close": 130.0,
+          "date": "2024-04-01"
+        }
+      ],
+      "requested_end": "2024-04-02",
+      "requested_start": "2023-12-28",
+      "summary": {
+        "cumulative_return": 0.12777778078703705,
+        "ending_holdings": 338.3333342361111,
+        "external_invested": 300.0,
+        "maximum_drawdown": -0.23076923076923062,
+        "reserve": 0.0,
+        "reusable_pool": 0.0,
+        "scheduled_invested": 300.0,
+        "stop_count": 0,
+        "time_in_market": 1.0,
+        "total_assets": 338.3333342361111,
+        "total_profit": 38.333334236111114,
+        "xirr": 1.0059970021212918
+      }
+    },
+    {
+      "actual_end": "2024-04-01",
+      "actual_start": "2023-12-29",
+      "config": {
+        "cadence": "quarterly",
+        "contribution_amount": 100.0,
+        "name": "quarterly-trailing_drawdown",
+        "recycle_proceeds": true,
+        "sale_fraction": 0.01,
+        "stop_family": "trailing_drawdown",
+        "target_return": 0.2,
+        "trailing_drawdown": 0.1
+      },
+      "coverage": [
+        "matrix"
+      ],
+      "daily_states": [
+        {
+          "cycle_basis": 100.0,
+          "date": "2023-12-29",
+          "external_contribution": 100.0,
+          "holding_value": 100.0,
+          "nav": 1.0,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.0,
+          "total_assets": 100.0
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-01-02",
+          "external_contribution": 100.0,
+          "holding_value": 219.999999,
+          "nav": 1.19999999,
+          "pool_contribution": 0.0,
+          "price": 119.999999,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 219.999999
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-01-08",
+          "external_contribution": 0.0,
+          "holding_value": 220.00000083333333,
+          "nav": 1.2,
+          "pool_contribution": 0.0,
+          "price": 120.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 220.00000083333333
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-01-15",
+          "external_contribution": 0.0,
+          "holding_value": 238.3333342361111,
+          "nav": 1.2999999999999998,
+          "pool_contribution": 0.0,
+          "price": 130.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 238.3333342361111
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-02-01",
+          "external_contribution": 0.0,
+          "holding_value": 214.50000081250002,
+          "nav": 1.17,
+          "pool_contribution": 0.0,
+          "price": 117.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 214.50000081250002
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-02-15",
+          "external_contribution": 0.0,
+          "holding_value": 183.3333340277778,
+          "nav": 1.0,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 183.3333340277778
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-03-01",
+          "external_contribution": 0.0,
+          "holding_value": 220.00000083333333,
+          "nav": 1.2,
+          "pool_contribution": 0.0,
+          "price": 120.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 220.00000083333333
+        },
+        {
+          "cycle_basis": 200.0,
+          "date": "2024-03-15",
+          "external_contribution": 0.0,
+          "holding_value": 198.00000075,
+          "nav": 1.08,
+          "pool_contribution": 0.0,
+          "price": 108.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 1.8333333402777778,
+          "total_assets": 198.00000075
+        },
+        {
+          "cycle_basis": 300.0,
+          "date": "2024-04-01",
+          "external_contribution": 100.0,
+          "holding_value": 338.3333342361111,
+          "nav": 1.3,
+          "pool_contribution": 0.0,
+          "price": 130.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 2.602564109508547,
+          "total_assets": 338.3333342361111
+        }
+      ],
+      "events": [
+        {
+          "amount": 100.0,
+          "date": "2023-12-29",
+          "event_type": "contribution",
+          "price": 100.0,
+          "shares": 1.0
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-01-02",
+          "event_type": "contribution",
+          "price": 119.999999,
+          "shares": 0.8333333402777778
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-04-01",
+          "event_type": "contribution",
+          "price": 130.0,
+          "shares": 0.7692307692307693
+        }
+      ],
+      "id": "matrix_quarterly_trailing_drawdown",
+      "prices": [
+        {
+          "close": 100.0,
+          "date": "2023-12-29"
+        },
+        {
+          "close": 119.999999,
+          "date": "2024-01-02"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-01-08"
+        },
+        {
+          "close": 130.0,
+          "date": "2024-01-15"
+        },
+        {
+          "close": 117.0,
+          "date": "2024-02-01"
+        },
+        {
+          "close": 100.0,
+          "date": "2024-02-15"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-03-01"
+        },
+        {
+          "close": 108.0,
+          "date": "2024-03-15"
+        },
+        {
+          "close": 130.0,
+          "date": "2024-04-01"
+        }
+      ],
+      "requested_end": "2024-04-02",
+      "requested_start": "2023-12-28",
+      "summary": {
+        "cumulative_return": 0.12777778078703705,
+        "ending_holdings": 338.3333342361111,
+        "external_invested": 300.0,
+        "maximum_drawdown": -0.23076923076923062,
+        "reserve": 0.0,
+        "reusable_pool": 0.0,
+        "scheduled_invested": 300.0,
+        "stop_count": 0,
+        "time_in_market": 1.0,
+        "total_assets": 338.3333342361111,
+        "total_profit": 38.333334236111114,
+        "xirr": 1.0059970021212918
+      }
+    },
+    {
+      "actual_end": "2024-01-03",
+      "actual_start": "2024-01-02",
+      "config": {
+        "cadence": "monthly",
+        "contribution_amount": 100.0,
+        "name": "near-threshold",
+        "recycle_proceeds": false,
+        "sale_fraction": 1.0,
+        "stop_family": "target_return",
+        "target_return": 0.2,
+        "trailing_drawdown": null
+      },
+      "coverage": [
+        "near_threshold",
+        "no_trigger"
+      ],
+      "daily_states": [
+        {
+          "cycle_basis": 100.0,
+          "date": "2024-01-02",
+          "external_contribution": 100.0,
+          "holding_value": 100.0,
+          "nav": 1.0,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.0,
+          "total_assets": 100.0
+        },
+        {
+          "cycle_basis": 100.0,
+          "date": "2024-01-03",
+          "external_contribution": 0.0,
+          "holding_value": 119.999999,
+          "nav": 1.19999999,
+          "pool_contribution": 0.0,
+          "price": 119.999999,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 1.0,
+          "total_assets": 119.999999
+        }
+      ],
+      "events": [
+        {
+          "amount": 100.0,
+          "date": "2024-01-02",
+          "event_type": "contribution",
+          "price": 100.0,
+          "shares": 1.0
+        }
+      ],
+      "id": "edge_near_threshold",
+      "prices": [
+        {
+          "close": 100.0,
+          "date": "2024-01-02"
+        },
+        {
+          "close": 119.999999,
+          "date": "2024-01-03"
+        }
+      ],
+      "requested_end": "2024-01-03",
+      "requested_start": "2024-01-02",
+      "summary": {
+        "cumulative_return": 0.19999999000000002,
+        "ending_holdings": 119.999999,
+        "external_invested": 100.0,
+        "maximum_drawdown": 0.0,
+        "reserve": 0.0,
+        "reusable_pool": 0.0,
+        "scheduled_invested": 100.0,
+        "stop_count": 0,
+        "time_in_market": 1.0,
+        "total_assets": 119.999999,
+        "total_profit": 19.999999000000003,
+        "xirr": null
+      }
+    },
+    {
+      "actual_end": "2024-01-03",
+      "actual_start": "2024-01-02",
+      "config": {
+        "cadence": "monthly",
+        "contribution_amount": 100.0,
+        "name": "exact-threshold",
+        "recycle_proceeds": false,
+        "sale_fraction": 1.0,
+        "stop_family": "target_return",
+        "target_return": 0.2,
+        "trailing_drawdown": null
+      },
+      "coverage": [
+        "exact_threshold"
+      ],
+      "daily_states": [
+        {
+          "cycle_basis": 100.0,
+          "date": "2024-01-02",
+          "external_contribution": 100.0,
+          "holding_value": 100.0,
+          "nav": 1.0,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.0,
+          "total_assets": 100.0
+        },
+        {
+          "cycle_basis": 0.0,
+          "date": "2024-01-03",
+          "external_contribution": 0.0,
+          "holding_value": 0.0,
+          "nav": 1.2,
+          "pool_contribution": 0.0,
+          "price": 120.0,
+          "reserve": 120.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 0.0,
+          "total_assets": 120.0
+        }
+      ],
+      "events": [
+        {
+          "amount": 100.0,
+          "date": "2024-01-02",
+          "event_type": "contribution",
+          "price": 100.0,
+          "shares": 1.0
+        },
+        {
+          "amount": 120.0,
+          "date": "2024-01-03",
+          "event_type": "sale",
+          "price": 120.0,
+          "shares": 1.0
+        }
+      ],
+      "id": "edge_exact_threshold",
+      "prices": [
+        {
+          "close": 100.0,
+          "date": "2024-01-02"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-01-03"
+        }
+      ],
+      "requested_end": "2024-01-03",
+      "requested_start": "2024-01-02",
+      "summary": {
+        "cumulative_return": 0.2,
+        "ending_holdings": 0.0,
+        "external_invested": 100.0,
+        "maximum_drawdown": 0.0,
+        "reserve": 120.0,
+        "reusable_pool": 0.0,
+        "scheduled_invested": 100.0,
+        "stop_count": 1,
+        "time_in_market": 0.5,
+        "total_assets": 120.0,
+        "total_profit": 20.0,
+        "xirr": null
+      }
+    },
+    {
+      "actual_end": "2024-02-01",
+      "actual_start": "2024-01-02",
+      "config": {
+        "cadence": "monthly",
+        "contribution_amount": 100.0,
+        "name": "same-day",
+        "recycle_proceeds": true,
+        "sale_fraction": 1.0,
+        "stop_family": "target_return",
+        "target_return": 0.2,
+        "trailing_drawdown": null
+      },
+      "coverage": [
+        "same_day",
+        "recycle"
+      ],
+      "daily_states": [
+        {
+          "cycle_basis": 100.0,
+          "date": "2024-01-02",
+          "external_contribution": 100.0,
+          "holding_value": 100.0,
+          "nav": 1.0,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.0,
+          "total_assets": 100.0
+        },
+        {
+          "cycle_basis": 100.0,
+          "date": "2024-02-01",
+          "external_contribution": 0.0,
+          "holding_value": 100.0,
+          "nav": 1.2,
+          "pool_contribution": 100.0,
+          "price": 120.0,
+          "reserve": 0.0,
+          "reusable_pool": 20.0,
+          "scheduled_contribution": 100.0,
+          "shares": 0.8333333333333334,
+          "total_assets": 120.0
+        }
+      ],
+      "events": [
+        {
+          "amount": 100.0,
+          "date": "2024-01-02",
+          "event_type": "contribution",
+          "price": 100.0,
+          "shares": 1.0
+        },
+        {
+          "amount": 120.0,
+          "date": "2024-02-01",
+          "event_type": "sale",
+          "price": 120.0,
+          "shares": 1.0
+        },
+        {
+          "amount": 100.0,
+          "date": "2024-02-01",
+          "event_type": "contribution",
+          "price": 120.0,
+          "shares": 0.8333333333333334
+        }
+      ],
+      "id": "edge_same_day_recycled",
+      "prices": [
+        {
+          "close": 100.0,
+          "date": "2024-01-02"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-02-01"
+        }
+      ],
+      "requested_end": "2024-02-01",
+      "requested_start": "2024-01-02",
+      "summary": {
+        "cumulative_return": 0.2,
+        "ending_holdings": 100.0,
+        "external_invested": 100.0,
+        "maximum_drawdown": 0.0,
+        "reserve": 0.0,
+        "reusable_pool": 20.0,
+        "scheduled_invested": 200.0,
+        "stop_count": 1,
+        "time_in_market": 1.0,
+        "total_assets": 120.0,
+        "total_profit": 20.0,
+        "xirr": 8.205166973505358
+      }
+    },
+    {
+      "actual_end": "2024-01-06",
+      "actual_start": "2024-01-02",
+      "config": {
+        "cadence": "monthly",
+        "contribution_amount": 100.0,
+        "name": "repeated-cycles",
+        "recycle_proceeds": false,
+        "sale_fraction": 0.5,
+        "stop_family": "trailing_drawdown",
+        "target_return": 0.2,
+        "trailing_drawdown": 0.1
+      },
+      "coverage": [
+        "exact_threshold",
+        "repeated_cycles"
+      ],
+      "daily_states": [
+        {
+          "cycle_basis": 100.0,
+          "date": "2024-01-02",
+          "external_contribution": 100.0,
+          "holding_value": 100.0,
+          "nav": 1.0,
+          "pool_contribution": 0.0,
+          "price": 100.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 100.0,
+          "shares": 1.0,
+          "total_assets": 100.0
+        },
+        {
+          "cycle_basis": 100.0,
+          "date": "2024-01-03",
+          "external_contribution": 0.0,
+          "holding_value": 120.0,
+          "nav": 1.2,
+          "pool_contribution": 0.0,
+          "price": 120.0,
+          "reserve": 0.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 1.0,
+          "total_assets": 120.0
+        },
+        {
+          "cycle_basis": 54.0,
+          "date": "2024-01-04",
+          "external_contribution": 0.0,
+          "holding_value": 54.0,
+          "nav": 1.0799999999999998,
+          "pool_contribution": 0.0,
+          "price": 108.0,
+          "reserve": 54.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 0.5,
+          "total_assets": 108.0
+        },
+        {
+          "cycle_basis": 54.0,
+          "date": "2024-01-05",
+          "external_contribution": 0.0,
+          "holding_value": 64.8,
+          "nav": 1.1879999999999997,
+          "pool_contribution": 0.0,
+          "price": 129.6,
+          "reserve": 54.0,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 0.5,
+          "total_assets": 118.8
+        },
+        {
+          "cycle_basis": 29.16,
+          "date": "2024-01-06",
+          "external_contribution": 0.0,
+          "holding_value": 29.16,
+          "nav": 1.1231999999999998,
+          "pool_contribution": 0.0,
+          "price": 116.64,
+          "reserve": 83.16,
+          "reusable_pool": 0.0,
+          "scheduled_contribution": 0.0,
+          "shares": 0.25,
+          "total_assets": 112.32
+        }
+      ],
+      "events": [
+        {
+          "amount": 100.0,
+          "date": "2024-01-02",
+          "event_type": "contribution",
+          "price": 100.0,
+          "shares": 1.0
+        },
+        {
+          "amount": 0.0,
+          "date": "2024-01-03",
+          "event_type": "stop_activation",
+          "price": 120.0,
+          "shares": 0.0
+        },
+        {
+          "amount": 54.0,
+          "date": "2024-01-04",
+          "event_type": "sale",
+          "price": 108.0,
+          "shares": 0.5
+        },
+        {
+          "amount": 0.0,
+          "date": "2024-01-05",
+          "event_type": "stop_activation",
+          "price": 129.6,
+          "shares": 0.0
+        },
+        {
+          "amount": 29.16,
+          "date": "2024-01-06",
+          "event_type": "sale",
+          "price": 116.64,
+          "shares": 0.25
+        }
+      ],
+      "id": "edge_repeated_trailing_cycles",
+      "prices": [
+        {
+          "close": 100.0,
+          "date": "2024-01-02"
+        },
+        {
+          "close": 120.0,
+          "date": "2024-01-03"
+        },
+        {
+          "close": 108.0,
+          "date": "2024-01-04"
+        },
+        {
+          "close": 129.6,
+          "date": "2024-01-05"
+        },
+        {
+          "close": 116.64,
+          "date": "2024-01-06"
+        }
+      ],
+      "requested_end": "2024-01-06",
+      "requested_start": "2024-01-02",
+      "summary": {
+        "cumulative_return": 0.12319999999999993,
+        "ending_holdings": 29.16,
+        "external_invested": 100.0,
+        "maximum_drawdown": -0.10000000000000009,
+        "reserve": 83.16,
+        "reusable_pool": 0.0,
+        "scheduled_invested": 100.0,
+        "stop_count": 2,
+        "time_in_market": 1.0,
+        "total_assets": 112.32,
+        "total_profit": 12.319999999999993,
+        "xirr": null
+      }
+    }
+  ],
+  "schema_version": 1
+}

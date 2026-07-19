@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="沪深300全收益指数定投与止盈策略对比计算器">
+    <title>定投与止盈策略对比计算器</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E">
+    <link rel="stylesheet" href="./calculator.css">
+  </head>
+  <body>
+    <main class="page-shell">
+      <header class="page-header">
+        <p class="overline">H00300 · 全收益指数</p>
+        <h1>定投与止盈策略对比计算器</h1>
+        <p class="lead">配置一至五个方案，在同一时间区间内比较定投频率、止盈规则、卖出比例与资金复投方式。</p>
+      </header>
+
+      <section class="workspace" aria-labelledby="workspace-title">
+        <div class="section-heading">
+          <div>
+            <p class="overline">参数工作区</p>
+            <h2 id="workspace-title">设置回测方案</h2>
+          </div>
+          <p class="method-note" id="method-note">仅在点击“开始计算”后更新结果；同日先止盈，再执行定投。</p>
+        </div>
+
+        <form id="calculator-form" novalidate aria-describedby="method-note">
+          <fieldset class="shared-fields">
+            <legend>共同回测区间</legend>
+            <div class="field">
+              <label for="start-date">起始日期</label>
+              <input id="start-date" name="startDate" type="date" required aria-describedby="start-date-error">
+              <p class="field-error" id="start-date-error"></p>
+            </div>
+            <div class="field">
+              <label for="end-date">结束日期</label>
+              <input id="end-date" name="endDate" type="date" required aria-describedby="end-date-error">
+              <p class="field-error" id="end-date-error"></p>
+            </div>
+          </fieldset>
+
+          <div class="strategy-heading">
+            <div>
+              <h3>策略参数</h3>
+              <p class="helper" id="row-limit-help">最多配置五个方案，可使用相同策略和不同参数。</p>
+            </div>
+            <button id="add-strategy" class="button secondary" type="button" aria-describedby="row-limit-help">新增策略</button>
+          </div>
+          <div id="strategy-list" class="strategy-list" aria-label="策略配置列表"></div>
+          <div class="form-actions">
+            <button class="button primary" type="submit">开始计算</button>
+          </div>
+        </form>
+        <p id="calculator-status" class="status" role="status" aria-live="polite">正在加载指数数据…</p>
+      </section>
+
+      <section class="results-shell" aria-labelledby="results-title">
+        <p class="overline">计算结果</p>
+        <h2 id="results-title">策略对比</h2>
+        <p id="results-empty">完成参数设置并点击“开始计算”后，此处将展示结果表格和曲线。</p>
+        <div id="results-summary" hidden data-results-hook></div>
+        <div id="assets-chart" hidden data-chart-hook="assets"></div>
+        <div id="nav-chart" hidden data-chart-hook="nav"></div>
+      </section>
+
+      <footer class="provenance" aria-labelledby="provenance-title">
+        <h2 id="provenance-title">数据口径</h2>
+        <dl id="data-provenance">
+          <div><dt>指数</dt><dd>沪深300全收益指数（H00300）</dd></div>
+          <div><dt>数据状态</dt><dd id="data-state">等待载入</dd></div>
+        </dl>
+      </footer>
+    </main>
+    <script src="./calculator-core.js" defer></script>
+    <script src="./calculator-chart.js" defer></script>
+    <script src="./calculator-app.js" defer></script>
+  </body>
+</html>

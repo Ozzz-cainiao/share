@@ -78,6 +78,21 @@ All spacing derives from a base of 4px.
 - Card metrics use a 4-column grid on desktop and 2 columns under `680px`.
 - Tables may overflow horizontally only if wrapped by a deliberate scroll container.
 
+### Calculator Breakpoints
+
+- `1280px`: use the existing `1120px` wide shell; shared date controls and the
+  calculate action share one row, and each strategy keeps a compact tabular row.
+- `768px`: retain the wide shell within `--space-7` page padding; shared controls
+  wrap by logical group and strategy fields use two columns.
+- `375px`: use the narrow-page padding rule; each strategy becomes one stacked
+  field flow and all actions remain full-width, labeled, and visible.
+- `320px`: use the same stacked flow with no clipped labels or controls. Result
+  tables remain semantic tables inside a deliberate horizontal scroll container
+  with a visible scroll instruction rather than compressing numeric columns.
+- These four widths are the required calculator review breakpoints. Layout changes
+  use normal flow and Grid; they must not introduce nested cards or horizontal
+  page overflow.
+
 ### Rules
 
 - Page padding uses `44px 28px 60px` on desktop and `24px 14px 40px` on narrow screens.
@@ -134,6 +149,112 @@ All spacing derives from a base of 4px.
 - **States**: the preferable value may use success color plus stronger weight; the number remains explicit.
 - **Accessibility**: row and column headers use semantic table scopes; color is never the only distinction.
 - **Motion**: none.
+
+### Calculator Workspace
+
+- **Structure**: one bordered workspace containing an H2, concise method note,
+  shared labeled start/end date controls, an ordered strategy list, the visible
+  add-strategy action, the primary calculate action, and a polite result-status
+  region. Use `--card`, `--line`, `--ink`, and `--muted`; inner groups are divided
+  by borders or `--space-*` gaps, not nested cards.
+- **Spacing**: shell and section padding use `--space-6`; compact control groups
+  use `--space-2`, `--space-3`, and `--space-4`; larger section separation uses
+  `--space-8`. No calculator spacing bypasses the 4px scale.
+- **States**: the page opens with one valid strategy row. Editing never triggers
+  calculation; the calculate button applies all valid fields together. While a
+  calculation is running, its existing label communicates progress and repeated
+  submission is disabled. Invalid submission keeps prior results visible and
+  moves focus to the first invalid field.
+- **Accessibility**: use `fieldset` and `legend` for shared dates and each strategy,
+  native buttons for actions, and an `aria-live="polite"` status for successful,
+  empty, and failed calculations. Method and validation text is available without
+  hover.
+- **Motion**: only the existing Micro or Standard opacity/transform timing may be
+  used for status changes; reduced-motion users receive an immediate state change.
+
+### Strategy Row
+
+- **Structure**: a stable row number and series key, editable display name,
+  contribution amount, cadence, stop family, target return, trailing drawdown,
+  sale fraction, recycle-proceeds checkbox, and a permanently visible labeled
+  delete button. Rows are separated by `--line`, not individually boxed.
+- **Conditional controls**: target return and sale fraction are disabled for no
+  stop; trailing drawdown is enabled only for target-activated drawdown. Disabled
+  fields stay labeled so the model remains understandable and never silently
+  changes entered values.
+- **Add/delete/max-row behavior**: start with one row; add appends after the last
+  row until five exist. At five rows, the add button remains visible but disabled
+  and its nearby helper plus polite status explains the five-row limit. Delete
+  remains visible for every row; at one row it is disabled with a minimum-one-row
+  explanation. Deletion preserves surviving row order, stable identity, entered
+  values, and assigned chart series; a newly added row receives an available
+  series key without recoloring survivors.
+- **Desktop/tablet layout**: follow the Calculator Breakpoints Grid rules; fields
+  align by label and may wrap only between complete field groups.
+- **Mobile stacked layout**: at `375px` and `320px`, every label, native control,
+  helper/error, recycle checkbox, and delete action occupies a predictable stacked
+  reading order. No destructive or corrective action is hover-only.
+- **Accessibility**: legends name rows independently of editable display names;
+  row addition announces the new count and moves focus to the new display-name
+  input, while deletion moves focus to the nearest surviving row heading.
+
+### Native Form Control
+
+- **Structure**: a visible Body/sm label above a native `input`, `select`, or
+  checkbox, optional Caption helper beneath, and a dedicated Caption validation
+  message linked with `aria-describedby`.
+- **Default**: `--card` surface, `--ink` text, and Border/default. Placeholder and
+  helper text use `--muted`; financial inputs use tabular figures.
+- **Focus**: retain the browser's native keyboard focus indicator and reinforce it
+  with `--brand`; focus must remain visible against both `--paper` and `--card`.
+- **Invalid**: expose native validity and `aria-invalid="true"`, use `--negative`
+  for the border/message, and state the correction in text. Do not use color alone.
+- **Disabled**: preserve the label, use `--surface-subtle` and `--muted`, and keep
+  the reason in adjacent helper text; disabled controls are not submitted as
+  active stop parameters.
+- **Interaction**: native keyboard, pointer, and touch behavior is preserved. A
+  complete validation pass happens only on explicit calculation, not each
+  keystroke.
+
+### Calculator Results Table
+
+- **Structure**: extend Result Table with one column per configured strategy in
+  stable row order and rows for scheduled invested, external invested, ending
+  holdings, cash pool, total assets, total profit, cumulative return, XIRR,
+  contribution-neutral maximum drawdown, time in market, and stop count.
+- **States**: before calculation, show a text empty state describing the required
+  action; on invalid input, retain the last valid table and identify it as the
+  previous result; after recalculation, update the caption with actual coverage.
+- **Responsive behavior**: at `768px`, `375px`, and `320px`, keep the semantic
+  table in a labeled horizontal scroll container. Keep metric row headers visible
+  with `--card`, provide an explicit scroll instruction, and preserve right-aligned
+  tabular numbers; never collapse cells into unlabeled values.
+- **Accessibility**: strategy names are column headers, metric names are row
+  headers, and the caption states requested and actual date coverage. Signed text
+  and numbers carry meaning independently of series color.
+
+### Calculator Time-Series Figure
+
+- **Structure**: two Research Figure variants only: nominal total assets and
+  contribution-neutral cumulative NAV return. Each contains a heading, legend,
+  responsive inline SVG, current-value text summary, and a text/table alternative.
+- **Stable five series**: series assignment belongs to strategy-row identity, not
+  strategy type or current position. Keys one through five use `--brand`,
+  `--positive`, `--negative`, `--muted`, and `--ink`, respectively, combined with
+  distinct solid/dash patterns and explicit legend labels so color is never the
+  sole identifier. Deleting or reordering does not recolor a surviving row.
+- **Tooltip and focus behavior**: pointer hover or tap exposes the nearest dated
+  values; keyboard focus exposes the same readout, starts at the latest date, and
+  supports arrow-key traversal across observations. The active date, strategy
+  name, and formatted value are announced in text. Focus is visibly reinforced
+  with `--brand`; Escape dismisses the readout without losing the chart's place.
+  No value is available only on hover.
+- **Accessibility**: each SVG has a title and description naming date range and
+  metric; legend order follows Strategy Row order; full daily calculations remain
+  represented in the text/table alternative even if the display path is
+  downsampled.
+- **Motion**: tooltip and focus changes use only opacity/transform with existing
+  timing tokens, and reduced motion makes the update immediate.
 
 ### Research Figure
 
