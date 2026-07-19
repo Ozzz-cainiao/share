@@ -123,7 +123,7 @@ All spacing derives from a base of 4px.
 ### Scenario Section
 
 - **Structure**: numbered scenario label, H2 title, concise cash-flow rule, metrics, ledger, and methodology.
-- **Variants**: no-sale benchmark, retained proceeds, recycled proceeds, and partial profit-taking; later strategies append as the next numbered section.
+- **Variants**: no-sale benchmark, retained proceeds, recycled proceeds, partial profit-taking, and trailing-drawdown profit-taking; later strategies append as the next numbered section.
 - **Spacing**: `80px` desktop and `64px` mobile before each scenario.
 - **Accessibility**: scenarios remain in chronological document order with unique heading IDs.
 

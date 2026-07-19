@@ -116,6 +116,31 @@ def render_partial_sections(
 </section>"""
 
 
+def render_drawdown_sections(
+    result: SimpleBacktestResult,
+    annualized_return: float,
+) -> str:
+    summary = result.summary
+    return f"""
+<section aria-labelledby="drawdown-result-title">
+  <div class="section-heading"><p class="overline">RESULT 04</p><h2 id="drawdown-result-title">资金结果</h2></div>
+  <dl class="result-grid">
+    {metric("外部新增投入", money(summary.total_invested), f"{summary.contribution_count} 次月度投入")}
+    {metric("期末总资产", money(summary.total_assets), "资金池与当前持仓合计")}
+    {metric("止盈资金池", money(summary.reserve_pool), "回撤触发后全仓卖出所得")}
+    {metric("当前持仓市值", money(summary.current_holding_value), "定投持续形成的新持仓")}
+    {metric("累计收益率", percent(summary.total_return), "总盈利 ÷ 外部新增投入")}
+    {metric("XIRR 年化收益率", percent(annualized_return), "按真实日期计算")}
+    {metric("总盈利", signed_money(summary.total_profit), "期末总资产减外部投入")}
+    {metric("回撤止盈次数", f"{summary.profit_take_count} 次", "每次出售全部持仓")}
+  </dl>
+</section>
+<section aria-labelledby="drawdown-ledger-title">
+  <div class="section-heading"><p class="overline">LEDGER 04</p><h2 id="drawdown-ledger-title">回撤止盈明细</h2></div>
+  {render_simple_ledger(result)}
+</section>"""
+
+
 def _render_partial_ledger(result: SimpleBacktestResult) -> str:
     rows = "".join(
         "<tr>"

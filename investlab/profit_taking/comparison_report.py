@@ -8,6 +8,7 @@ from investlab.profit_taking.comparison_sections import (
     money,
     percent,
     render_baseline_sections,
+    render_drawdown_sections,
     render_partial_sections,
     render_recycled_sections,
     render_retained_sections,
@@ -23,6 +24,7 @@ def render_comparison_report(
     retained: SimpleBacktestResult,
     recycled: RecycledBacktestResult,
     partial: SimpleBacktestResult,
+    drawdown: SimpleBacktestResult,
     *,
     provider: str,
     checksum: str,
@@ -33,12 +35,13 @@ def render_comparison_report(
     baseline_xirr = calculate_simple_xirr(baseline)
     retained_xirr = calculate_simple_xirr(retained)
     partial_xirr = calculate_simple_xirr(partial)
+    drawdown_xirr = calculate_simple_xirr(drawdown)
     return f"""<!doctype html>
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="沪深300全收益指数持续定投基准与三种止盈方案对比">
+<meta name="description" content="沪深300全收益指数持续定投基准与四种止盈方案对比">
 <title>沪深300定投止盈策略研究</title>
 <style>{CSS}</style>
 </head>
@@ -47,12 +50,12 @@ def render_comparison_report(
   <header class="hero">
     <div>
       <p class="overline">H00300 TOTAL RETURN · PROFIT-TAKING STUDY</p>
-      <h1>一个基准，<br>三种止盈处理方式</h1>
-      <p class="lead">{retained_summary.start_date.isoformat()} 至 {retained_summary.end_date.isoformat()}。每月定投 {contribution} 元；以持续持有、不止盈为基准，<span class="nowrap">对比 {target}%</span> 全部止盈、资金池复投和半仓止盈。</p>
+      <h1>一个基准，<br>四种止盈处理方式</h1>
+      <p class="lead">{retained_summary.start_date.isoformat()} 至 {retained_summary.end_date.isoformat()}。每月定投 {contribution} 元；以持续持有、不止盈为基准，<span class="nowrap">对比</span>全部止盈、资金池复投、半仓止盈和<span class="nowrap">回撤止盈</span>。</p>
     </div>
     <dl class="headline-result">
       <div><dt>共同累计定投</dt><dd>{money(retained_summary.total_invested)}</dd></div>
-      <div><dt>比较组合</dt><dd>4 种</dd></div>
+      <div><dt>比较组合</dt><dd>5 种</dd></div>
     </dl>
   </header>
 
@@ -61,7 +64,7 @@ def render_comparison_report(
       <p class="overline">COMPARISON</p>
       <h2 id="comparison-title">结果对比</h2>
     </div>
-    {_render_comparison_table(baseline, retained, recycled, partial, baseline_xirr, retained_xirr, partial_xirr)}
+    {_render_comparison_table(baseline, retained, recycled, partial, drawdown, baseline_xirr, retained_xirr, partial_xirr, drawdown_xirr)}
   </section>
 
   <article class="scenario" aria-labelledby="scenario-baseline-title">
@@ -108,13 +111,24 @@ def render_comparison_report(
     {render_partial_sections(partial, partial_xirr)}
   </article>
 
+  <article class="scenario" aria-labelledby="scenario-drawdown-title">
+    <header class="scenario-header">
+      <div><span class="scenario-number">方案 04</span></div>
+      <div>
+        <h2 id="scenario-drawdown-title">方案四：收益达到 {target}% 后，<span class="nowrap">回撤 10%</span> 全部止盈</h2>
+        <p>本轮收益达到 {target}% 时启动跟踪；此后峰值随指数<span class="nowrap">创新高</span>而上移，从峰值回撤 10% 时全部卖出，<span class="nowrap">月度定投</span>持续进行。</p>
+      </div>
+    </header>
+    {render_drawdown_sections(drawdown, drawdown_xirr)}
+  </article>
+
   <section class="method" aria-labelledby="shared-method-title">
     <div>
       <p class="overline">SHARED METHOD</p>
       <h2 id="shared-method-title">共同口径</h2>
     </div>
     <div class="method-copy">
-      <p>四组回测使用完全相同的 H00300 全收益指数、定投日期和月度金额。基准从不止盈；<span class="nowrap">方案一和方案二</span>达到 {target}% 时卖出全部持仓；方案三卖出 50% 持仓并重置剩余仓位的成本基准。</p>
+      <p>五组回测使用完全相同的 H00300 全收益指数、定投日期和月度金额。基准从不止盈；<span class="nowrap">方案一和方案二</span>达到 {target}% 时卖出全部持仓；方案三卖出 50%；方案四在达到 {target}% 后跟踪价格峰值，回撤 10% 时卖出全部持仓。</p>
       <p>累计收益率均使用“总盈利 ÷ 外部新增投入”。XIRR 将真实日期上的外部投入记为负现金流，将期末全部资产记为正现金流。</p>
       <p>“相对基准盈利差额”只比较期末盈利金额。方案二的外部投入较少，判断效率时应同时参考累计收益率和 XIRR。</p>
       <p class="source">数据：{html.escape(provider)} · SHA-256 {html.escape(checksum)} · 原始 H00300 <span class="nowrap">全收益指数</span>。</p>
@@ -133,6 +147,7 @@ def write_comparison_report(
     retained: SimpleBacktestResult,
     recycled: RecycledBacktestResult,
     partial: SimpleBacktestResult,
+    drawdown: SimpleBacktestResult,
     *,
     provider: str,
     checksum: str,
@@ -145,6 +160,7 @@ def write_comparison_report(
             retained,
             recycled,
             partial,
+            drawdown,
             provider=provider,
             checksum=checksum,
         ),
@@ -158,14 +174,17 @@ def _render_comparison_table(
     retained: SimpleBacktestResult,
     recycled: RecycledBacktestResult,
     partial: SimpleBacktestResult,
+    drawdown: SimpleBacktestResult,
     baseline_xirr: float,
     retained_xirr: float,
     partial_xirr: float,
+    drawdown_xirr: float,
 ) -> str:
     reference = baseline.summary
     first = retained.summary
     second = recycled.summary
     third = partial.summary
+    fourth = drawdown.summary
     rows = (
         (
             "外部新增投入",
@@ -173,6 +192,7 @@ def _render_comparison_table(
             money(first.total_invested),
             money(second.external_invested),
             money(third.total_invested),
+            money(fourth.total_invested),
         ),
         (
             "期末总资产",
@@ -180,6 +200,7 @@ def _render_comparison_table(
             money(first.total_assets),
             money(second.total_assets),
             money(third.total_assets),
+            money(fourth.total_assets),
         ),
         (
             "总盈利",
@@ -187,6 +208,7 @@ def _render_comparison_table(
             signed_money(first.total_profit),
             signed_money(second.total_profit),
             signed_money(third.total_profit),
+            signed_money(fourth.total_profit),
         ),
         (
             "相对基准盈利差额",
@@ -194,6 +216,7 @@ def _render_comparison_table(
             signed_money(first.total_profit - reference.total_profit),
             signed_money(second.total_profit - reference.total_profit),
             signed_money(third.total_profit - reference.total_profit),
+            signed_money(fourth.total_profit - reference.total_profit),
         ),
         (
             "累计收益率",
@@ -201,6 +224,7 @@ def _render_comparison_table(
             percent(first.total_return),
             percent(second.cumulative_return),
             percent(third.total_return),
+            percent(fourth.total_return),
         ),
         (
             "XIRR 年化收益率",
@@ -208,6 +232,7 @@ def _render_comparison_table(
             percent(retained_xirr),
             percent(second.annualized_return),
             percent(partial_xirr),
+            percent(drawdown_xirr),
         ),
         (
             "止盈次数",
@@ -215,17 +240,19 @@ def _render_comparison_table(
             f"{first.profit_take_count} 次",
             f"{second.profit_take_count} 次",
             f"{third.profit_take_count} 次",
+            f"{fourth.profit_take_count} 次",
         ),
     )
     body = "".join(
         f'<tr><th scope="row">{label}</th><td>{reference_value}</td>'
-        f"<td>{first_value}</td><td>{second_value}</td><td>{third_value}</td></tr>"
-        for label, reference_value, first_value, second_value, third_value in rows
+        f"<td>{first_value}</td><td>{second_value}</td><td>{third_value}</td>"
+        f"<td>{fourth_value}</td></tr>"
+        for label, reference_value, first_value, second_value, third_value, fourth_value in rows
     )
     return f"""<div class="table-wrap" tabindex="0">
 <table class="comparison-table">
 <caption>相同市场投入计划下的资金结果</caption>
-<thead><tr><th scope="col">指标</th><th scope="col">持续定投不止盈</th><th scope="col">止盈所得不投入</th><th scope="col">止盈所得全部投入</th><th scope="col">每次止盈 50%</th></tr></thead>
+<thead><tr><th scope="col">指标</th><th scope="col">持续定投不止盈</th><th scope="col">止盈所得不投入</th><th scope="col">止盈所得全部投入</th><th scope="col">每次止盈 50%</th><th scope="col">20% 激活 / 回撤 10%</th></tr></thead>
 <tbody>{body}</tbody>
 </table>
 </div>"""
