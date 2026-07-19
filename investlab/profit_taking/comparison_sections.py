@@ -15,6 +15,31 @@ from investlab.profit_taking.simple_report import (
 )
 
 
+def render_baseline_sections(
+    result: SimpleBacktestResult,
+    annualized_return: float,
+) -> str:
+    summary = result.summary
+    return f"""
+<section aria-labelledby="baseline-result-title">
+  <div class="section-heading"><p class="overline">RESULT 00</p><h2 id="baseline-result-title">基准结果</h2></div>
+  <dl class="result-grid">
+    {metric("外部新增投入", money(summary.total_invested), f"{summary.contribution_count} 次月度投入")}
+    {metric("期末总资产", money(summary.total_assets), "全部资金持续留在市场")}
+    {metric("当前持仓市值", money(summary.current_holding_value), "没有卖出或转入资金池")}
+    {metric("止盈资金池", money(summary.reserve_pool), "基准策略从不止盈")}
+    {metric("累计收益率", percent(summary.total_return), "总盈利 ÷ 外部新增投入")}
+    {metric("XIRR 年化收益率", percent(annualized_return), "按真实日期计算")}
+    {metric("总盈利", signed_money(summary.total_profit), "期末总资产减外部投入")}
+    {metric("止盈次数", f"{summary.profit_take_count} 次", "作为其他方案的比较基准")}
+  </dl>
+</section>
+<section aria-labelledby="baseline-chart-title">
+  <div class="section-heading"><p class="overline">TRAJECTORY 00</p><h2 id="baseline-chart-title">基准资产轨迹</h2></div>
+  {render_simple_chart(result)}
+</section>"""
+
+
 def render_retained_sections(
     result: SimpleBacktestResult,
     annualized_return: float,
