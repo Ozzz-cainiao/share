@@ -112,6 +112,24 @@ All spacing derives from a base of 4px.
 - **Accessibility**: real anchor with `href`.
 - **Motion**: none.
 
+### Result Strip
+
+- **Structure**: semantic definition list with the terminal value and total profit.
+- **Variants**: neutral value and signed profit.
+- **Spacing**: `24px` inner spacing.
+- **States**: static content; positive and negative values retain explicit signs.
+- **Accessibility**: labels precede values in DOM order; color never carries meaning alone.
+- **Motion**: none.
+
+### Research Figure
+
+- **Structure**: title, inline SVG trajectory, legend, and text-equivalent ledger.
+- **Variants**: total assets, cumulative contribution, reserve pool.
+- **Spacing**: `24px` inner spacing.
+- **States**: static with responsive scaling.
+- **Accessibility**: SVG includes title and description; source data remains downloadable as CSV.
+- **Motion**: none.
+
 ## 6. Motion & Interaction
 
 ### Timing
