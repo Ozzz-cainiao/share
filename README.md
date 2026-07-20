@@ -205,3 +205,49 @@ node scripts/export_watermarked_tables.mjs \
 `.github/workflows/publish.yml` 在推送到 `main` 时自动：构建 rolling-returns 与 dca-comparison 场景输出 → 构建 `dist/site` → 导出带水印长图 → 通过 `actions/upload-pages-artifact` 与 `actions/deploy-pages` 部署到 GitHub Pages。仓库不再依赖手动提交的 `docs/` 作为发布源（`docs/index.html` 已标注 `GENERATED`，仅作历史快照保留）。
 
 新增标的时编辑 `asset_catalog.py`；新增公开表格类型时在 `investlab/publish/report_registry.py` 的 `REPORT_REGISTRY` 中登记。
+
+## 12. 技术指标择时研报复现
+
+`technical-timing` 场景复现《精选 32 个技术指标在指数上的择时能力分析》的默认参数单指标择时框架：2010-01-04 至 2023-08-31、日频、纯多头、手续费万分之三，并输出每个指标的夏普、年化收益、年化超额、年化波动、持仓胜率、赔率、最大回撤和年均换仓次数。
+
+默认使用 AkShare 公开指数日线 OHLCV，覆盖论文中的沪深 300、中证 500、中证 1000、国证 2000、创业板指五个指数：
+
+```bash
+uv run python -m investlab.cli run technical-timing \
+  --assets all \
+  --start-date 2010-01-04 \
+  --end-date 2023-08-31 \
+  --output-dir output/technical_timing
+```
+
+如果有 Wind/东方财富导出的 OHLCV 数据，可放在同一目录下并按 `<asset-key>.csv` 命名，例如 `large-cap.csv`，列名支持中文 `日期/开盘/最高/最低/收盘/成交量` 或英文 `date/open/high/low/close/volume`。传入 `--csv-dir` 后会优先读取本地 CSV：
+
+```bash
+uv run python -m investlab.cli run technical-timing \
+  --assets large-cap \
+  --csv-dir data/technical_timing \
+  --output-dir output/technical_timing
+```
+
+输出：
+
+- `<asset-key>_ohlcv.csv`：本次回测实际使用的 OHLCV，可用于审计和复跑。
+- `<asset-key>_summary.csv`：32 个技术指标的回测统计量。
+- `<asset-key>_equity_curves.csv`：基准与 32 个指标策略的净值曲线。
+- `<asset-key>_equity_all.png`：全部指标净值折线图。
+- `<asset-key>_equity_trend.png`、`<asset-key>_equity_momentum.png`、`<asset-key>_equity_volatility.png`、`<asset-key>_equity_volume.png`：按指标类别拆分后的净值折线图。
+- `<asset-key>_signals.csv`：各指标每日买入/卖出信号。
+
+论文五个资产 key：`large-cap`（沪深 300）、`mid-cap`（中证 500）、`small-cap`（中证 1000）、`guozheng2000`（国证 2000）、`chinext`（创业板指）。
+
+各指标含义、计算方法和信号规则见 `docs/technical_indicators.md`。
+
+可用 PDF 中结构化较可靠的沪深 300 表格做一致性对比：
+
+```bash
+uv run python scripts/compare_technical_timing_paper.py \
+  --summary output/technical_timing/large-cap_summary.csv \
+  --output output/technical_timing/hs300_paper_comparison.csv
+```
+
+当前对比基准包含论文表 4（趋势类 8 个指标）和表 22（成交量类 6 个指标）。波动类与动量类表格在 PDF 文本抽取中存在跨列混排，未写入自动基准，避免引入不可靠的人工录数。

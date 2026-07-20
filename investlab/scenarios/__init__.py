@@ -15,6 +15,7 @@ from investlab.scenarios.dca_matrix import (
 from investlab.scenarios import framework_scenario  # noqa: F401 — triggers registration
 from investlab.scenarios import rolling_returns_scenario  # noqa: F401 — triggers registration
 from investlab.scenarios import dca_comparison_scenario  # noqa: F401 — triggers registration
+from investlab.scenarios import technical_timing_scenario  # noqa: F401 — triggers registration
 
 __all__ = [
     "SCENARIO_REGISTRY",
