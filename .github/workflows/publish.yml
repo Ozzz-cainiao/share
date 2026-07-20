@@ -41,6 +41,9 @@ jobs:
       - name: Build static site
         run: |
           uv run python -m investlab.cli publish site --assets all --end-year 2025 --input-root tmp --site-dir dist/site --rebalance-html tmp/rebalance/rebalance_comparison.html
+      - name: Build DCA calculator
+        run: |
+          uv run python -m investlab.profit_taking.calculator_runner --output-dir dist/site/calculator
       - name: Install Playwright
         run: |
           npm install playwright
