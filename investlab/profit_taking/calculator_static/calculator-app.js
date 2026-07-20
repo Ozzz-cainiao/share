@@ -123,15 +123,27 @@
     try {
       const response = await fetch("./assets/h00300-prices.json");
       if (!response.ok) throw new Error(`数据文件响应 ${response.status}`);
-      payload = await response.json();
-      const coverage = payload.provenance.actual_coverage;
-      startInput.value = coverage[0];
-      endInput.value = coverage[1];
-      startInput.min = coverage[0];
-      startInput.max = coverage[1];
-      endInput.min = coverage[0];
-      endInput.max = coverage[1];
-      dataState.textContent = `${coverage[0]} 至 ${coverage[1]} · ${payload.provenance.provider} · SHA-256 ${payload.provenance.checksum_sha256}`;
+      const payloadText = await response.text();
+      const expectedChecksum = document.querySelector(
+        'meta[name="calculator-data-sha256"]',
+      )?.content;
+      const expectedPayloadChecksum = document.querySelector(
+        'meta[name="calculator-payload-sha256"]',
+      )?.content;
+      payload = await CalculatorIntegrity.verifyPayloadText(
+        payloadText,
+        expectedPayloadChecksum || "",
+        expectedChecksum || "",
+      );
+      const requestedCoverage = payload.provenance.requested_coverage;
+      const actualCoverage = payload.provenance.actual_coverage;
+      startInput.value = requestedCoverage[0];
+      endInput.value = requestedCoverage[1];
+      startInput.min = requestedCoverage[0];
+      startInput.max = requestedCoverage[1];
+      endInput.min = requestedCoverage[0];
+      endInput.max = requestedCoverage[1];
+      dataState.textContent = `数据快照截至 ${actualCoverage[1]}；可选 ${requestedCoverage[0]} 至 ${requestedCoverage[1]}；实际交易数据 ${actualCoverage[0]} 至 ${actualCoverage[1]} · ${payload.provenance.provider} · SHA-256 ${payload.provenance.checksum_sha256}`;
       status.textContent = "数据已载入。请设置参数并点击“开始计算”。";
     } catch (error) {
       status.classList.add("error");
@@ -185,7 +197,7 @@
         startDate: startInput.value,
         endDate: endInput.value,
         rows,
-      });
+      }, payload.provenance.requested_coverage);
       const results = CalculatorCore.runCalculator(payload.prices, request);
       lastValidResults = results;
       const resultsSummary = document.querySelector("#results-summary");

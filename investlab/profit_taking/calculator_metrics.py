@@ -3,8 +3,6 @@ from __future__ import annotations
 import math
 from typing import Final
 
-import pandas as pd  # noqa: PANDAS_OK
-
 from investlab.profit_taking.calculator_models import (
     CalculatorEvent,
     CalculatorEventType,
@@ -12,9 +10,12 @@ from investlab.profit_taking.calculator_models import (
     CalculatorValidationError,
     DailyState,
 )
-from investlab.utils import xirr
 
 _TOLERANCE: Final = 1e-10
+_XIRR_MAX_RATE: Final = 1_000_000_000_000.0
+_XIRR_MAX_ITERATIONS: Final = 256
+_XIRR_NPV_TOLERANCE: Final = 1e-12
+_XIRR_RATE_TOLERANCE: Final = 1e-12
 
 
 def contribution_neutral_nav(
@@ -114,10 +115,52 @@ def _external_xirr(
     if states[0].date == states[-1].date:
         return None
     cashflows = [
-        (pd.Timestamp(state.date), -state.external_contribution)
+        (state.date, -state.external_contribution)
         for state in states
         if state.external_contribution > 0
     ]
-    cashflows.append((pd.Timestamp(states[-1].date), terminal_assets))
-    value = xirr(cashflows)
-    return value if math.isfinite(value) else None
+    cashflows.append((states[-1].date, terminal_assets))
+    origin = cashflows[0][0]
+
+    def net_present_value(rate: float) -> float:
+        return sum(
+            amount / (1.0 + rate) ** ((flow_date - origin).days / 365.25)
+            for flow_date, amount in cashflows
+        )
+
+    low = -0.9999
+    high = 10.0
+    npv_low = net_present_value(low)
+    npv_high = net_present_value(high)
+    if not math.isfinite(npv_low) or not math.isfinite(npv_high):
+        return None
+    for exponent in range(5, 13):
+        if npv_low * npv_high <= 0:
+            break
+        candidate = -(1.0 - 10.0**-exponent)
+        candidate_npv = net_present_value(candidate)
+        if not math.isfinite(candidate_npv):
+            break
+        low, npv_low = candidate, candidate_npv
+    while npv_low * npv_high > 0 and high < _XIRR_MAX_RATE:
+        high = min(high * 2.0, _XIRR_MAX_RATE)
+        npv_high = net_present_value(high)
+        if not math.isfinite(npv_high):
+            return None
+    if npv_low * npv_high > 0:
+        return None
+    for _ in range(_XIRR_MAX_ITERATIONS):
+        middle = (low + high) / 2.0
+        npv_middle = net_present_value(middle)
+        if not math.isfinite(npv_middle):
+            return None
+        if abs(npv_middle) < _XIRR_NPV_TOLERANCE or high - low <= (
+            _XIRR_RATE_TOLERANCE * max(1.0, abs(middle))
+        ):
+            return middle
+        if npv_low * npv_middle < 0:
+            high = middle
+        else:
+            low = middle
+            npv_low = npv_middle
+    return None

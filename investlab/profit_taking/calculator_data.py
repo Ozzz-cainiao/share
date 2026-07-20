@@ -10,6 +10,7 @@ from typing import Final, TypedDict
 import pandas as pd  # noqa: PANDAS_OK
 
 from investlab.profit_taking.data import (
+    H00300_PROVIDER,
     H00300_SYMBOL,
     DataProvenance,
     H00300DataError,
@@ -55,6 +56,7 @@ def build_calculator_payload(
     loader: RawH00300Loader | None = None,
     cached_price_csv: Path | None = None,
     expected_checksum_sha256: str | None = None,
+    provider: str = H00300_PROVIDER,
     retrieved_at_utc: datetime | None = None,
 ) -> str:
     if loader is not None and cached_price_csv is not None:
@@ -70,6 +72,7 @@ def build_calculator_payload(
             requested_start,
             requested_end,
             loader=selected_loader,
+            provider=provider,
             retrieved_at_utc=retrieved_at_utc,
         )
     except H00300DataError as error:
@@ -118,6 +121,7 @@ def write_calculator_payload(
     loader: RawH00300Loader | None = None,
     cached_price_csv: Path | None = None,
     expected_checksum_sha256: str | None = None,
+    provider: str = H00300_PROVIDER,
     retrieved_at_utc: datetime | None = None,
 ) -> Path:
     relative_path = _parse_asset_path(asset_path)
@@ -128,6 +132,7 @@ def write_calculator_payload(
         loader=loader,
         cached_price_csv=cached_price_csv,
         expected_checksum_sha256=expected_checksum_sha256,
+        provider=provider,
         retrieved_at_utc=retrieved_at_utc,
     )
     destination = _resolved_destination(output_dir, relative_path)

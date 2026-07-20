@@ -20,6 +20,7 @@ _CLEANING_ACTIONS: Final = (
     "duplicate_dates_last_value_wins",
     "invalid_dates_dropped",
     "missing_nonfinite_nonpositive_closes_dropped",
+    "synthetic_nontrading_requested_boundary_dropped",
     "missing_observations_not_forward_filled",
     "annual_1.026_adjustment_bypassed",
 )
@@ -116,6 +117,7 @@ def _normalize_raw_frame(
         (frame["date"] >= requested_start_timestamp)
         & (frame["date"] <= requested_end_timestamp)
     ]
+    frame = frame.loc[frame["date"].dt.dayofweek < 5]
     prices = pd.Series(
         frame["close"].astype(float).to_numpy(),
         index=pd.DatetimeIndex(frame["date"].to_numpy(), name=None),
@@ -154,6 +156,7 @@ def load_h00300_prices(
     requested_end: date | str,
     *,
     loader: RawH00300Loader | None = None,
+    provider: str = H00300_PROVIDER,
     retrieved_at_utc: datetime | None = None,
 ) -> tuple[pd.Series, DataProvenance]:
     """Load only raw H00300 total-return closes and return auditable provenance."""
@@ -176,7 +179,7 @@ def load_h00300_prices(
     )
     checksum = hashlib.sha256(canonical_price_bytes(normalized.prices)).hexdigest()
     provenance = DataProvenance(
-        provider=H00300_PROVIDER,
+        provider=provider,
         retrieved_at_utc=retrieved_at,
         requested_start=start,
         requested_end=end,

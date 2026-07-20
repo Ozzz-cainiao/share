@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "symbol": "H00300",
+  "provider": "csindex_tri (AkShare stock_zh_index_hist_csindex)",
+  "retrieved_at_utc": "2026-07-17T00:00:00Z",
+  "requested_coverage": ["2006-01-01", "2026-07-17"],
+  "source_row_count": 4990,
+  "source_payload_sha256": "6afcedad8b0299dab5f564f10ac094d18a781827510d24afc145c1a742a91e62",
+  "normalized_coverage": ["2006-01-04", "2026-07-17"],
+  "normalized_row_count": 4989,
+  "normalized_checksum_sha256": "c0ee2e9f895525f4644d5cd2e039c4b6e37c4ce5c8575a143779bacd5ad2a8ce"
+}

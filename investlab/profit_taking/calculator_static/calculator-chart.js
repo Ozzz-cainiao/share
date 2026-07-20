@@ -106,7 +106,7 @@
     }).join("");
     return `<figure class="research-figure" data-chart-id="${chartId}"><h3>${title}</h3>
       <ul class="chart-legend" aria-label="图例">${legend}</ul>
-      <div class="chart-frame"><svg viewBox="0 0 ${WIDTH} ${HEIGHT}" role="img" tabindex="0" aria-labelledby="${chartId}-title ${chartId}-desc">
+      <div class="chart-frame chart-scroll" tabindex="0" aria-label="${title}图表，可横向滚动"><svg viewBox="0 0 ${WIDTH} ${HEIGHT}" role="img" tabindex="0" aria-labelledby="${chartId}-title ${chartId}-desc">
         <title id="${chartId}-title">${title}</title><desc id="${chartId}-desc">${start} 至 ${end}，纵轴 ${axes.unit}，横轴为交易日期，${model.series.length} 个策略；方向键可逐日读取数值。</desc>
         ${axes.markup}
         <line class="axis" x1="${PAD.left}" y1="${PAD.top}" x2="${PAD.left}" y2="${HEIGHT - PAD.bottom}"></line>
@@ -129,9 +129,12 @@
       ["在场率（持仓交易日÷区间交易日）", "timeInMarket", formatPercent],
       ["止盈次数", "stopCount", (value) => String(value)],
     ];
-    const head = cells.map(([label]) => `<th scope="col">${label}</th>`).join("");
-    const body = results.map((result) => `<tr><th scope="row">${escapeHtml(result.config.name)}</th>${cells.map(([, key, formatter]) => `<td>${formatter(result.summary[key])}</td>`).join("")}</tr>`).join("");
-    return `<div class="table-scroll" tabindex="0" aria-label="策略结果表，可横向滚动"><p class="scroll-instruction">窄屏可横向滚动查看全部指标。</p><table class="results-table"><caption>请求区间 ${coverage.requestedStart} 至 ${coverage.requestedEnd}；实际交易日 ${coverage.actualStart} 至 ${coverage.actualEnd}</caption><thead><tr><th scope="col">策略</th>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+    const head = results.map((result) =>
+      `<th scope="col">${escapeHtml(result.config.name)}</th>`).join("");
+    const body = cells.map(([label, key, formatter]) =>
+      `<tr><th scope="row">${label}</th>${results.map((result) =>
+        `<td>${formatter(result.summary[key])}</td>`).join("")}</tr>`).join("");
+    return `<div class="table-scroll" tabindex="0" aria-label="策略结果表，可横向滚动"><p class="scroll-instruction">窄屏可横向滚动查看全部策略。</p><table class="results-table"><caption>请求区间 ${coverage.requestedStart} 至 ${coverage.requestedEnd}；实际交易日 ${coverage.actualStart} 至 ${coverage.actualEnd}</caption><thead><tr><th scope="col">指标</th>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
   }
 
   function renderResultsMarkup(results, coverage, rowStyles = coverage.rowStyles || []) {

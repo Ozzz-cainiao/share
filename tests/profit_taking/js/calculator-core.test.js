@@ -17,10 +17,15 @@ const PRICES = [
   ["2024-01-15", 120],
   ["2024-02-01", 120],
 ];
+const COVERAGE_2024 = ["2024-01-01", "2024-12-31"];
 const GOLDEN = JSON.parse(fs.readFileSync(
   path.join(__dirname, "../golden/calculator_parity.json"),
   "utf8",
 ));
+const APP_SOURCE = fs.readFileSync(
+  path.join(__dirname, "../../../investlab/profit_taking/calculator_static/calculator-app.js"),
+  "utf8",
+);
 
 function assertClose(actual, expected, label) {
   if (expected === null) {
@@ -48,6 +53,10 @@ function targetRow(overrides = {}) {
   };
 }
 
+function parse2024(input) {
+  return parseRequest(input, COVERAGE_2024);
+}
+
 test("contributionDates emits the first close in every supported period", () => {
   // Given: four observations spanning ISO weeks, 14-day buckets, months, and quarters.
   const dates = PRICES.map(([date]) => date);
@@ -73,7 +82,7 @@ test("contributionDates emits the first close in every supported period", () => 
 
 test("runCalculator sells before a same-close contribution", () => {
   // Given: a monthly strategy reaches its exact target on February's contribution date.
-  const request = parseRequest({
+  const request = parse2024({
     startDate: "2024-01-02",
     endDate: "2024-02-01",
     rows: [targetRow()],
@@ -96,7 +105,7 @@ test("runCalculator sells before a same-close contribution", () => {
 
 test("runCalculator uses recycled proceeds before external cash", () => {
   // Given: a full target sale recycles its proceeds.
-  const request = parseRequest({
+  const request = parse2024({
     startDate: "2024-01-02",
     endDate: "2024-02-01",
     rows: [targetRow({ recycleProceeds: true })],
@@ -113,7 +122,7 @@ test("runCalculator uses recycled proceeds before external cash", () => {
 
 test("runCalculator waits for the exact trailing drawdown threshold", () => {
   // Given: a trailing strategy is armed at 120 and remains just above a 10% drawdown.
-  const request = parseRequest({
+  const request = parse2024({
     startDate: "2024-01-02",
     endDate: "2024-01-05",
     rows: [targetRow({ stopFamily: "trailing_drawdown", trailingDrawdown: "10" })],
@@ -133,7 +142,7 @@ test("runCalculator waits for the exact trailing drawdown threshold", () => {
 
 test("runCalculator sells at the inclusive trailing drawdown threshold", () => {
   // Given: a trailing strategy is armed and peaks at 130.
-  const request = parseRequest({
+  const request = parse2024({
     startDate: "2024-01-02",
     endDate: "2024-01-05",
     rows: [targetRow({ stopFamily: "trailing_drawdown", trailingDrawdown: "10" })],
@@ -166,8 +175,8 @@ test("parseRequest rejects malformed and sixth-row input", () => {
   };
 
   // When/Then: both boundaries fail with field-addressable validation errors.
-  assert.throws(() => parseRequest(malformed), { name: "CalculatorValidationError" });
-  assert.throws(() => parseRequest(tooMany), /一至五/);
+  assert.throws(() => parse2024(malformed), { name: "CalculatorValidationError" });
+  assert.throws(() => parse2024(tooMany), /一至五/);
 });
 
 test("parseRequest clears stop-only values for a no-stop strategy", () => {
@@ -187,7 +196,7 @@ test("parseRequest clears stop-only values for a no-stop strategy", () => {
   };
 
   // When: the browser boundary parses the request.
-  const request = parseRequest(input);
+  const request = parse2024(input);
 
   // Then: inactive values cannot leak into the calculation.
   assert.deepEqual(
@@ -204,6 +213,61 @@ test("parseRequest clears stop-only values for a no-stop strategy", () => {
       recycleProceeds: false,
     },
   );
+});
+
+test("parseRequest rejects both requested coverage boundaries and inverted dates", () => {
+  // Given: the manifest allows requested dates from 2006-01-01 through 2026-07-17.
+  const coverage = ["2006-01-01", "2026-07-17"];
+  const input = {
+    startDate: "2006-01-01",
+    endDate: "2026-07-17",
+    rows: [targetRow()],
+  };
+
+  // When/Then: pre-coverage, post-coverage, and inverted requests identify the date field.
+  assert.throws(
+    () => parseRequest({ ...input, startDate: "2005-12-31" }, coverage),
+    { field: "startDate" },
+  );
+  assert.throws(
+    () => parseRequest({ ...input, endDate: "2027-01-01" }, coverage),
+    { field: "endDate" },
+  );
+  assert.throws(
+    () => parseRequest({ ...input, startDate: "2026-01-02", endDate: "2025-01-02" }, coverage),
+    { field: "endDate" },
+  );
+});
+
+test("runCalculator accepts an in-coverage weekend and reports the inward trading date", () => {
+  // Given: requested coverage starts on Sunday 2006-01-01, before the first close.
+  const request = parseRequest({
+    startDate: "2006-01-01",
+    endDate: "2006-01-06",
+    rows: [targetRow()],
+  }, ["2006-01-01", "2026-07-17"]);
+
+  // When: the valid request runs against prices beginning on 2006-01-04.
+  const [result] = runCalculator([
+    ["2006-01-04", 100],
+    ["2006-01-05", 101],
+    ["2006-01-06", 102],
+  ], request);
+
+  // Then: the requested weekend is retained while actual coverage rounds inward.
+  assert.equal(request.startDate, "2006-01-01");
+  assert.equal(result.dailyStates[0].date, "2006-01-04");
+});
+
+test("browser form binds manifest requested coverage and preserves date error focus", () => {
+  // Given: the static browser controller is the date-input boundary.
+  // When/Then: it binds requested coverage, passes it to parsing, and focuses invalid controls.
+  assert.match(APP_SOURCE, /payload\.provenance\.requested_coverage/);
+  assert.match(APP_SOURCE, /startInput\.min = requestedCoverage\[0\]/);
+  assert.match(APP_SOURCE, /endInput\.max = requestedCoverage\[1\]/);
+  assert.match(APP_SOURCE, /parseRequest\([\s\S]*payload\.provenance\.requested_coverage\)/);
+  assert.match(APP_SOURCE, /control\.focus\(\)/);
+  assert.match(APP_SOURCE, /dataset\.stale = "true"/);
 });
 
 test("runCalculator matches every Python golden parity case", () => {
@@ -228,7 +292,7 @@ test("runCalculator matches every Python golden parity case", () => {
         saleFraction: percent(config.sale_fraction),
         recycleProceeds: config.recycle_proceeds,
       }],
-    });
+    }, [fixture.requested_start, fixture.requested_end]);
     const [actual] = runCalculator(
       fixture.prices.map((point) => [point.date, point.close]),
       request,

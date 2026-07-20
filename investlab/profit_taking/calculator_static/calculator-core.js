@@ -12,6 +12,7 @@
 
   const CADENCES = new Set(["daily", "weekly", "biweekly", "monthly", "quarterly"]);
   const STOP_FAMILIES = new Set(["none", "target_return", "trailing_drawdown"]);
+  const XIRR_MAX_RATE = 1000000000000;
 
   function parseIsoDate(value, field) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(value))
@@ -37,11 +38,7 @@
     const name = String(input.name || "").trim();
     if (!name) throw new CalculatorValidationError(`${prefix}.name`, "请输入方案名称");
     const contributionAmount = parseDecimal(
-      input.contributionAmount,
-      `${prefix}.contributionAmount`,
-      1,
-      10000000,
-      2,
+      input.contributionAmount, `${prefix}.contributionAmount`, 1, 10000000, 2,
     );
     if (!CADENCES.has(input.cadence))
       throw new CalculatorValidationError(`${prefix}.cadence`, "未知定投频率");
@@ -60,37 +57,33 @@
     };
     if (input.stopFamily === "none") return Object.freeze(row);
     row.targetReturn = parseDecimal(
-      input.targetReturn,
-      `${prefix}.targetReturn`,
-      0.1,
-      500,
-      1,
+      input.targetReturn, `${prefix}.targetReturn`, 0.1, 500, 1,
     ) / 100;
     row.saleFraction = parseDecimal(
-      input.saleFraction,
-      `${prefix}.saleFraction`,
-      0.1,
-      100,
-      1,
+      input.saleFraction, `${prefix}.saleFraction`, 0.1, 100, 1,
     ) / 100;
     row.recycleProceeds = input.recycleProceeds === true;
     if (input.stopFamily === "trailing_drawdown") {
       row.trailingDrawdown = parseDecimal(
-        input.trailingDrawdown,
-        `${prefix}.trailingDrawdown`,
-        0.1,
-        99,
-        1,
+        input.trailingDrawdown, `${prefix}.trailingDrawdown`, 0.1, 99, 1,
       ) / 100;
     }
     return Object.freeze(row);
   }
 
-  function parseRequest(input) {
+  function parseRequest(input, requestedCoverage) {
+    if (!Array.isArray(requestedCoverage) || requestedCoverage.length !== 2)
+      throw new CalculatorValidationError("dateRange", "缺少数据可选日期范围");
+    const coverageStart = parseIsoDate(String(requestedCoverage[0]), "dateRange");
+    const coverageEnd = parseIsoDate(String(requestedCoverage[1]), "dateRange");
     const startDate = parseIsoDate(String(input.startDate || ""), "startDate");
     const endDate = parseIsoDate(String(input.endDate || ""), "endDate");
     if (startDate > endDate)
       throw new CalculatorValidationError("endDate", "结束日期不能早于开始日期");
+    if (startDate < coverageStart)
+      throw new CalculatorValidationError("startDate", `不能早于 ${coverageStart}`);
+    if (endDate > coverageEnd)
+      throw new CalculatorValidationError("endDate", `不能晚于 ${coverageEnd}`);
     if (!Array.isArray(input.rows) || input.rows.length < 1 || input.rows.length > 5)
       throw new CalculatorValidationError("rows", "策略数量必须为一至五个");
     return Object.freeze({
@@ -163,15 +156,28 @@
       return total + amount / ((1 + rate) ** (days / 365.25));
     }, 0);
     let low = -0.9999, high = 10, npvLow = xnpv(low), npvHigh = xnpv(high);
-    if (!Number.isFinite(npvLow) || !Number.isFinite(npvHigh) || npvLow * npvHigh > 0) return null;
-    for (let iteration = 0; iteration < 200; iteration += 1) {
+    if (!Number.isFinite(npvLow) || !Number.isFinite(npvHigh)) return null;
+    for (let exponent = 5; exponent <= 12 && npvLow * npvHigh > 0; exponent += 1) {
+      const candidate = -(1 - 10 ** -exponent), candidateNpv = xnpv(candidate);
+      if (!Number.isFinite(candidateNpv)) break;
+      low = candidate;
+      npvLow = candidateNpv;
+    }
+    while (npvLow * npvHigh > 0 && high < XIRR_MAX_RATE) {
+      high = Math.min(high * 2, XIRR_MAX_RATE);
+      npvHigh = xnpv(high);
+      if (!Number.isFinite(npvHigh)) return null;
+    }
+    if (npvLow * npvHigh > 0) return null;
+    for (let iteration = 0; iteration < 256; iteration += 1) {
       const middle = (low + high) / 2, npvMiddle = xnpv(middle);
-      if (Math.abs(npvMiddle) < 1e-10) return middle;
+      if (!Number.isFinite(npvMiddle)) return null;
+      if (Math.abs(npvMiddle) < 1e-12 ||
+          high - low <= 1e-12 * Math.max(1, Math.abs(middle))) return middle;
       if (npvLow * npvMiddle < 0) high = middle;
       else { low = middle; npvLow = npvMiddle; }
     }
-    const result = (low + high) / 2;
-    return Number.isFinite(result) ? result : null;
+    return null;
   }
 
   function simulate(prices, config) {

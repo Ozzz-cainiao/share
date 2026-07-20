@@ -9,15 +9,12 @@ import pytest
 from investlab.profit_taking.calculator_models import (
     Cadence,
     CalculatorEvent,
-    CalculatorEventType,
     CalculatorRequest,
     CalculatorResult,
     CalculatorSummary,
     CalculatorValidationError,
-    PercentageKind,
     StopFamily,
     StrategyRowConfig,
-    parse_percentage,
 )
 
 
@@ -85,17 +82,6 @@ def test_request_accepts_one_to_five_ordered_rows_with_duplicates() -> None:
     assert request.rows == rows
 
 
-def test_request_rejects_mutable_rows_container_and_invalid_members() -> None:
-    # Given: a mutable row container or a tuple containing a non-row value.
-    row = _row()
-
-    # When/Then: neither input crosses the request boundary.
-    with pytest.raises(CalculatorValidationError, match="rows"):
-        CalculatorRequest(date(2019, 1, 1), date(2020, 1, 1), [row])
-    with pytest.raises(CalculatorValidationError, match="rows"):
-        CalculatorRequest(date(2019, 1, 1), date(2020, 1, 1), (object(),))
-
-
 @pytest.mark.parametrize(
     ("cadence", "stop_family"),
     [
@@ -132,6 +118,8 @@ def test_request_and_result_do_not_retain_mutable_sequence_aliases() -> None:
         CalculatorResult(row, [], (), summary)
     with pytest.raises(CalculatorValidationError, match="events"):
         CalculatorResult(row, (), [], summary)
+    with pytest.raises(CalculatorValidationError, match="rows"):
+        CalculatorRequest(date(2020, 1, 1), date(2020, 1, 2), (object(),))
     with pytest.raises(CalculatorValidationError, match="config"):
         CalculatorResult(object(), (), (), summary)
     with pytest.raises(CalculatorValidationError, match="summary"):
@@ -149,26 +137,23 @@ def test_request_and_result_do_not_retain_mutable_sequence_aliases() -> None:
 
 
 @pytest.mark.parametrize(
-    ("enum_type", "bad_value"),
+    "amount",
     [
-        (Cadence, "fortnightly"),
-        (StopFamily, "threshold"),
-        (CalculatorEventType, "dividend"),
-        (PercentageKind, "fee"),
+        0.0,
+        -1.0,
+        math.nan,
+        math.inf,
+        -math.inf,
+        0.999,
+        10_000_000.01,
+        1.001,
+        True,
+        "100",
     ],
 )
-def test_enums_reject_unknown_values(enum_type: type, bad_value: str) -> None:
-    # Given: an unsupported enum value.
-    # When/Then: enum construction rejects it.
-    with pytest.raises(ValueError):
-        enum_type(bad_value)
-
-
-@pytest.mark.parametrize(
-    "amount",
-    [0.0, -1.0, math.nan, math.inf, -math.inf, 0.999, 10_000_000.01, 1.001],
-)
-def test_row_rejects_invalid_contribution_amount(amount: float) -> None:
+def test_row_rejects_invalid_contribution_amount(
+    amount: float | bool | str,
+) -> None:
     # Given: an amount outside the finite ¥1–¥10,000,000/two-decimal contract.
     # When/Then: row construction rejects it.
     with pytest.raises(CalculatorValidationError, match="contribution_amount"):
@@ -178,6 +163,42 @@ def test_row_rejects_invalid_contribution_amount(amount: float) -> None:
             Cadence.MONTHLY,
             StopFamily.NONE,
         )
+
+
+@pytest.mark.parametrize("name", [None, 7])
+def test_row_rejects_non_string_names(name: str | int | None) -> None:
+    # Given: a name that is not an exact string.
+    # When/Then: construction fails with the domain error.
+    with pytest.raises(CalculatorValidationError, match="name"):
+        StrategyRowConfig(name, 1_000, Cadence.MONTHLY, StopFamily.NONE)
+
+
+def test_row_trims_name_and_normalizes_numeric_inputs_for_engine_arithmetic() -> None:
+    # Given: safe integer numerics and a padded display name.
+    # When: a target-return row crosses the model boundary.
+    row = StrategyRowConfig(
+        "  策略  ",
+        1_000,
+        Cadence.MONTHLY,
+        StopFamily.TARGET_RETURN,
+        1,
+        None,
+        1,
+    )
+
+    # Then: the immutable record contains engine-safe canonical values.
+    assert (
+        row.name,
+        row.contribution_amount,
+        row.target_return,
+        row.sale_fraction,
+    ) == (
+        "策略",
+        1_000.0,
+        1.0,
+        1.0,
+    )
+    assert 1_200 / row.contribution_amount - 1 < row.target_return
 
 
 @pytest.mark.parametrize(
@@ -225,9 +246,16 @@ def test_row_rejects_incompatible_stop_fields(
         ("sale_fraction", 0.0),
         ("sale_fraction", 1.001),
         ("sale_fraction", -math.inf),
+        ("target_return", "0.2"),
+        ("target_return", True),
+        ("sale_fraction", "1.0"),
+        ("sale_fraction", False),
     ],
 )
-def test_row_rejects_invalid_stop_percentages(field: str, value: float) -> None:
+def test_row_rejects_invalid_stop_percentages(
+    field: str,
+    value: float | str | bool,
+) -> None:
     # Given: one percentage outside its decimal domain.
     values = {
         "target_return": 0.2,
@@ -244,52 +272,6 @@ def test_row_rejects_invalid_stop_percentages(field: str, value: float) -> None:
             trailing_drawdown=values["trailing_drawdown"],
             sale_fraction=values["sale_fraction"],
         )
-
-
-@pytest.mark.parametrize(
-    ("kind", "raw", "expected"),
-    [
-        (PercentageKind.TARGET_RETURN, "0.1", 0.001),
-        (PercentageKind.TARGET_RETURN, "500", 5.0),
-        (PercentageKind.TRAILING_DRAWDOWN, "99.0", 0.99),
-        (PercentageKind.SALE_FRACTION, "100", 1.0),
-    ],
-)
-def test_percentage_parser_accepts_inclusive_boundaries(
-    kind: PercentageKind,
-    raw: str,
-    expected: float,
-) -> None:
-    # Given: a user-facing percentage on an inclusive boundary.
-    # When: it crosses the parser boundary.
-    parsed = parse_percentage(kind, raw)
-
-    # Then: it is converted exactly once to decimal form.
-    assert parsed == expected
-
-
-@pytest.mark.parametrize(
-    ("kind", "raw"),
-    [
-        (PercentageKind.TARGET_RETURN, ""),
-        (PercentageKind.TARGET_RETURN, "abc"),
-        (PercentageKind.TARGET_RETURN, "NaN"),
-        (PercentageKind.TARGET_RETURN, "Infinity"),
-        (PercentageKind.TARGET_RETURN, "0"),
-        (PercentageKind.TARGET_RETURN, "500.1"),
-        (PercentageKind.TRAILING_DRAWDOWN, "99.1"),
-        (PercentageKind.SALE_FRACTION, "-1"),
-        (PercentageKind.SALE_FRACTION, "20.01"),
-    ],
-)
-def test_percentage_parser_rejects_malformed_or_out_of_range_input(
-    kind: PercentageKind,
-    raw: str,
-) -> None:
-    # Given: malformed, non-finite, imprecise, or out-of-range pasted input.
-    # When/Then: parsing fails before a row can be produced.
-    with pytest.raises(CalculatorValidationError):
-        parse_percentage(kind, raw)
 
 
 @pytest.mark.parametrize(

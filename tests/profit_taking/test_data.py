@@ -146,14 +146,14 @@ def test_load_h00300_prices_does_not_forward_fill_missing_sessions() -> None:
     # Given
     def loader(_symbol: str, _start: date, _end: date) -> pd.DataFrame:
         return pd.DataFrame(
-            {"日期": ["2020-01-02", "2020-01-04"], "收盘": [100.0, 101.0]}
+            {"日期": ["2020-01-02", "2020-01-06"], "收盘": [100.0, 101.0]}
         )
 
     # When
     prices, _ = load_h00300_prices(
         "H00300",
         date(2020, 1, 2),
-        date(2020, 1, 4),
+        date(2020, 1, 6),
         loader=loader,
         retrieved_at_utc=RETRIEVED_AT,
     )
@@ -161,7 +161,61 @@ def test_load_h00300_prices_does_not_forward_fill_missing_sessions() -> None:
     # Then
     assert prices.index.tolist() == [
         pd.Timestamp("2020-01-02"),
-        pd.Timestamp("2020-01-04"),
+        pd.Timestamp("2020-01-06"),
+    ]
+
+
+def test_load_h00300_prices_drops_duplicate_weekend_requested_boundary() -> None:
+    # Given: the provider repeats the first tradable close on a requested Sunday.
+    def loader(_symbol: str, _start: date, _end: date) -> pd.DataFrame:
+        return pd.DataFrame(
+            {
+                "日期": ["2006-01-01", "2006-01-04", "2006-01-05"],
+                "收盘": [941.43, 941.43, 959.13],
+            }
+        )
+
+    # When: the requested interval begins on that non-trading boundary.
+    prices, provenance = load_h00300_prices(
+        "H00300",
+        date(2006, 1, 1),
+        date(2006, 1, 5),
+        loader=loader,
+        retrieved_at_utc=RETRIEVED_AT,
+    )
+
+    # Then: the synthetic Sunday cannot become a contribution session.
+    assert prices.index.tolist() == [
+        pd.Timestamp("2006-01-04"),
+        pd.Timestamp("2006-01-05"),
+    ]
+    assert provenance.requested_start == date(2006, 1, 1)
+    assert provenance.actual_start == date(2006, 1, 4)
+    assert (
+        "synthetic_nontrading_requested_boundary_dropped" in provenance.cleaning_actions
+    )
+
+
+def test_load_h00300_prices_drops_all_weekend_rows() -> None:
+    def loader(_symbol: str, _start: date, _end: date) -> pd.DataFrame:
+        return pd.DataFrame(
+            {
+                "日期": ["2020-01-03", "2020-01-04", "2020-01-05", "2020-01-06"],
+                "收盘": [100.0, 100.0, 100.0, 101.0],
+            }
+        )
+
+    prices, _ = load_h00300_prices(
+        "H00300",
+        date(2020, 1, 3),
+        date(2020, 1, 6),
+        loader=loader,
+        retrieved_at_utc=RETRIEVED_AT,
+    )
+
+    assert prices.index.tolist() == [
+        pd.Timestamp("2020-01-03"),
+        pd.Timestamp("2020-01-06"),
     ]
 
 

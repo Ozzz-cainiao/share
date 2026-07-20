@@ -55,6 +55,10 @@ _PERCENT_LIMITS: Final[dict[PercentageKind, tuple[Decimal, Decimal]]] = {
 
 
 def parse_percentage(kind: PercentageKind, value: str) -> float:
+    if type(kind) is not PercentageKind:
+        raise CalculatorValidationError("percentage_kind", "must be a PercentageKind")
+    if type(value) is not str:
+        raise CalculatorValidationError(kind.value, "must be percentage text")
     try:
         percentage = Decimal(value)
     except InvalidOperation as error:
@@ -75,20 +79,15 @@ def parse_percentage(kind: PercentageKind, value: str) -> float:
     return float(percentage / Decimal(100))
 
 
-def _require_percentage(
+def _normalize_percentage(
     kind: PercentageKind,
     value: float | None,
-    *,
-    required: bool,
-) -> None:
+) -> float | None:
     if value is None:
-        if required:
-            raise CalculatorValidationError(kind.value, "is required")
-        return
-    try:
-        parse_percentage(kind, str(Decimal(str(value)) * Decimal(100)))
-    except CalculatorValidationError as error:
-        raise CalculatorValidationError(kind.value, error.reason) from error
+        return None
+    if type(value) not in (int, float):
+        raise CalculatorValidationError(kind.value, "must be an int or float")
+    return parse_percentage(kind, str(Decimal(str(value)) * Decimal(100)))
 
 
 @dataclass(frozen=True, slots=True)
@@ -103,13 +102,21 @@ class StrategyRowConfig:
     recycle_proceeds: bool = False
 
     def __post_init__(self) -> None:
-        if not self.name.strip():
+        if type(self.name) is not str:
+            raise CalculatorValidationError("name", "must be a string")
+        name = self.name.strip()
+        if not name:
             raise CalculatorValidationError("name", "must be non-empty")
+        object.__setattr__(self, "name", name)
         if type(self.cadence) is not Cadence:
             raise CalculatorValidationError("cadence", "must be a Cadence")
         if type(self.stop_family) is not StopFamily:
             raise CalculatorValidationError("stop_family", "must be a StopFamily")
-        amount = self.contribution_amount
+        if type(self.contribution_amount) not in (int, float):
+            raise CalculatorValidationError(
+                "contribution_amount", "must be an int or float"
+            )
+        amount = float(self.contribution_amount)
         if (
             not math.isfinite(amount)
             or not 1 <= amount <= 10_000_000
@@ -119,55 +126,42 @@ class StrategyRowConfig:
                 "contribution_amount",
                 "must be finite, inside [1, 10000000], and use at most two decimals",
             )
+        object.__setattr__(self, "contribution_amount", amount)
         if type(self.recycle_proceeds) is not bool:
             raise CalculatorValidationError("recycle_proceeds", "must be boolean")
+        target = _normalize_percentage(PercentageKind.TARGET_RETURN, self.target_return)
+        drawdown = _normalize_percentage(
+            PercentageKind.TRAILING_DRAWDOWN, self.trailing_drawdown
+        )
+        fraction = _normalize_percentage(
+            PercentageKind.SALE_FRACTION, self.sale_fraction
+        )
+        object.__setattr__(self, "target_return", target)
+        object.__setattr__(self, "trailing_drawdown", drawdown)
+        object.__setattr__(self, "sale_fraction", fraction)
         match self.stop_family:
             case StopFamily.NONE:
-                if (
-                    self.target_return is not None
-                    or self.trailing_drawdown is not None
-                    or self.sale_fraction is not None
-                    or self.recycle_proceeds
+                if any(value is not None for value in (target, drawdown, fraction)) or (
+                    self.recycle_proceeds
                 ):
                     raise CalculatorValidationError(
                         "stop_family", "no-stop rows take no stop-only fields"
                     )
             case StopFamily.TARGET_RETURN:
-                _require_percentage(
-                    PercentageKind.TARGET_RETURN,
-                    self.target_return,
-                    required=True,
-                )
-                _require_percentage(
-                    PercentageKind.TRAILING_DRAWDOWN,
-                    self.trailing_drawdown,
-                    required=False,
-                )
-                if self.trailing_drawdown is not None:
+                if target is None or fraction is None:
+                    raise CalculatorValidationError(
+                        "stop_family", "target and sale fraction are required"
+                    )
+                if drawdown is not None:
                     raise CalculatorValidationError(
                         "trailing_drawdown", "is only valid for trailing stops"
                     )
-                _require_percentage(
-                    PercentageKind.SALE_FRACTION,
-                    self.sale_fraction,
-                    required=True,
-                )
             case StopFamily.TRAILING_DRAWDOWN:
-                _require_percentage(
-                    PercentageKind.TARGET_RETURN,
-                    self.target_return,
-                    required=True,
-                )
-                _require_percentage(
-                    PercentageKind.TRAILING_DRAWDOWN,
-                    self.trailing_drawdown,
-                    required=True,
-                )
-                _require_percentage(
-                    PercentageKind.SALE_FRACTION,
-                    self.sale_fraction,
-                    required=True,
-                )
+                if target is None or drawdown is None or fraction is None:
+                    raise CalculatorValidationError(
+                        "stop_family",
+                        "target, drawdown, and sale fraction are required",
+                    )
             case unreachable:
                 assert_never(unreachable)
 

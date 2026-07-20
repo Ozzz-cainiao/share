@@ -109,6 +109,48 @@ def test_one_observation_has_no_invented_xirr() -> None:
     assert summary.xirr is None
 
 
+def test_adjacent_trading_day_gain_has_finite_high_xirr() -> None:
+    # Given: one external contribution gains 1% by the next trading day.
+    states = (
+        _state("2024-01-02", scheduled=100.0, external=100.0, pool=0.0, holding=100.0),
+        _state("2024-01-03", scheduled=0.0, external=0.0, pool=0.0, holding=101.0),
+    )
+
+    # When: the calculator annualizes the dated external cash flows.
+    summary = compute_calculator_summary(states, ())
+
+    # Then: adaptive bracketing finds the valid root above the former limit of ten.
+    assert summary.xirr == pytest.approx(1.01**365.25 - 1.0, rel=1e-10)
+
+
+def test_adjacent_trading_day_gain_above_finite_cap_has_null_xirr() -> None:
+    # Given: a 10% one-day gain whose annualized root exceeds the safety cap.
+    states = (
+        _state("2024-01-02", scheduled=100.0, external=100.0, pool=0.0, holding=100.0),
+        _state("2024-01-03", scheduled=0.0, external=0.0, pool=0.0, holding=110.0),
+    )
+
+    # When: the calculator cannot safely bracket the root.
+    summary = compute_calculator_summary(states, ())
+
+    # Then: convergence failure stays explicit instead of returning a boundary.
+    assert summary.xirr is None
+
+
+def test_near_total_loss_has_finite_negative_xirr() -> None:
+    states = (
+        _state("2020-01-01", scheduled=100.0, external=100.0, pool=0.0, holding=100.0),
+        _state("2020-12-31", scheduled=0.0, external=0.0, pool=0.0, holding=0.00001),
+    )
+
+    summary = compute_calculator_summary(states, ())
+
+    assert summary.xirr == pytest.approx(
+        (0.00001 / 100.0) ** (365.25 / 365) - 1.0,
+        abs=1e-11,
+    )
+
+
 def test_nav_and_drawdown_are_contribution_neutral() -> None:
     # Given: a large external deposit followed by a 50% market loss.
     states = (

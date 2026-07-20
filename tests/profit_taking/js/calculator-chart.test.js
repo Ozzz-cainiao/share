@@ -2,6 +2,8 @@
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
 
 const {
   buildChartModel,
@@ -118,7 +120,10 @@ test("one-day axes remain finite and render one stable date tick", () => {
 });
 
 test("result markup exposes every metric, two SVGs and textual summaries", () => {
-  const results = [result("strategy-1", "<基准>", [100], null)];
+  const results = [
+    result("strategy-1", "<基准>", [100], null),
+    result("strategy-2", "止盈", [100], 0.1),
+  ];
   const markup = renderResultsMarkup(results, {
     requestedStart: "2024-01-01",
     requestedEnd: "2024-01-01",
@@ -136,6 +141,22 @@ test("result markup exposes every metric, two SVGs and textual summaries", () =>
   assert.match(markup, /当前值/);
   assert.match(markup, />—</);
   assert.doesNotMatch(markup, /<基准>/);
+  assert.match(markup, /<thead><tr><th scope="col">指标<\/th><th scope="col">&lt;基准&gt;<\/th><th scope="col">止盈<\/th>/);
+  const tableBody = markup.match(/<table class="results-table">[\s\S]*?<tbody>([\s\S]*?)<\/tbody>/)[1];
+  assert.equal((tableBody.match(/<tr>/g) || []).length, 12);
+  assert.equal((tableBody.match(/<th scope="row">/g) || []).length, 12);
+});
+
+test("responsive CSS preserves readable charts and desktop date action row", () => {
+  const css = fs.readFileSync(path.join(
+    __dirname,
+    "../../../investlab/profit_taking/calculator_static/calculator.css",
+  ), "utf8");
+  assert.match(css, /\.chart-scroll\s*\{[^}]*overflow-x:\s*auto/s);
+  assert.match(css, /\.chart-scroll svg\s*\{[^}]*min-width:\s*640px/s);
+  assert.match(css, /#calculator-form\s*\{[^}]*display:\s*grid/s);
+  assert.match(css, /\.form-actions\s*\{[^}]*grid-column:\s*2/s);
+  assert.match(css, /@media \(max-width: 768px\)[\s\S]*#calculator-form\s*\{[^}]*display:\s*block/s);
 });
 
 test("formatPercent uses signed text and handles undefined XIRR", () => {
