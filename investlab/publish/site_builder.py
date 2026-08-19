@@ -94,9 +94,15 @@ def home(
     asset_count = len(selected)
     body = f"""<main class="shell"><div class="eyebrow">Index Return Lab</div>
 <h1>中美指数长期收益实验室</h1>
-<p class="lead">探索两个核心研究主题：指数间再平衡是否有效，以及不同买入时点和持有期限下的长期收益表现。</p>
-<nav class="topnav"><a href="methodology.html">方法与数据说明</a></nav>
+<p class="lead">探索指数每日波动、指数间再平衡，以及不同买入时点和持有期限下的长期收益表现。</p>
+<nav class="topnav"><a href="daily-distributions/index.html">每日涨跌幅分布</a><a href="methodology.html">方法与数据说明</a></nav>
 <div class="grid">
+<article class="card feature">
+  <div class="category">每日更新</div>
+  <h2>📉 每日涨跌幅分布</h2>
+  <p>沪深300、中证500、中证800、中证1000、A500、创业板指、科创50、科创100、科创创业50，自发布以来的单日涨跌幅直方图。</p>
+  <div class="links"><a href="daily-distributions/index.html">查看九个指数 →</a></div>
+</article>
 <article class="card feature">
   <div class="category">核心研究</div>
   <h2>📊 再平衡研究</h2>
