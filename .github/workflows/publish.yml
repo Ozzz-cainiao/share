@@ -50,6 +50,10 @@ jobs:
       - name: Build DCA calculator
         run: |
           uv run python -m investlab.profit_taking.calculator_runner --output-dir dist/site/calculator
+      - name: Add salary calculator
+        run: |
+          mkdir -p dist/site/salary-calculator
+          cp salary-calculator/index.html salary-calculator/style.css salary-calculator/calculator.js dist/site/salary-calculator/
       - name: Install Playwright
         run: |
           npm install playwright

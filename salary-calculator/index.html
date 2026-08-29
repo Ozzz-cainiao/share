@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="上海个人工资、个税、年终奖与到手收入计算器，支持边际收益分析和 Offer 对比。">
+  <meta name="color-scheme" content="light dark">
+  <title>工资、个税与到手收入计算器</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.min.js" defer></script>
+  <script src="calculator.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="#top" aria-label="返回顶部">收入计算器</a>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="切换深色模式">深色</button>
+    </div>
+  </header>
+
+  <main id="top" class="page-shell">
+    <section class="intro">
+      <div>
+        <p class="eyebrow">SHANGHAI · PERSONAL INCOME</p>
+        <h1>看清工资上涨之后，<br>真正留下了多少。</h1>
+      </div>
+      <p class="intro-copy">同时计算工资、五险一金、个税和年终奖。所有数据只在你的浏览器中处理。</p>
+    </section>
+
+    <section class="calculator-panel" aria-labelledby="inputTitle">
+      <div class="section-heading compact">
+        <div>
+          <p class="section-kicker">01 · 输入</p>
+          <h2 id="inputTitle">收入与扣除</h2>
+        </div>
+        <span class="policy-chip" id="policyPeriod">上海参数</span>
+      </div>
+
+      <div class="input-grid">
+        <label class="field">
+          <span>税前月薪</span>
+          <span class="input-wrap prefix"><b>¥</b><input id="monthlySalary" type="number" min="0" step="1000" value="30000" inputmode="decimal"></span>
+        </label>
+        <label class="field">
+          <span>年终奖月数</span>
+          <span class="input-wrap suffix"><input id="bonusMonths" type="number" min="0" step="0.5" value="3" inputmode="decimal"><b>个月</b></span>
+        </label>
+        <label class="field">
+          <span>年终奖金额</span>
+          <span class="input-wrap prefix"><b>¥</b><input id="bonusAmount" type="number" min="0" step="1000" value="90000" inputmode="decimal"></span>
+        </label>
+        <label class="field">
+          <span>每月专项附加扣除</span>
+          <span class="input-wrap prefix"><b>¥</b><input id="monthlySpecialDeduction" type="number" min="0" step="100" value="0" inputmode="decimal"></span>
+        </label>
+        <label class="field">
+          <span>个人公积金比例</span>
+          <span class="input-wrap suffix"><input id="housingFundRate" type="number" min="0" max="20" step="0.5" value="12" inputmode="decimal"><b>%</b></span>
+          <span class="field-hint">可输入 5%、7% 或 12% 等实际比例</span>
+        </label>
+      </div>
+
+      <details class="advanced" id="advancedSettings">
+        <summary>高级设置 <span>缴费基数上下限</span></summary>
+        <div class="advanced-grid">
+          <label class="field"><span>社保最低基数</span><span class="input-wrap prefix"><b>¥</b><input id="socialMinBase" type="number" min="0" step="1"></span></label>
+          <label class="field"><span>社保最高基数</span><span class="input-wrap prefix"><b>¥</b><input id="socialMaxBase" type="number" min="0" step="1"></span></label>
+          <label class="field"><span>公积金最低基数</span><span class="input-wrap prefix"><b>¥</b><input id="housingMinBase" type="number" min="0" step="1"></span></label>
+          <label class="field"><span>公积金最高基数</span><span class="input-wrap prefix"><b>¥</b><input id="housingMaxBase" type="number" min="0" step="1"></span></label>
+        </div>
+        <button class="secondary-button" id="resetDefaults" type="button">恢复上海默认参数</button>
+      </details>
+    </section>
+
+    <section class="results-section" aria-labelledby="resultTitle">
+      <div class="section-heading">
+        <div><p class="section-kicker">02 · 结果</p><h2 id="resultTitle">全年收入结果</h2></div>
+        <div class="recommendation" id="recommendation">正在计算…</div>
+      </div>
+
+      <div class="hero-results">
+        <article class="primary-result dark-card">
+          <span>全年现金到手</span>
+          <strong id="annualCashIncome">—</strong>
+          <small>不含进入个人公积金账户的金额</small>
+        </article>
+        <article class="primary-result accent-card">
+          <span>全年实际个人资产增加</span>
+          <strong id="annualAssetIncrease">—</strong>
+          <small>现金到手 + 个人公积金</small>
+        </article>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric"><span>税前年收入</span><strong id="annualGrossIncome">—</strong></div>
+        <div class="metric"><span>平均每月现金到手</span><strong id="averageMonthlyCashIncome">—</strong></div>
+        <div class="metric"><span>全年个人所得税</span><strong id="totalTax">—</strong></div>
+        <div class="metric"><span>全年个人社保</span><strong id="annualSocialSecurity">—</strong></div>
+        <div class="metric"><span>全年个人公积金</span><strong id="annualHousingFund">—</strong></div>
+      </div>
+
+      <div class="tax-comparison">
+        <div class="tax-header"><h3>年终奖计税方案</h3><span>自动采用总税负更低的方案</span></div>
+        <div class="tax-options">
+          <article><span>方案 A · 单独计税</span><strong id="separateTotalTax">—</strong><small id="separateTaxDetail">—</small></article>
+          <article><span>方案 B · 并入综合所得</span><strong id="mergedTotalTax">—</strong><small>工资与年终奖合并后的全年个税</small></article>
+          <article><span>两种方案税额差</span><strong id="taxDifference">—</strong><small id="taxSavingText">—</small></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="marginal-section" aria-labelledby="marginalTitle">
+      <div class="section-heading">
+        <div><p class="section-kicker">03 · 边际收益</p><h2 id="marginalTitle">月薪再涨 ¥1,000，会发生什么？</h2></div>
+      </div>
+      <div class="marginal-callout">
+        <div><span>月薪每增加 ¥1,000，实际新增现金到手</span><strong id="marginalCash">—</strong><small id="marginalContext">平均每月 · 年终奖金额保持不变</small></div>
+        <div class="rate-block"><span>加薪现金转化率</span><strong id="cashConversionRate">—</strong></div>
+        <div class="rate-block"><span>加薪资产转化率</span><strong id="assetConversionRate">—</strong></div>
+      </div>
+      <div class="delta-grid">
+        <div><span>税前年收入</span><b id="deltaGross">—</b></div>
+        <div><span>个税</span><b id="deltaTax">—</b></div>
+        <div><span>个人社保</span><b id="deltaSocial">—</b></div>
+        <div><span>个人公积金</span><b id="deltaHousing">—</b></div>
+        <div><span>平均月到手</span><b id="deltaMonthlyCash">—</b></div>
+        <div><span>个人资产</span><b id="deltaAsset">—</b></div>
+      </div>
+    </section>
+
+    <section class="charts-section" aria-labelledby="chartTitle">
+      <div class="section-heading"><div><p class="section-kicker">04 · 可视化</p><h2 id="chartTitle">从曲线里看见边界</h2></div></div>
+      <div class="chart-card"><div id="incomeChart" class="chart" role="img" aria-label="税前月薪与月均现金到手折线图"></div></div>
+      <div class="chart-card"><div id="marginalChart" class="chart" role="img" aria-label="每增加一千元工资的边际分配图"></div></div>
+      <div class="chart-card distribution-card"><div id="distributionChart" class="chart short-chart" role="img" aria-label="税前年收入分配环形图"></div><div class="distribution-note"><span>收入分配核对</span><strong id="distributionCheck">—</strong><small>到手现金、个税、社保与公积金之和</small></div></div>
+    </section>
+
+    <section class="offers-section" aria-labelledby="offerTitle">
+      <div class="section-heading"><div><p class="section-kicker">05 · OFFER 对比</p><h2 id="offerTitle">比较真正到手的差异</h2></div></div>
+      <div class="offer-inputs">
+        <fieldset><legend>Offer A</legend><label class="field"><span>月薪</span><span class="input-wrap prefix"><b>¥</b><input id="offerASalary" type="number" min="0" step="1000" value="30000"></span></label><label class="field"><span>年终奖月数</span><span class="input-wrap suffix"><input id="offerABonusMonths" type="number" min="0" step="0.5" value="3"><b>个月</b></span></label></fieldset>
+        <div class="versus">VS</div>
+        <fieldset><legend>Offer B</legend><label class="field"><span>月薪</span><span class="input-wrap prefix"><b>¥</b><input id="offerBSalary" type="number" min="0" step="1000" value="40000"></span></label><label class="field"><span>年终奖月数</span><span class="input-wrap suffix"><input id="offerBBonusMonths" type="number" min="0" step="0.5" value="4"><b>个月</b></span></label></fieldset>
+      </div>
+      <div class="offer-table-wrap">
+        <table class="offer-table">
+          <thead><tr><th>指标</th><th>Offer A</th><th>Offer B</th><th>B − A</th></tr></thead>
+          <tbody id="offerTableBody"></tbody>
+        </table>
+      </div>
+      <p class="offer-summary" id="offerSummary">—</p>
+    </section>
+
+    <footer>
+      <p>本工具仅用于个人收入测算与薪资比较，不构成税务建议。实际个税、社保及住房公积金缴纳金额可能因年度政策、缴费基数、单位申报方式、专项附加扣除及其他因素而不同，请以实际工资单和官方政策为准。</p>
+      <p>计算全部在本地浏览器中完成，不会上传你的薪资数据。</p>
+      <p class="source-note">参数参考：<a href="https://rsj.sh.gov.cn/" target="_blank" rel="noopener">上海市人力资源和社会保障局</a> · <a href="https://www.shzfgjj.cn/" target="_blank" rel="noopener">上海住房公积金网</a></p>
+    </footer>
+  </main>
+</body>
+</html>
