@@ -46,6 +46,12 @@ function finiteNonNegative(value, fallback = 0) {
   return Number.isFinite(number) ? Math.max(0, number) : fallback;
 }
 
+function optionalNonNegative(value) {
+  if (value === undefined || value === null || String(value).trim() === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.max(0, number) : null;
+}
+
 function clamp(value, min, max) {
   const safeMin = Math.min(min, max);
   const safeMax = Math.max(min, max);
@@ -70,20 +76,22 @@ function normalizedSettings(settings = {}) {
   };
 }
 
-function calculateSocialSecurity(monthlySalary, settings = DEFAULT_SETTINGS) {
+function calculateSocialSecurity(monthlySalary, settings = DEFAULT_SETTINGS, declaredBase = null) {
   const salary = finiteNonNegative(monthlySalary);
   const config = normalizedSettings(settings);
-  const contributionBase = clamp(salary, config.socialMinBase, config.socialMaxBase);
+  const customBase = optionalNonNegative(declaredBase);
+  const contributionBase = clamp(customBase ?? salary, config.socialMinBase, config.socialMaxBase);
   const monthlyAmount = contributionBase * (PENSION_RATE + MEDICAL_RATE + UNEMPLOYMENT_RATE);
-  return { contributionBase, monthlyAmount: roundMoney(monthlyAmount), annualAmount: roundMoney(monthlyAmount * 12) };
+  return { contributionBase, declaredBase: customBase, usesCustomBase: customBase !== null, monthlyAmount: roundMoney(monthlyAmount), annualAmount: roundMoney(monthlyAmount * 12) };
 }
 
-function calculateHousingFund(monthlySalary, settings = DEFAULT_SETTINGS) {
+function calculateHousingFund(monthlySalary, settings = DEFAULT_SETTINGS, declaredBase = null) {
   const salary = finiteNonNegative(monthlySalary);
   const config = normalizedSettings(settings);
-  const contributionBase = clamp(salary, config.housingMinBase, config.housingMaxBase);
+  const customBase = optionalNonNegative(declaredBase);
+  const contributionBase = clamp(customBase ?? salary, config.housingMinBase, config.housingMaxBase);
   const monthlyAmount = contributionBase * config.housingFundRate;
-  return { contributionBase, monthlyAmount: roundMoney(monthlyAmount), annualAmount: roundMoney(monthlyAmount * 12) };
+  return { contributionBase, declaredBase: customBase, usesCustomBase: customBase !== null, monthlyAmount: roundMoney(monthlyAmount), annualAmount: roundMoney(monthlyAmount * 12) };
 }
 
 function taxFromBrackets(taxableIncome, brackets) {
@@ -121,11 +129,13 @@ function calculateIncome(input = {}) {
   const monthlySalary = finiteNonNegative(input.monthlySalary);
   const bonus = finiteNonNegative(input.bonus);
   const monthlySpecialDeduction = finiteNonNegative(input.monthlySpecialDeduction);
+  const socialSecurityBaseInput = optionalNonNegative(input.socialSecurityBase);
+  const housingFundBaseInput = optionalNonNegative(input.housingFundBase);
   const settings = normalizedSettings(input.settings);
   const annualBaseSalary = roundMoney(monthlySalary * 12);
   const annualGrossIncome = roundMoney(annualBaseSalary + bonus);
-  const social = calculateSocialSecurity(monthlySalary, settings);
-  const housing = calculateHousingFund(monthlySalary, settings);
+  const social = calculateSocialSecurity(monthlySalary, settings, socialSecurityBaseInput);
+  const housing = calculateHousingFund(monthlySalary, settings, housingFundBaseInput);
   const annualSpecialDeduction = roundMoney(monthlySpecialDeduction * 12);
 
   const separateComprehensive = calculateAnnualComprehensiveTax(
@@ -161,6 +171,10 @@ function calculateIncome(input = {}) {
     annualPersonalAssetIncrease: roundMoney(annualCashIncome + housing.annualAmount),
     socialSecurityBase: social.contributionBase,
     housingFundBase: housing.contributionBase,
+    socialSecurityBaseInput,
+    housingFundBaseInput,
+    usesCustomSocialSecurityBase: social.usesCustomBase,
+    usesCustomHousingFundBase: housing.usesCustomBase,
     monthlySocialSecurity: social.monthlyAmount,
     monthlyHousingFund: housing.monthlyAmount,
     separateComprehensiveTax: separateComprehensive.tax,
@@ -204,6 +218,8 @@ function compareOffers(offerA, offerB, shared = {}) {
     monthlySalary: finiteNonNegative(offer.monthlySalary),
     bonus: roundMoney(finiteNonNegative(offer.monthlySalary) * finiteNonNegative(offer.bonusMonths)),
     monthlySpecialDeduction: finiteNonNegative(shared.monthlySpecialDeduction),
+    socialSecurityBase: optionalNonNegative(shared.socialSecurityBase),
+    housingFundBase: optionalNonNegative(shared.housingFundBase),
     settings: shared.settings
   });
   const a = calculateIncome(buildInput(offerA));
@@ -244,7 +260,7 @@ function formatWan(value) {
 if (typeof document !== "undefined") {
   document.addEventListener("DOMContentLoaded", () => {
     const byId = id => document.getElementById(id);
-    const inputIds = ["monthlySalary", "bonusMonths", "bonusAmount", "monthlySpecialDeduction", "housingFundRate", "socialMinBase", "socialMaxBase", "housingMinBase", "housingMaxBase"];
+    const inputIds = ["monthlySalary", "bonusMonths", "bonusAmount", "monthlySpecialDeduction", "socialSecurityBase", "housingFundBase", "housingFundRate", "socialMinBase", "socialMaxBase", "housingMinBase", "housingMaxBase"];
     const offerInputIds = ["offerASalary", "offerABonusMonths", "offerBSalary", "offerBBonusMonths"];
     let bonusUpdateSource = "months";
     let chartInstances = [];
@@ -271,6 +287,8 @@ if (typeof document !== "undefined") {
         monthlySalary: finiteNonNegative(byId("monthlySalary").value),
         bonus: finiteNonNegative(byId("bonusAmount").value),
         monthlySpecialDeduction: finiteNonNegative(byId("monthlySpecialDeduction").value),
+        socialSecurityBase: optionalNonNegative(byId("socialSecurityBase").value),
+        housingFundBase: optionalNonNegative(byId("housingFundBase").value),
         settings: readSettings()
       };
     }
@@ -291,6 +309,14 @@ if (typeof document !== "undefined") {
     }
 
     function updateResults(result, marginal) {
+      const socialWasClamped = result.usesCustomSocialSecurityBase && result.socialSecurityBase !== result.socialSecurityBaseInput;
+      const housingWasClamped = result.usesCustomHousingFundBase && result.housingFundBase !== result.housingFundBaseInput;
+      setText("socialBaseHint", result.usesCustomSocialSecurityBase
+        ? `实际按 ${formatMoney(result.socialSecurityBase)} 计算${socialWasClamped ? "（已按上下限校准）" : ""}`
+        : `当前按月薪校准为 ${formatMoney(result.socialSecurityBase)}`);
+      setText("housingBaseHint", result.usesCustomHousingFundBase
+        ? `实际按 ${formatMoney(result.housingFundBase)} 计算${housingWasClamped ? "（已按上下限校准）" : ""}`
+        : `当前按月薪校准为 ${formatMoney(result.housingFundBase)}`);
       setText("recommendation", `推荐方案：${result.recommendedScheme === "separate" ? "年终奖单独计税" : "并入综合所得"}`);
       setText("annualCashIncome", formatMoney(result.annualCashIncome));
       setText("annualAssetIncrease", formatMoney(result.annualPersonalAssetIncrease));
@@ -321,7 +347,12 @@ if (typeof document !== "undefined") {
       const comparison = compareOffers(
         { monthlySalary: byId("offerASalary").value, bonusMonths: byId("offerABonusMonths").value },
         { monthlySalary: byId("offerBSalary").value, bonusMonths: byId("offerBBonusMonths").value },
-        { monthlySpecialDeduction: byId("monthlySpecialDeduction").value, settings: readSettings() }
+        {
+          monthlySpecialDeduction: byId("monthlySpecialDeduction").value,
+          socialSecurityBase: byId("socialSecurityBase").value,
+          housingFundBase: byId("housingFundBase").value,
+          settings: readSettings()
+        }
       );
       const rows = [
         ["税前年包", "annualGrossIncome"],
@@ -368,11 +399,11 @@ if (typeof document !== "undefined") {
       };
     }
 
-    function findTaxThresholdNodes(bonusMonths, monthlySpecialDeduction, settings) {
+    function findTaxThresholdNodes(bonusMonths, monthlySpecialDeduction, settings, socialSecurityBase, housingFundBase) {
       const nodes = [];
       let previousBracket = -1;
       for (let salary = 5000; salary <= 100000; salary += 100) {
-        const result = calculateIncome({ monthlySalary: salary, bonus: salary * bonusMonths, monthlySpecialDeduction, settings });
+        const result = calculateIncome({ monthlySalary: salary, bonus: salary * bonusMonths, monthlySpecialDeduction, socialSecurityBase, housingFundBase, settings });
         const bracket = COMPREHENSIVE_TAX_BRACKETS.findIndex(item => result.taxableIncome <= item.upper);
         if (previousBracket >= 0 && bracket > previousBracket) nodes.push(salary);
         previousBracket = bracket;
@@ -386,11 +417,13 @@ if (typeof document !== "undefined") {
       const settings = readSettings();
       const bonusMonths = finiteNonNegative(byId("bonusMonths").value);
       const deduction = finiteNonNegative(byId("monthlySpecialDeduction").value);
+      const socialSecurityBase = optionalNonNegative(byId("socialSecurityBase").value);
+      const housingFundBase = optionalNonNegative(byId("housingFundBase").value);
       const salaries = [];
       const gross = [], cash = [], housing = [], tax = [];
       const marginalCash = [], marginalHousing = [], marginalTax = [], marginalSocial = [];
       for (let salary = 5000; salary <= 100000; salary += 1000) {
-        const input = { monthlySalary: salary, bonus: salary * bonusMonths, monthlySpecialDeduction: deduction, settings };
+        const input = { monthlySalary: salary, bonus: salary * bonusMonths, monthlySpecialDeduction: deduction, socialSecurityBase, housingFundBase, settings };
         const item = calculateIncome(input);
         const delta = calculateMarginalIncome(input);
         salaries.push(salary);
@@ -421,10 +454,10 @@ if (typeof document !== "undefined") {
         ]
       });
 
-      const taxNodes = findTaxThresholdNodes(bonusMonths, deduction, settings);
+      const taxNodes = findTaxThresholdNodes(bonusMonths, deduction, settings, socialSecurityBase, housingFundBase);
       const markData = [
-        { xAxis: settings.socialMaxBase, name: "社保封顶", label: { formatter: "社保封顶" } },
-        { xAxis: settings.housingMaxBase, name: "公积金封顶", label: { formatter: "公积金封顶", position: "insideEndBottom" } },
+        ...(socialSecurityBase === null ? [{ xAxis: settings.socialMaxBase, name: "社保封顶", label: { formatter: "社保封顶" } }] : []),
+        ...(housingFundBase === null ? [{ xAxis: settings.housingMaxBase, name: "公积金封顶", label: { formatter: "公积金封顶", position: "insideEndBottom" } }] : []),
         ...taxNodes.map((node, i) => ({ xAxis: node, name: `税档 ${i + 1}`, label: { formatter: "税档切换", show: i < 2 } }))
       ];
       marginalChart.setOption({

@@ -54,6 +54,16 @@
           <span class="input-wrap prefix"><b>¥</b><input id="monthlySpecialDeduction" type="number" min="0" step="100" value="0" inputmode="decimal"></span>
         </label>
         <label class="field">
+          <span>社保申报基数</span>
+          <span class="input-wrap prefix"><b>¥</b><input id="socialSecurityBase" type="number" min="0" step="100" placeholder="留空则跟随月薪" inputmode="decimal"></span>
+          <span class="field-hint" id="socialBaseHint">留空时按月薪，并受上海上下限约束</span>
+        </label>
+        <label class="field">
+          <span>公积金申报基数</span>
+          <span class="input-wrap prefix"><b>¥</b><input id="housingFundBase" type="number" min="0" step="100" placeholder="留空则跟随月薪" inputmode="decimal"></span>
+          <span class="field-hint" id="housingBaseHint">留空时按月薪，并受公积金上下限约束</span>
+        </label>
+        <label class="field">
           <span>个人公积金比例</span>
           <span class="input-wrap suffix"><input id="housingFundRate" type="number" min="0" max="20" step="0.5" value="12" inputmode="decimal"><b>%</b></span>
           <span class="field-hint">可输入 5%、7% 或 12% 等实际比例</span>
