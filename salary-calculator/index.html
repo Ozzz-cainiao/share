@@ -146,11 +146,50 @@
     </section>
 
     <section class="offers-section" aria-labelledby="offerTitle">
-      <div class="section-heading"><div><p class="section-kicker">05 · OFFER 对比</p><h2 id="offerTitle">比较真正到手的差异</h2></div></div>
+      <div class="section-heading offer-heading">
+        <div><p class="section-kicker">05 · OFFER 对比</p><h2 id="offerTitle">比较真正到手的差异</h2></div>
+        <label class="weeks-setting">
+          <span>每年工作周数</span>
+          <span class="input-wrap suffix"><input id="workingWeeks" type="number" min="1" max="53" step="1" value="52" inputmode="decimal"><b>周</b></span>
+          <small>统一估算口径，可按年假与节假日调整</small>
+        </label>
+      </div>
       <div class="offer-inputs">
-        <fieldset><legend>Offer A</legend><label class="field"><span>月薪</span><span class="input-wrap prefix"><b>¥</b><input id="offerASalary" type="number" min="0" step="1000" value="30000"></span></label><label class="field"><span>年终奖月数</span><span class="input-wrap suffix"><input id="offerABonusMonths" type="number" min="0" step="0.5" value="3"><b>个月</b></span></label></fieldset>
+        <fieldset class="offer-card">
+          <legend>Offer A</legend>
+          <div class="offer-money-grid">
+            <label class="field"><span>月薪</span><span class="input-wrap prefix"><b>¥</b><input id="offerASalary" type="number" min="0" step="1000" value="30000"></span></label>
+            <label class="field"><span>年终奖月数</span><span class="input-wrap suffix"><input id="offerABonusMonths" type="number" min="0" step="0.5" value="3"><b>个月</b></span></label>
+          </div>
+          <div class="schedule-divider"><span>工作时间</span></div>
+          <label class="field schedule-preset"><span>作息预设</span><span class="input-wrap"><select id="offerASchedulePreset"><option value="965" selected>965 · 9 点到 6 点 / 5 天</option><option value="996">996 · 9 点到 9 点 / 6 天</option><option value="custom">自定义</option></select></span></label>
+          <div class="schedule-grid">
+            <label class="field"><span>上班</span><span class="input-wrap"><input id="offerAStartTime" type="time" value="09:00"></span></label>
+            <label class="field"><span>下班</span><span class="input-wrap"><input id="offerAEndTime" type="time" value="18:00"></span></label>
+            <label class="field"><span>每周</span><span class="input-wrap suffix"><input id="offerAWorkdays" type="number" min="1" max="7" step="0.5" value="5"><b>天</b></span></label>
+            <label class="field"><span>午休</span><span class="input-wrap suffix"><input id="offerALunchBreak" type="number" min="0" max="8" step="0.5" value="1"><b>小时</b></span></label>
+            <label class="field"><span>晚饭</span><span class="input-wrap suffix"><input id="offerADinnerBreak" type="number" min="0" max="8" step="0.5" value="0"><b>小时</b></span></label>
+          </div>
+          <p class="schedule-summary" id="offerAScheduleSummary">—</p>
+        </fieldset>
         <div class="versus">VS</div>
-        <fieldset><legend>Offer B</legend><label class="field"><span>月薪</span><span class="input-wrap prefix"><b>¥</b><input id="offerBSalary" type="number" min="0" step="1000" value="40000"></span></label><label class="field"><span>年终奖月数</span><span class="input-wrap suffix"><input id="offerBBonusMonths" type="number" min="0" step="0.5" value="4"><b>个月</b></span></label></fieldset>
+        <fieldset class="offer-card">
+          <legend>Offer B</legend>
+          <div class="offer-money-grid">
+            <label class="field"><span>月薪</span><span class="input-wrap prefix"><b>¥</b><input id="offerBSalary" type="number" min="0" step="1000" value="40000"></span></label>
+            <label class="field"><span>年终奖月数</span><span class="input-wrap suffix"><input id="offerBBonusMonths" type="number" min="0" step="0.5" value="4"><b>个月</b></span></label>
+          </div>
+          <div class="schedule-divider"><span>工作时间</span></div>
+          <label class="field schedule-preset"><span>作息预设</span><span class="input-wrap"><select id="offerBSchedulePreset"><option value="965">965 · 9 点到 6 点 / 5 天</option><option value="996" selected>996 · 9 点到 9 点 / 6 天</option><option value="custom">自定义</option></select></span></label>
+          <div class="schedule-grid">
+            <label class="field"><span>上班</span><span class="input-wrap"><input id="offerBStartTime" type="time" value="09:00"></span></label>
+            <label class="field"><span>下班</span><span class="input-wrap"><input id="offerBEndTime" type="time" value="21:00"></span></label>
+            <label class="field"><span>每周</span><span class="input-wrap suffix"><input id="offerBWorkdays" type="number" min="1" max="7" step="0.5" value="6"><b>天</b></span></label>
+            <label class="field"><span>午休</span><span class="input-wrap suffix"><input id="offerBLunchBreak" type="number" min="0" max="8" step="0.5" value="1"><b>小时</b></span></label>
+            <label class="field"><span>晚饭</span><span class="input-wrap suffix"><input id="offerBDinnerBreak" type="number" min="0" max="8" step="0.5" value="1"><b>小时</b></span></label>
+          </div>
+          <p class="schedule-summary" id="offerBScheduleSummary">—</p>
+        </fieldset>
       </div>
       <div class="offer-table-wrap">
         <table class="offer-table">

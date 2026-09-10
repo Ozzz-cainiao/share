@@ -11,6 +11,12 @@ const MEDICAL_RATE = 0.02;
 const UNEMPLOYMENT_RATE = 0.005;
 const HOUSING_FUND_RATE = 0.12;
 const ANNUAL_BASIC_DEDUCTION = 60000;
+const DEFAULT_WORKING_WEEKS = 52;
+
+const WORK_SCHEDULE_PRESETS = Object.freeze({
+  "965": { startTime: "09:00", endTime: "18:00", workdaysPerWeek: 5, lunchBreakHours: 1, dinnerBreakHours: 0 },
+  "996": { startTime: "09:00", endTime: "21:00", workdaysPerWeek: 6, lunchBreakHours: 1, dinnerBreakHours: 1 }
+});
 
 const COMPREHENSIVE_TAX_BRACKETS = [
   { upper: 36000, rate: 0.03, quickDeduction: 0 },
@@ -213,6 +219,40 @@ function calculateMarginalIncome(input = {}, increment = 1000) {
   };
 }
 
+function timeToMinutes(value, fallback) {
+  const match = String(value || "").match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return fallback;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  return hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59 ? hours * 60 + minutes : fallback;
+}
+
+function calculateWorkingHours(schedule = {}, workingWeeks = DEFAULT_WORKING_WEEKS) {
+  const defaultSchedule = WORK_SCHEDULE_PRESETS["965"];
+  const startMinutes = timeToMinutes(schedule.startTime, timeToMinutes(defaultSchedule.startTime, 9 * 60));
+  const endMinutes = timeToMinutes(schedule.endTime, timeToMinutes(defaultSchedule.endTime, 18 * 60));
+  const elapsedMinutes = endMinutes === startMinutes ? 0 : endMinutes > startMinutes ? endMinutes - startMinutes : endMinutes + 24 * 60 - startMinutes;
+  const grossDailyHours = elapsedMinutes / 60;
+  const lunchBreakHours = Math.min(finiteNonNegative(schedule.lunchBreakHours, defaultSchedule.lunchBreakHours), 12);
+  const dinnerBreakHours = Math.min(finiteNonNegative(schedule.dinnerBreakHours, defaultSchedule.dinnerBreakHours), 12);
+  const breakHours = lunchBreakHours + dinnerBreakHours;
+  const netDailyHours = Math.max(0, grossDailyHours - breakHours);
+  const workdaysPerWeek = Math.min(Math.max(finiteNonNegative(schedule.workdaysPerWeek, 5), 1), 7);
+  const safeWorkingWeeks = Math.min(Math.max(finiteNonNegative(workingWeeks, DEFAULT_WORKING_WEEKS), 1), 53);
+  const weeklyHours = roundMoney(netDailyHours * workdaysPerWeek);
+  return {
+    startTime: schedule.startTime || "09:00",
+    endTime: schedule.endTime || "18:00",
+    grossDailyHours: roundMoney(grossDailyHours),
+    breakHours: roundMoney(breakHours),
+    netDailyHours: roundMoney(netDailyHours),
+    workdaysPerWeek,
+    workingWeeks: safeWorkingWeeks,
+    weeklyHours,
+    annualWorkingHours: roundMoney(weeklyHours * safeWorkingWeeks)
+  };
+}
+
 function compareOffers(offerA, offerB, shared = {}) {
   const buildInput = offer => ({
     monthlySalary: finiteNonNegative(offer.monthlySalary),
@@ -224,12 +264,26 @@ function compareOffers(offerA, offerB, shared = {}) {
   });
   const a = calculateIncome(buildInput(offerA));
   const b = calculateIncome(buildInput(offerB));
+  const scheduleA = calculateWorkingHours(offerA.schedule, shared.workingWeeks);
+  const scheduleB = calculateWorkingHours(offerB.schedule, shared.workingWeeks);
+  a.workSchedule = scheduleA;
+  b.workSchedule = scheduleB;
+  a.grossHourlyIncome = scheduleA.annualWorkingHours ? roundMoney(a.annualGrossIncome / scheduleA.annualWorkingHours) : 0;
+  b.grossHourlyIncome = scheduleB.annualWorkingHours ? roundMoney(b.annualGrossIncome / scheduleB.annualWorkingHours) : 0;
+  a.cashHourlyIncome = scheduleA.annualWorkingHours ? roundMoney(a.annualCashIncome / scheduleA.annualWorkingHours) : 0;
+  b.cashHourlyIncome = scheduleB.annualWorkingHours ? roundMoney(b.annualCashIncome / scheduleB.annualWorkingHours) : 0;
+  a.assetHourlyIncome = scheduleA.annualWorkingHours ? roundMoney(a.annualPersonalAssetIncrease / scheduleA.annualWorkingHours) : 0;
+  b.assetHourlyIncome = scheduleB.annualWorkingHours ? roundMoney(b.annualPersonalAssetIncrease / scheduleB.annualWorkingHours) : 0;
   const difference = {};
-  ["annualGrossIncome", "annualCashIncome", "annualHousingFund", "annualPersonalAssetIncrease", "totalTax", "averageMonthlyCashIncome"].forEach(key => {
+  ["annualGrossIncome", "annualCashIncome", "annualHousingFund", "annualPersonalAssetIncrease", "totalTax", "averageMonthlyCashIncome", "grossHourlyIncome", "cashHourlyIncome", "assetHourlyIncome"].forEach(key => {
     difference[key] = roundMoney(b[key] - a[key]);
   });
+  difference.annualWorkingHours = roundMoney(scheduleB.annualWorkingHours - scheduleA.annualWorkingHours);
   difference.cashConversionRate = difference.annualGrossIncome
     ? difference.annualCashIncome / difference.annualGrossIncome
+    : 0;
+  difference.cashHourlyChangeRate = a.cashHourlyIncome
+    ? difference.cashHourlyIncome / a.cashHourlyIncome
     : 0;
   return { a, b, difference };
 }
@@ -257,11 +311,31 @@ function formatWan(value) {
   return `${sign}${(Math.abs(safe) / 10000).toFixed(1)} 万元`;
 }
 
+function formatHours(value) {
+  const safe = Number.isFinite(Number(value)) ? Number(value) : 0;
+  return `${safe.toLocaleString("zh-CN", { maximumFractionDigits: 1 })} 小时`;
+}
+
+function formatHourDelta(value) {
+  const safe = Number.isFinite(Number(value)) ? Number(value) : 0;
+  if (Math.abs(safe) < 0.005) return "0 小时";
+  return `${safe > 0 ? "+" : "−"}${Math.abs(safe).toLocaleString("zh-CN", { maximumFractionDigits: 1 })} 小时`;
+}
+
+function formatHourlyMoney(value) {
+  return `${formatMoney(value, 2)} / 小时`;
+}
+
+function formatHourlyDelta(value) {
+  return `${formatDelta(value)} / 小时`;
+}
+
 if (typeof document !== "undefined") {
   document.addEventListener("DOMContentLoaded", () => {
     const byId = id => document.getElementById(id);
     const inputIds = ["monthlySalary", "bonusMonths", "bonusAmount", "monthlySpecialDeduction", "socialSecurityBase", "housingFundBase", "housingFundRate", "socialMinBase", "socialMaxBase", "housingMinBase", "housingMaxBase"];
-    const offerInputIds = ["offerASalary", "offerABonusMonths", "offerBSalary", "offerBBonusMonths"];
+    const offerMoneyInputIds = ["offerASalary", "offerABonusMonths", "offerBSalary", "offerBBonusMonths", "workingWeeks"];
+    const offerScheduleFieldNames = ["StartTime", "EndTime", "Workdays", "LunchBreak", "DinnerBreak"];
     let bonusUpdateSource = "months";
     let chartInstances = [];
 
@@ -344,32 +418,63 @@ if (typeof document !== "undefined") {
     }
 
     function updateOfferComparison() {
+      const readSchedule = prefix => ({
+        startTime: byId(`offer${prefix}StartTime`).value,
+        endTime: byId(`offer${prefix}EndTime`).value,
+        workdaysPerWeek: byId(`offer${prefix}Workdays`).value,
+        lunchBreakHours: byId(`offer${prefix}LunchBreak`).value,
+        dinnerBreakHours: byId(`offer${prefix}DinnerBreak`).value
+      });
       const comparison = compareOffers(
-        { monthlySalary: byId("offerASalary").value, bonusMonths: byId("offerABonusMonths").value },
-        { monthlySalary: byId("offerBSalary").value, bonusMonths: byId("offerBBonusMonths").value },
+        { monthlySalary: byId("offerASalary").value, bonusMonths: byId("offerABonusMonths").value, schedule: readSchedule("A") },
+        { monthlySalary: byId("offerBSalary").value, bonusMonths: byId("offerBBonusMonths").value, schedule: readSchedule("B") },
         {
           monthlySpecialDeduction: byId("monthlySpecialDeduction").value,
           socialSecurityBase: byId("socialSecurityBase").value,
           housingFundBase: byId("housingFundBase").value,
+          workingWeeks: byId("workingWeeks").value,
           settings: readSettings()
         }
       );
       const rows = [
-        ["税前年包", "annualGrossIncome"],
-        ["全年现金到手", "annualCashIncome"],
-        ["全年个人公积金", "annualHousingFund"],
-        ["全年个人资产增加", "annualPersonalAssetIncrease"],
-        ["全年个人所得税", "totalTax"],
-        ["平均月到手", "averageMonthlyCashIncome"]
+        { label: "税前年包", key: "annualGrossIncome", format: formatMoney, deltaFormat: formatDelta },
+        { label: "全年现金到手", key: "annualCashIncome", format: formatMoney, deltaFormat: formatDelta },
+        { label: "全年个人公积金", key: "annualHousingFund", format: formatMoney, deltaFormat: formatDelta },
+        { label: "全年个人资产增加", key: "annualPersonalAssetIncrease", format: formatMoney, deltaFormat: formatDelta },
+        { label: "全年个人所得税", key: "totalTax", format: formatMoney, deltaFormat: formatDelta },
+        { label: "平均月到手", key: "averageMonthlyCashIncome", format: formatMoney, deltaFormat: formatDelta },
+        { label: "预计年工作时长", key: "annualWorkingHours", format: formatHours, deltaFormat: formatHourDelta, scheduleValue: true },
+        { label: "税前时薪", key: "grossHourlyIncome", format: formatHourlyMoney, deltaFormat: formatHourlyDelta },
+        { label: "税后现金时薪", key: "cashHourlyIncome", format: formatHourlyMoney, deltaFormat: formatHourlyDelta },
+        { label: "个人资产时薪", key: "assetHourlyIncome", format: formatHourlyMoney, deltaFormat: formatHourlyDelta }
       ];
-      byId("offerTableBody").innerHTML = rows.map(([label, key]) =>
-        `<tr><td>${label}</td><td>${formatMoney(comparison.a[key])}</td><td>${formatMoney(comparison.b[key])}</td><td>${formatDelta(comparison.difference[key])}</td></tr>`
+      byId("offerTableBody").innerHTML = rows.map(row => {
+        const aValue = row.scheduleValue ? comparison.a.workSchedule[row.key] : comparison.a[row.key];
+        const bValue = row.scheduleValue ? comparison.b.workSchedule[row.key] : comparison.b[row.key];
+        return `<tr${row.key === "cashHourlyIncome" ? ' class="highlight-row"' : ""}><td>${row.label}</td><td>${row.format(aValue)}</td><td>${row.format(bValue)}</td><td>${row.deltaFormat(comparison.difference[row.key])}</td></tr>`;
+      }
       ).join("");
       const d = comparison.difference;
       const direction = d.annualGrossIncome >= 0 ? "增加" : "减少";
       const cashDirection = d.annualCashIncome >= 0 ? "增加" : "减少";
       const conversionText = d.annualGrossIncome === 0 ? "税前年包相同" : `实际现金转化率约 ${formatPercent(Math.abs(d.cashConversionRate))}`;
-      setText("offerSummary", `Offer B 相比 Offer A，税前年包${direction} ${formatWan(Math.abs(d.annualGrossIncome))}，全年现金到手${cashDirection}约 ${formatWan(Math.abs(d.annualCashIncome))}，${conversionText}。`);
+      const hourlyDirection = d.cashHourlyIncome >= 0 ? "上涨" : "下降";
+      const hourlyRate = comparison.a.cashHourlyIncome ? formatPercent(Math.abs(d.cashHourlyChangeRate)) : "无法比较";
+      setText("offerAScheduleSummary", `每天净工作 ${comparison.a.workSchedule.netDailyHours} 小时 · 每周 ${comparison.a.workSchedule.weeklyHours} 小时 · 年约 ${formatHours(comparison.a.workSchedule.annualWorkingHours)}`);
+      setText("offerBScheduleSummary", `每天净工作 ${comparison.b.workSchedule.netDailyHours} 小时 · 每周 ${comparison.b.workSchedule.weeklyHours} 小时 · 年约 ${formatHours(comparison.b.workSchedule.annualWorkingHours)}`);
+      setText("offerSummary", `Offer B 相比 Offer A，税前年包${direction} ${formatWan(Math.abs(d.annualGrossIncome))}，全年现金到手${cashDirection}约 ${formatWan(Math.abs(d.annualCashIncome))}，${conversionText}；税后现金时薪为 ${formatHourlyMoney(comparison.b.cashHourlyIncome)}，${hourlyDirection} ${hourlyRate}。`);
+    }
+
+    function applySchedulePreset(prefix) {
+      const presetName = byId(`offer${prefix}SchedulePreset`).value;
+      const preset = WORK_SCHEDULE_PRESETS[presetName];
+      if (!preset) return;
+      byId(`offer${prefix}StartTime`).value = preset.startTime;
+      byId(`offer${prefix}EndTime`).value = preset.endTime;
+      byId(`offer${prefix}Workdays`).value = preset.workdaysPerWeek;
+      byId(`offer${prefix}LunchBreak`).value = preset.lunchBreakHours;
+      byId(`offer${prefix}DinnerBreak`).value = preset.dinnerBreakHours;
+      updateOfferComparison();
     }
 
     function chartTheme() {
@@ -509,7 +614,16 @@ if (typeof document !== "undefined") {
       if (id === "bonusAmount") syncMonthsFromBonus();
       updateAll();
     }));
-    offerInputIds.forEach(id => byId(id).addEventListener("input", updateOfferComparison));
+    offerMoneyInputIds.forEach(id => byId(id).addEventListener("input", updateOfferComparison));
+    ["A", "B"].forEach(prefix => {
+      byId(`offer${prefix}SchedulePreset`).addEventListener("change", () => applySchedulePreset(prefix));
+      offerScheduleFieldNames.forEach(fieldName => {
+        byId(`offer${prefix}${fieldName}`).addEventListener("input", () => {
+          byId(`offer${prefix}SchedulePreset`).value = "custom";
+          updateOfferComparison();
+        });
+      });
+    });
     byId("resetDefaults").addEventListener("click", () => {
       setDefaultBaseInputs();
       byId("housingFundRate").value = HOUSING_FUND_RATE * 100;
@@ -546,6 +660,7 @@ if (typeof module !== "undefined" && module.exports) {
     calculateIncome,
     calculateMarginalIncome,
     compareOffers,
+    calculateWorkingHours,
     DEFAULT_SETTINGS,
     COMPREHENSIVE_TAX_BRACKETS,
     ANNUAL_BONUS_TAX_BRACKETS
