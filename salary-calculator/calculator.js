@@ -21,7 +21,9 @@ const MARGINAL_MARKER_STYLES = Object.freeze({
 
 const WORK_SCHEDULE_PRESETS = Object.freeze({
   "965": { startTime: "09:00", endTime: "18:00", workdaysPerWeek: 5, lunchBreakHours: 1, dinnerBreakHours: 0 },
-  "996": { startTime: "09:00", endTime: "21:00", workdaysPerWeek: 6, lunchBreakHours: 1, dinnerBreakHours: 1 }
+  "995": { startTime: "09:00", endTime: "21:00", workdaysPerWeek: 5, lunchBreakHours: 1, dinnerBreakHours: 1 },
+  "996": { startTime: "09:00", endTime: "21:00", workdaysPerWeek: 6, lunchBreakHours: 1, dinnerBreakHours: 1 },
+  "11116": { startTime: "11:00", endTime: "23:00", workdaysPerWeek: 6, lunchBreakHours: 1, dinnerBreakHours: 1 }
 });
 
 const COMPREHENSIVE_TAX_BRACKETS = [
@@ -702,6 +704,7 @@ if (typeof module !== "undefined" && module.exports) {
     calculateWorkingHours,
     createMarginalMarkData,
     MARGINAL_MARKER_STYLES,
+    WORK_SCHEDULE_PRESETS,
     DEFAULT_SETTINGS,
     COMPREHENSIVE_TAX_BRACKETS,
     ANNUAL_BONUS_TAX_BRACKETS
