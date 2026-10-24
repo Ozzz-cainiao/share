@@ -13,12 +13,6 @@ const HOUSING_FUND_RATE = 0.12;
 const ANNUAL_BASIC_DEDUCTION = 60000;
 const DEFAULT_WORKING_WEEKS = 52;
 
-const MARGINAL_MARKER_STYLES = Object.freeze({
-  taxBracket: { color: "#7C3AED", labelPosition: "insideMiddleTop" },
-  socialSecurityCap: { color: "#DC2626", labelPosition: "insideEndTop" },
-  housingFundCap: { color: "#0284C7", labelPosition: "insideEndBottom" }
-});
-
 const WORK_SCHEDULE_PRESETS = Object.freeze({
   "965": { startTime: "09:00", endTime: "18:00", workdaysPerWeek: 5, lunchBreakHours: 1, dinnerBreakHours: 0 },
   "995": { startTime: "09:00", endTime: "21:00", workdaysPerWeek: 5, lunchBreakHours: 1, dinnerBreakHours: 1 },
@@ -261,36 +255,16 @@ function calculateWorkingHours(schedule = {}, workingWeeks = DEFAULT_WORKING_WEE
   };
 }
 
-function createMarginalMarkData(taxNodes, settings, usesCustomSocialBase, usesCustomHousingBase) {
-  const marker = (xAxis, name, style, labelPosition, show = true) => ({
-    xAxis,
-    name,
-    lineStyle: { color: style.color, type: "dashed", width: 1.5, opacity: 0.9 },
-    label: {
-      formatter: name,
-      show,
-      position: labelPosition || style.labelPosition,
-      color: style.color,
-      fontSize: 10,
-      fontWeight: 600
-    }
-  });
-
-  return [
-    ...(!usesCustomSocialBase
-      ? [marker(settings.socialMaxBase, "社保封顶", MARGINAL_MARKER_STYLES.socialSecurityCap)]
-      : []),
-    ...(!usesCustomHousingBase
-      ? [marker(settings.housingMaxBase, "公积金封顶", MARGINAL_MARKER_STYLES.housingFundCap)]
-      : []),
-    ...taxNodes.map((node, index) => marker(
-      node,
-      "税档切换",
-      MARGINAL_MARKER_STYLES.taxBracket,
-      index % 2 === 0 ? "insideMiddleTop" : "insideMiddleBottom",
-      index < 2
-    ))
-  ];
+function createMarginalMarkGroups(taxNodes, settings, usesCustomSocialBase, usesCustomHousingBase) {
+  return {
+    socialSecurityCap: usesCustomSocialBase ? [] : [{ xAxis: settings.socialMaxBase, name: "社保封顶" }],
+    housingFundCap: usesCustomHousingBase ? [] : [{ xAxis: settings.housingMaxBase, name: "公积金封顶" }],
+    taxBrackets: taxNodes.map((node, index) => ({
+      xAxis: node,
+      name: "税档切换",
+      label: { show: index < 2 }
+    }))
+  };
 }
 
 function compareOffers(offerA, offerB, shared = {}) {
@@ -600,7 +574,7 @@ if (typeof document !== "undefined") {
       });
 
       const taxNodes = findTaxThresholdNodes(bonusMonths, deduction, settings, socialSecurityBase, housingFundBase);
-      const markData = createMarginalMarkData(
+      const markGroups = createMarginalMarkGroups(
         taxNodes,
         settings,
         socialSecurityBase !== null,
@@ -611,10 +585,34 @@ if (typeof document !== "undefined") {
         yAxis: { type: "value", axisLabel: { color: theme.muted, formatter: value => `¥${Math.round(value)}` }, splitLine: { lineStyle: { color: theme.line, type: "dashed" } } },
         color: [theme.accent, theme.blue, theme.orange, theme.red],
         series: [
-          { name: "新增现金到手", type: "line", showSymbol: false, data: marginalCash, lineStyle: { width: 4 }, areaStyle: { opacity: .12 }, markLine: { silent: true, symbol: "none", data: markData } },
-          { name: "新增个人公积金", type: "line", showSymbol: false, data: marginalHousing, lineStyle: { width: 2 } },
-          { name: "新增个税", type: "line", showSymbol: false, data: marginalTax, lineStyle: { width: 2 } },
-          { name: "新增社保", type: "line", showSymbol: false, data: marginalSocial, lineStyle: { width: 2 } }
+          { name: "新增现金到手", type: "line", showSymbol: false, data: marginalCash, lineStyle: { width: 4 }, areaStyle: { opacity: .12 } },
+          {
+            name: "新增个人公积金", type: "line", showSymbol: false, data: marginalHousing, lineStyle: { width: 2 },
+            markLine: {
+              silent: true, symbol: "none",
+              lineStyle: { color: "#0284C7", type: "dashed", width: 1.5, opacity: 0.9 },
+              label: { formatter: "{b}", position: "insideEndBottom", color: "#0284C7", fontSize: 10, fontWeight: 600 },
+              data: markGroups.housingFundCap
+            }
+          },
+          {
+            name: "新增个税", type: "line", showSymbol: false, data: marginalTax, lineStyle: { width: 2 },
+            markLine: {
+              silent: true, symbol: "none",
+              lineStyle: { color: "#7C3AED", type: "dashed", width: 1.5, opacity: 0.9 },
+              label: { formatter: "{b}", position: "insideMiddleTop", color: "#7C3AED", fontSize: 10, fontWeight: 600 },
+              data: markGroups.taxBrackets
+            }
+          },
+          {
+            name: "新增社保", type: "line", showSymbol: false, data: marginalSocial, lineStyle: { width: 2 },
+            markLine: {
+              silent: true, symbol: "none",
+              lineStyle: { color: "#DC2626", type: "dashed", width: 1.5, opacity: 0.9 },
+              label: { formatter: "{b}", position: "insideEndTop", color: "#DC2626", fontSize: 10, fontWeight: 600 },
+              data: markGroups.socialSecurityCap
+            }
+          }
         ]
       });
 
@@ -702,8 +700,7 @@ if (typeof module !== "undefined" && module.exports) {
     calculateMarginalIncome,
     compareOffers,
     calculateWorkingHours,
-    createMarginalMarkData,
-    MARGINAL_MARKER_STYLES,
+    createMarginalMarkGroups,
     WORK_SCHEDULE_PRESETS,
     DEFAULT_SETTINGS,
     COMPREHENSIVE_TAX_BRACKETS,
