@@ -127,6 +127,8 @@ input::-webkit-inner-spin-button { opacity: .55; }
 
 .chart-card { margin-bottom: 16px; padding: 18px; border: 1px solid var(--line); background: var(--surface); border-radius: var(--radius-md); }
 .chart { width: 100%; height: 430px; }
+.chart-note { margin: -4px 10px 4px; color: var(--muted); font-size: 12px; line-height: 1.7; }
+.chart-note strong { color: var(--ink); font-weight: 650; }
 .distribution-card { display: grid; grid-template-columns: 1.7fr .8fr; align-items: center; }
 .short-chart { height: 340px; }
 .distribution-note { padding: 30px; border-left: 1px solid var(--line); }

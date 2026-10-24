@@ -255,14 +255,42 @@ function calculateWorkingHours(schedule = {}, workingWeeks = DEFAULT_WORKING_WEE
   };
 }
 
+function findTaxThresholdNodes(bonusMonths, monthlySpecialDeduction, settings, socialSecurityBase, housingFundBase) {
+  const nodes = [];
+  let previousBracket = -1;
+  for (let salary = 5000; salary <= 100000; salary += 100) {
+    const result = calculateIncome({
+      monthlySalary: salary,
+      bonus: salary * bonusMonths,
+      monthlySpecialDeduction,
+      socialSecurityBase,
+      housingFundBase,
+      settings
+    });
+    const bracketIndex = COMPREHENSIVE_TAX_BRACKETS.findIndex(item => result.taxableIncome <= item.upper);
+    if (previousBracket >= 0 && bracketIndex > previousBracket) {
+      nodes.push({
+        monthlySalary: salary,
+        rate: COMPREHENSIVE_TAX_BRACKETS[bracketIndex].rate,
+        bracketIndex
+      });
+    }
+    previousBracket = bracketIndex;
+  }
+  return nodes;
+}
+
 function createMarginalMarkGroups(taxNodes, settings, usesCustomSocialBase, usesCustomHousingBase) {
   return {
     socialSecurityCap: usesCustomSocialBase ? [] : [{ xAxis: settings.socialMaxBase, name: "社保封顶" }],
     housingFundCap: usesCustomHousingBase ? [] : [{ xAxis: settings.housingMaxBase, name: "公积金封顶" }],
     taxBrackets: taxNodes.map((node, index) => ({
-      xAxis: node,
-      name: "税档切换",
-      label: { show: index < 2 }
+      xAxis: node.monthlySalary,
+      name: `进入 ${Math.round(node.rate * 100)}% 税档`,
+      label: {
+        show: true,
+        position: index % 2 === 0 ? "insideMiddleTop" : "insideMiddleBottom"
+      }
     }))
   };
 }
@@ -518,18 +546,6 @@ if (typeof document !== "undefined") {
       };
     }
 
-    function findTaxThresholdNodes(bonusMonths, monthlySpecialDeduction, settings, socialSecurityBase, housingFundBase) {
-      const nodes = [];
-      let previousBracket = -1;
-      for (let salary = 5000; salary <= 100000; salary += 100) {
-        const result = calculateIncome({ monthlySalary: salary, bonus: salary * bonusMonths, monthlySpecialDeduction, socialSecurityBase, housingFundBase, settings });
-        const bracket = COMPREHENSIVE_TAX_BRACKETS.findIndex(item => result.taxableIncome <= item.upper);
-        if (previousBracket >= 0 && bracket > previousBracket) nodes.push(salary);
-        previousBracket = bracket;
-      }
-      return nodes.slice(0, 4);
-    }
-
     function updateCharts(result) {
       if (typeof echarts === "undefined") return;
       const theme = chartTheme();
@@ -700,6 +716,7 @@ if (typeof module !== "undefined" && module.exports) {
     calculateMarginalIncome,
     compareOffers,
     calculateWorkingHours,
+    findTaxThresholdNodes,
     createMarginalMarkGroups,
     WORK_SCHEDULE_PRESETS,
     DEFAULT_SETTINGS,
