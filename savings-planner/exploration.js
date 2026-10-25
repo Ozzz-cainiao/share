@@ -1,5 +1,3 @@
-import {project} from './model.js';
-
 export const DEFAULT_GRID = {monthlyMin: 0, monthlyMax: 20000, monthlyStep: 1000, annualMin: 0, annualMax: 12, annualStep: 1};
 export function gridAxes(config) {
   const limits = {monthlyMin: [0, 1e8], monthlyMax: [0, 1e8], monthlyStep: [1, 1e8], annualMin: [-99, 100], annualMax: [-99, 100], annualStep: [0.01, 199]};
@@ -17,17 +15,6 @@ export function gridAxes(config) {
   if (monthly.length * annual.length > 2500) throw new Error('网格最多 2,500 格，请增大步长或缩小范围');
   return {monthly, annual};
 }
-export function sensitivity(plan, steps = 20) {
-  return Array.from({length: steps + 1}, (_, i) => {
-    const fraction = i / steps;
-    const monthly = plan.monthly + plan.extra * fraction;
-    const annual = plan.annual + (plan.compareAnnual - plan.annual) * fraction;
-    return {fraction, monthly, annual,
-      contribution: project(plan.initial, monthly, plan.annual, plan.target),
-      returns: project(plan.initial, plan.monthly, annual, plan.target)};
-  });
-}
-
 // Fixed bands make a given completion time retain its color across grid settings.
 export const TIME_BANDS = [
   {key: 'fastest', maxMonths: 60, label: '≤ 5 年'},

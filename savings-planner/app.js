@@ -1,5 +1,5 @@
 import {MAX_MONTHS, addMonths, monthIndex, balanceAt, project, validateState} from './model.js';
-import {DEFAULT_GRID, gridAxes, sensitivity, TIME_BANDS, timeBand} from './exploration.js';
+import {DEFAULT_GRID, gridAxes, TIME_BANDS, timeBand} from './exploration.js';
 const $ = id => document.getElementById(id);
 const now = new Date();
 const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -79,7 +79,6 @@ function render() {
   $('summary').innerHTML = metric('当前计划 · 预计达标', resultText(base), finish) + metric('计划起点 · 目标进度', percent(p.initial, p.target), `${wan(p.initial)} / ${wan(p.target)}`) + metric('达标时 · 投入与收益', base ? wan(base.principal) : '—', base ? `原有资产 + 累计投入；投资收益 ${money(base.gain)}` : '当前假设下尚无达标结果');
   $('scenario-rows').innerHTML = scenarios.map((s, i) => `<tr class="${i === 1 ? 'highlight' : ''}"><th scope="row">${s.name}</th><td>${money(s.monthly)}</td><td>${s.annual}%</td><td>${resultText(s.result)}</td><td>${s.result ? endMonth(p, s.result.months) : '—'}</td><td>${money(balanceAt(p.initial, s.monthly, s.annual, 120))}</td></tr>`).join('');
   renderGrid(p);
-  renderSensitivity(p);
   renderChart(p, scenarios);
   const milestones = [...new Set([500000, 1000000, 2000000, p.target].filter(v => v <= p.target))].sort((a, b) => a - b);
   $('milestones').innerHTML = milestones.map(target => {
@@ -121,35 +120,6 @@ function renderSelection(p) {
     comparison = diff === 0 ? '与当前计划同月达标。' : `比当前计划${diff > 0 ? '提前' : '晚'} ${duration(Math.abs(diff))}。`;
   }
   $('grid-selection').textContent = `所选组合：每月 ${money(monthly)}，假设年化 ${annual}%。${result ? `预计 ${resultText(result)}，${endMonth(p, result.months)}。` : '100 年内未达标。'}${comparison}`;
-}
-function renderSensitivity(p) {
-  const points = sensitivity(p);
-  $('sensitivity-context').textContent = `从当前每月 ${money(p.monthly)}、年化 ${p.annual}% 出发。调整到 100% 时：投入路径达到每月 ${money(p.monthly + p.extra)}；年化路径达到 ${p.compareAnnual}%。两条路径分别只改变一个变量。`;
-  const finite = points.flatMap(point => [point.contribution, point.returns].flatMap(result => result ? [result.months / 12] : []));
-  const lower = finite.length ? Math.max(0, Math.min(...finite) - 0.5) : 0;
-  const upper = finite.length ? Math.max(...finite) + 0.5 : 1;
-  const x = fraction => 64 + fraction * 848;
-  const y = years => 246 - (years - lower) / (upper - lower) * 210;
-  let svg = '<svg viewBox="0 0 960 305" role="img" aria-labelledby="sensitivity-title sensitivity-desc"><title id="sensitivity-title">增加月投入与调整年化对达标年数的影响</title><desc id="sensitivity-desc">横轴从基准到对比设置的调整进度为零至百分之一百，纵轴为达标年数，越低越快。实线代表只增加投入，虚线代表只调整年化。精确数据见下方表格，100年内未达标的点不绘制。</desc>';
-  for (let i = 0; i <= 4; i++) {
-    const years = lower + (upper - lower) * i / 4;
-    svg += `<line x1="64" x2="912" y1="${y(years)}" y2="${y(years)}" stroke="#dce2ed"/><text x="54" y="${y(years) + 4}" text-anchor="end" fill="#68758b" font-size="13">${years.toFixed(1)}年</text><text x="${x(i / 4)}" y="274" text-anchor="middle" fill="#68758b" font-size="13">${i * 25}%</text>`;
-  }
-  for (const [key, color, dash] of [['contribution', '#1a7a3a', 'none'], ['returns', '#405477', '8 5']]) {
-    let path = '', penDown = false;
-    for (const point of points) {
-      const result = point[key];
-      if (!result) { penDown = false; continue; }
-      path += `${penDown ? 'L' : 'M'}${x(point.fraction)},${y(result.months / 12)} `;
-      penDown = true;
-    }
-    svg += `<path d="${path}" fill="none" stroke="${color}" stroke-width="3" stroke-dasharray="${dash}"/>`;
-    for (const point of points.filter((_, i) => i % 5 === 0)) {
-      if (point[key]) svg += `<circle cx="${x(point.fraction)}" cy="${y(point[key].months / 12)}" r="4" fill="${color}"/>`;
-    }
-  }
-  $('sensitivity-chart').innerHTML = finite.length ? svg + '</svg>' : '<p class="muted">两条路径在 100 年内均未达标。请调整目标、月投入或收益率情景。</p>';
-  $('sensitivity-rows').innerHTML = points.filter((_, i) => i % 5 === 0).map(point => `<tr><th scope="row">${Math.round(point.fraction * 100)}%</th><td>${money(point.monthly)} / 月</td><td>${resultText(point.contribution)}</td><td>${Number(point.annual.toFixed(3))}%</td><td>${resultText(point.returns)}</td></tr>`).join('');
 }
 $('grid-form').addEventListener('submit', event => {
   event.preventDefault();
