@@ -4,7 +4,7 @@ const $ = id => document.getElementById(id);
 const now = new Date();
 const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 const KEY = 'investlab.savings-planner.v1';
-const expenseNames = ['话费', '水电网费', '吃饭', '房租 / 房贷', '其他生活支出'];
+const expenseNames = ['话费', '水电煤费', '吃饭', '房租 / 房贷', '其他生活支出'];
 const defaults = () => ({version: 1, plan: {initial: 300000, target: 3000000, monthly: 10000, extra: 2000, annual: 6, compareAnnual: 8, start: currentMonth, withdrawal: 3, salary: 20000, cashIncome: 0, expenses: [120, 280, 1800, 2500, 1300]}, records: []});
 let state = defaults();
 let editing = null;
