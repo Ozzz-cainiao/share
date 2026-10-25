@@ -220,7 +220,7 @@ def build_site(args: argparse.Namespace) -> int:
     planner_source = Path(__file__).resolve().parents[2] / "savings-planner"
     planner_dest = site_dir / "savings-planner"
     planner_dest.mkdir(parents=True, exist_ok=True)
-    for filename in ("index.html", "style.css", "app.js", "model.js"):
+    for filename in ("index.html", "style.css", "app.js", "model.js", "exploration.js"):
         shutil.copyfile(planner_source / filename, planner_dest / filename)
     build_rebalance_section(site_dir, getattr(args, "rebalance_html", None) or "output/rebalance_full/rebalance_comparison.html")
     directory_links = "".join(

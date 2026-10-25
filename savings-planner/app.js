@@ -1,4 +1,5 @@
 import {MAX_MONTHS, addMonths, monthIndex, balanceAt, project, validateState} from './model.js';
+import {DEFAULT_GRID, gridAxes, sensitivity, TIME_BANDS, timeBand} from './exploration.js';
 const $ = id => document.getElementById(id);
 const now = new Date();
 const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -7,6 +8,8 @@ const expenseNames = ['话费', '水电网费', '吃饭', '房租 / 房贷', '�
 const defaults = () => ({version: 1, plan: {initial: 300000, target: 3000000, monthly: 10000, extra: 2000, annual: 6, compareAnnual: 8, start: currentMonth, withdrawal: 3, salary: 20000, cashIncome: 0, expenses: [120, 280, 1800, 2500, 1300]}, records: []});
 let state = defaults();
 let editing = null;
+let gridCacheKey = '';
+let gridSelection = null;
 let storageBlocked = false;
 let corruptStorage = false;
 const money = n => '¥' + Math.round(n).toLocaleString('zh-CN');
@@ -19,10 +22,15 @@ const resultText = r => r ? duration(r.months) : '100 年内未达标';
 function announce(message) { $('message').textContent = message; }
 try {
   const saved = localStorage.getItem(KEY);
-  if (saved) state = validateState(JSON.parse(saved));
+  if (saved) state = checkedState(JSON.parse(saved));
 } catch (error) {
   if (error.name === 'SecurityError') { storageBlocked = true; announce('浏览器禁止本地保存，本次可正常计算，请导出备份保留数据。'); }
   else { corruptStorage = true; announce('原有本地数据无法读取，已保留原数据；当前使用示例。请先导出原始数据或导入有效备份。'); }
+}
+function checkedState(data) {
+  validateState(data);
+  if (data.grid) gridAxes(data.grid);
+  return data;
 }
 function persist() {
   if (corruptStorage) { announce('原有数据暂未覆盖。请先导出原始数据，再导入有效备份恢复保存。'); return; }
@@ -42,6 +50,8 @@ function hydrate() {
   $('extra').max = Math.max(20000, p.extra);
   $('extra').value = p.extra;
   $('compare-annual').value = p.compareAnnual;
+  $('base-annual').value = p.annual;
+  for (const key of Object.keys(DEFAULT_GRID)) $('grid-form').elements.namedItem(key).value = (state.grid || DEFAULT_GRID)[key];
   const form = $('record-form');
   form.elements.month.value = currentMonth < p.start ? p.start : currentMonth;
   form.elements.month.min = p.start;
@@ -68,6 +78,8 @@ function render() {
   const finish = base ? endMonth(p, base.months) : '100 年内未达标';
   $('summary').innerHTML = metric('当前计划 · 预计达标', resultText(base), finish) + metric('计划起点 · 目标进度', percent(p.initial, p.target), `${wan(p.initial)} / ${wan(p.target)}`) + metric('达标时 · 投入与收益', base ? wan(base.principal) : '—', base ? `原有资产 + 累计投入；投资收益 ${money(base.gain)}` : '当前假设下尚无达标结果');
   $('scenario-rows').innerHTML = scenarios.map((s, i) => `<tr class="${i === 1 ? 'highlight' : ''}"><th scope="row">${s.name}</th><td>${money(s.monthly)}</td><td>${s.annual}%</td><td>${resultText(s.result)}</td><td>${s.result ? endMonth(p, s.result.months) : '—'}</td><td>${money(balanceAt(p.initial, s.monthly, s.annual, 120))}</td></tr>`).join('');
+  renderGrid(p);
+  renderSensitivity(p);
   renderChart(p, scenarios);
   const milestones = [...new Set([500000, 1000000, 2000000, p.target].filter(v => v <= p.target))].sort((a, b) => a - b);
   $('milestones').innerHTML = milestones.map(target => {
@@ -77,6 +89,83 @@ function render() {
   renderCoverage(p);
   renderRecords(p, base);
 }
+function renderGrid(p) {
+  const config = state.grid || DEFAULT_GRID;
+  const cacheKey = JSON.stringify([p.initial, p.target, p.monthly, p.annual, config]);
+  if (cacheKey === gridCacheKey) return;
+  gridCacheKey = cacheKey;
+  const axes = gridAxes(config);
+  $('grid-context').textContent = `起始资产 ${money(p.initial)} → 目标 ${money(p.target)}；${axes.monthly.length} 列 × ${axes.annual.length} 行。起始资产与目标可在上方「我的计划」设置。`;
+  $('grid-head').innerHTML = '<tr><th scope="col">年化 ↓ / 月投 →</th>' + axes.monthly.map(value => `<th scope="col">${money(value)}</th>`).join('') + '</tr>';
+  const rows = [...axes.annual].reverse().map(annual => ({annual, cells: axes.monthly.map(monthly => ({monthly, result: project(p.initial, monthly, annual, p.target)}))}));
+  $('heat-key').innerHTML = TIME_BANDS.map(band => `<span><i class="heat-swatch heat-${band.key}"></i>${band.label}</span>`).join('') + '<span><i class="heat-swatch heat-unreachable"></i>— 100 年内未达标</span><span>◎ 当前基准</span>';
+  $('grid-body').innerHTML = rows.map(row => `<tr><th scope="row">${row.annual}%</th>${row.cells.map(cell => {
+    const {monthly, result} = cell;
+    const band = timeBand(result);
+    const isBase = Math.abs(p.monthly - monthly) < 1e-7 && Math.abs(p.annual - row.annual) < 1e-7;
+    const label = result ? result.months === 0 ? '已达标' : (result.months / 12).toFixed(1) : '—';
+    const description = `每月投入 ${money(monthly)}，年化 ${row.annual}%，${resultText(result)}`;
+    const selected = gridSelection && gridSelection.monthly === monthly && gridSelection.annual === row.annual;
+    return `<td><button type="button" data-monthly="${monthly}" data-annual="${row.annual}" class="heat-${band} ${isBase ? 'is-base' : ''}" aria-pressed="${Boolean(selected)}" aria-label="${description}" title="${description}">${isBase ? '◎ ' : ''}${label}</button></td>`;
+  }).join('')}</tr>`).join('');
+  if (!gridSelection) gridSelection = {monthly: p.monthly, annual: p.annual};
+  renderSelection(p);
+}
+function renderSelection(p) {
+  const {monthly, annual} = gridSelection;
+  const result = project(p.initial, monthly, annual, p.target);
+  const base = project(p.initial, p.monthly, p.annual, p.target);
+  let comparison = '';
+  if (base && result) {
+    const diff = base.months - result.months;
+    comparison = diff === 0 ? '与当前计划同月达标。' : `比当前计划${diff > 0 ? '提前' : '晚'} ${duration(Math.abs(diff))}。`;
+  }
+  $('grid-selection').textContent = `所选组合：每月 ${money(monthly)}，假设年化 ${annual}%。${result ? `预计 ${resultText(result)}，${endMonth(p, result.months)}。` : '100 年内未达标。'}${comparison}`;
+}
+function renderSensitivity(p) {
+  const points = sensitivity(p);
+  $('sensitivity-context').textContent = `从当前每月 ${money(p.monthly)}、年化 ${p.annual}% 出发。调整到 100% 时：投入路径达到每月 ${money(p.monthly + p.extra)}；年化路径达到 ${p.compareAnnual}%。两条路径分别只改变一个变量。`;
+  const finite = points.flatMap(point => [point.contribution, point.returns].flatMap(result => result ? [result.months / 12] : []));
+  const lower = finite.length ? Math.max(0, Math.min(...finite) - 0.5) : 0;
+  const upper = finite.length ? Math.max(...finite) + 0.5 : 1;
+  const x = fraction => 64 + fraction * 848;
+  const y = years => 246 - (years - lower) / (upper - lower) * 210;
+  let svg = '<svg viewBox="0 0 960 305" role="img" aria-labelledby="sensitivity-title sensitivity-desc"><title id="sensitivity-title">增加月投入与调整年化对达标年数的影响</title><desc id="sensitivity-desc">横轴从基准到对比设置的调整进度为零至百分之一百，纵轴为达标年数，越低越快。实线代表只增加投入，虚线代表只调整年化。精确数据见下方表格，100年内未达标的点不绘制。</desc>';
+  for (let i = 0; i <= 4; i++) {
+    const years = lower + (upper - lower) * i / 4;
+    svg += `<line x1="64" x2="912" y1="${y(years)}" y2="${y(years)}" stroke="#dce2ed"/><text x="54" y="${y(years) + 4}" text-anchor="end" fill="#68758b" font-size="13">${years.toFixed(1)}年</text><text x="${x(i / 4)}" y="274" text-anchor="middle" fill="#68758b" font-size="13">${i * 25}%</text>`;
+  }
+  for (const [key, color, dash] of [['contribution', '#1a7a3a', 'none'], ['returns', '#405477', '8 5']]) {
+    let path = '', penDown = false;
+    for (const point of points) {
+      const result = point[key];
+      if (!result) { penDown = false; continue; }
+      path += `${penDown ? 'L' : 'M'}${x(point.fraction)},${y(result.months / 12)} `;
+      penDown = true;
+    }
+    svg += `<path d="${path}" fill="none" stroke="${color}" stroke-width="3" stroke-dasharray="${dash}"/>`;
+    for (const point of points.filter((_, i) => i % 5 === 0)) {
+      if (point[key]) svg += `<circle cx="${x(point.fraction)}" cy="${y(point[key].months / 12)}" r="4" fill="${color}"/>`;
+    }
+  }
+  $('sensitivity-chart').innerHTML = finite.length ? svg + '</svg>' : '<p class="muted">两条路径在 100 年内均未达标。请调整目标、月投入或收益率情景。</p>';
+  $('sensitivity-rows').innerHTML = points.filter((_, i) => i % 5 === 0).map(point => `<tr><th scope="row">${Math.round(point.fraction * 100)}%</th><td>${money(point.monthly)} / 月</td><td>${resultText(point.contribution)}</td><td>${Number(point.annual.toFixed(3))}%</td><td>${resultText(point.returns)}</td></tr>`).join('');
+}
+$('grid-form').addEventListener('submit', event => {
+  event.preventDefault();
+  const config = Object.fromEntries(Object.keys(DEFAULT_GRID).map(key => [key, Number(event.target.elements.namedItem(key).value)]));
+  try { gridAxes(config); } catch (error) { $('grid-error').textContent = error.message; return; }
+  $('grid-error').textContent = '';
+  state.grid = config; gridCacheKey = ''; persist(); renderGrid(state.plan); success('网格已更新。点击任意组合查看精确达标时间。');
+});
+$('grid-body').addEventListener('click', event => {
+  const button = event.target.closest('button[data-monthly]');
+  if (!button) return;
+  gridSelection = {monthly: Number(button.dataset.monthly), annual: Number(button.dataset.annual)};
+  $('grid-body').querySelectorAll('button[aria-pressed="true"]').forEach(cell => cell.setAttribute('aria-pressed', 'false'));
+  button.setAttribute('aria-pressed', 'true');
+  renderSelection(state.plan);
+});
 function renderChart(p, scenarios) {
   const base = scenarios[0].result;
   // Bound the graph to 40 years for readability; the calculator still searches 100 years.
@@ -159,6 +248,17 @@ $('plan-form').addEventListener('submit', event => {
 });
 $('extra').addEventListener('input', event => { state.plan.extra = Number(event.target.value); render(); });
 $('extra').addEventListener('change', persist);
+$('base-annual').addEventListener('change', event => {
+  if (!event.target.reportValidity()) return;
+  setBaseAnnual(Number(event.target.value));
+});
+document.querySelectorAll('[data-base-rate]').forEach(button => button.addEventListener('click', () => setBaseAnnual(Number(button.dataset.baseRate))));
+function setBaseAnnual(annual) {
+  state.plan.annual = annual;
+  $('plan-form').elements.annual.value = annual;
+  $('base-annual').value = annual;
+  persist(); render(); success(`基础年化已设为 ${annual}%，所有预测已同步更新。`);
+}
 $('compare-annual').addEventListener('change', event => {
   if (!event.target.reportValidity()) return;
   state.plan.compareAnnual = Number(event.target.value); persist(); render();
@@ -214,7 +314,7 @@ $('import-file').addEventListener('change', async event => {
   const file = event.target.files[0]; if (!file) return;
   try {
     if (file.size > 1024 * 1024) throw new Error('备份文件不能超过 1 MB');
-    const imported = validateState(JSON.parse(await file.text()));
+    const imported = checkedState(JSON.parse(await file.text()));
     if (imported.records.some(r => r.month > currentMonth)) throw new Error('备份含未来月份的实际记录');
     if (!confirm(`导入将替换当前计划和 ${state.records.length} 条记录，恢复备份中的 ${imported.records.length} 条记录。是否继续？`)) return;
     state = imported; corruptStorage = false; cancelEdit(); persist(); hydrate(); render(); success('备份已恢复。');

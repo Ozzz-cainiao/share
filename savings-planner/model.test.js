@@ -37,3 +37,30 @@ test('backups are validated completely before being accepted', () => {
   const injection = state(); injection.records[0].month = '<img src=x onerror=alert(1)>';
   assert.throws(() => validateState(injection));
 });
+
+import {DEFAULT_GRID, gridAxes, sensitivity} from './exploration.js';
+test('grid supports dense custom axes, zero initial balance, fractional annual steps', () => {
+  const axes = gridAxes({...DEFAULT_GRID, monthlyMax: 1000, monthlyStep: 500, annualMin: 4, annualMax: 6, annualStep: 0.5});
+  assert.deepEqual(axes.monthly, [0, 500, 1000]);
+  assert.deepEqual(axes.annual, [4, 4.5, 5, 5.5, 6]);
+  assert.equal(project(0, 10000, 0, 3000000).months, 300);
+  assert.equal(project(0, 0, 6, 3000000), null);
+  assert.throws(() => gridAxes({...DEFAULT_GRID, monthlyStep: 0}));
+  assert.throws(() => gridAxes({...DEFAULT_GRID, monthlyMax: -1}));
+  assert.throws(() => gridAxes({...DEFAULT_GRID, monthlyStep: 1}));
+  assert.throws(() => gridAxes({...DEFAULT_GRID, monthlyMax: 50000, annualMax: 60}));
+});
+test('two sensitivity paths isolate monthly contribution and annual return', () => {
+  const points = sensitivity(state().plan);
+  assert.equal(points[0].contribution.months, 158);
+  assert.equal(points[0].returns.months, 158);
+  assert.equal(points.at(-1).monthly, 12000);
+  assert.equal(points.at(-1).annual, 8);
+  assert.equal(points.at(-1).contribution.months, 141);
+  assert.equal(points.at(-1).returns.months, 141);
+  assert.ok(points.every((p, i) => i === 0 || p.contribution.months <= points[i - 1].contribution.months));
+  const zero = sensitivity({...state().plan, initial: 0, monthly: 0, extra: 10000});
+  assert.equal(zero[0].contribution, null);
+  assert.equal(zero.at(-1).returns, null);
+  assert.ok(zero.at(-1).contribution.months > 0);
+});
