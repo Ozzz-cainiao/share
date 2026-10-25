@@ -137,6 +137,9 @@ $('grid-body').addEventListener('click', event => {
   renderSelection(state.plan);
 });
 function renderChart(p, scenarios) {
+  const symbols = ['━', '┄', '··'];
+  const classes = ['', 'positive', 'muted'];
+  $('chart-legend').innerHTML = scenarios.map((s, i) => `<span class="${classes[i]}">${symbols[i]} ${s.name}：每月 ${money(s.monthly)} · 年化 ${s.annual}%</span>`).join('') + '<span>● 实际记录</span>';
   const base = scenarios[0].result;
   // Bound the graph to 40 years for readability; the calculator still searches 100 years.
   const horizon = Math.max(12, Math.min(480, Math.ceil((base?.months || 240) / 12) * 12));
