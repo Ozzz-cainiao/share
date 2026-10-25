@@ -32,6 +32,8 @@ jobs:
         run: pip install uv
       - name: Sync dependencies
         run: uv sync
+      - name: Test savings planner calculations
+        run: node --test savings-planner/model.test.js
       - name: Build rolling-returns scenario outputs
         run: |
           uv run python -m investlab.cli run rolling-returns --assets all --end-year 2025 --output-dir tmp/rolling

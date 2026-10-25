@@ -95,8 +95,14 @@ def home(
     body = f"""<main class="shell"><div class="eyebrow">Index Return Lab</div>
 <h1>中美指数长期收益实验室</h1>
 <p class="lead">探索指数每日波动、指数间再平衡，以及不同买入时点和持有期限下的长期收益表现。</p>
-<nav class="topnav"><a href="daily-distributions/index.html">每日涨跌幅分布</a><a href="methodology.html">方法与数据说明</a></nav>
+<nav class="topnav"><a href="savings-planner/index.html">攒钱计划</a><a href="daily-distributions/index.html">每日涨跌幅分布</a><a href="methodology.html">方法与数据说明</a></nav>
 <div class="grid">
+<article class="card feature">
+  <div class="category">个人财务工具</div>
+  <h2>🌱 攒钱计划与生活自由度</h2>
+  <p>每月多存一点，能提前多久？对比投入与收益率情景，查看生活支出覆盖，记录真实攒钱进度。数据仅保存在当前浏览器。</p>
+  <div class="links"><a href="savings-planner/index.html">看看能提前多久 →</a></div>
+</article>
 <article class="card feature">
   <div class="category">每日更新</div>
   <h2>📉 每日涨跌幅分布</h2>
@@ -208,6 +214,14 @@ def build_site(args: argparse.Namespace) -> int:
         home(selected, args.start_year, args.end_year), encoding="utf-8"
     )
     (site_dir / "methodology.html").write_text(methodology(), encoding="utf-8")
+    # Copy the buildless planner on every build, including scheduled publication.
+    import shutil
+
+    planner_source = Path(__file__).resolve().parents[2] / "savings-planner"
+    planner_dest = site_dir / "savings-planner"
+    planner_dest.mkdir(parents=True, exist_ok=True)
+    for filename in ("index.html", "style.css", "app.js", "model.js"):
+        shutil.copyfile(planner_source / filename, planner_dest / filename)
     build_rebalance_section(site_dir, getattr(args, "rebalance_html", None) or "output/rebalance_full/rebalance_comparison.html")
     directory_links = "".join(
         f'<li><a href="{asset.key}/index.html">{html.escape(asset.category)} · '
