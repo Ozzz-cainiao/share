@@ -216,12 +216,25 @@ def build_site(args: argparse.Namespace) -> int:
     (site_dir / "methodology.html").write_text(methodology(), encoding="utf-8")
     # Copy the buildless planner on every build, including scheduled publication.
     import shutil
+    import hashlib
 
     planner_source = Path(__file__).resolve().parents[2] / "savings-planner"
     planner_dest = site_dir / "savings-planner"
     planner_dest.mkdir(parents=True, exist_ok=True)
     for filename in ("index.html", "style.css", "app.js", "model.js", "exploration.js"):
         shutil.copyfile(planner_source / filename, planner_dest / filename)
+    # Version both the entry script and its modules to avoid mixing releases.
+    planner_files = ("index.html", "style.css", "app.js", "model.js", "exploration.js")
+    version = hashlib.sha256(
+        b"".join((planner_source / name).read_bytes() for name in planner_files)
+    ).hexdigest()[:12]
+    for filename in ("index.html", "app.js"):
+        target = planner_dest / filename
+        content = target.read_text(encoding="utf-8")
+        for asset in ("style.css", "app.js", "model.js", "exploration.js"):
+            for quote in ('"', "'"):
+                content = content.replace(f"{asset}{quote}", f"{asset}?v={version}{quote}")
+        target.write_text(content, encoding="utf-8")
     build_rebalance_section(site_dir, getattr(args, "rebalance_html", None) or "output/rebalance_full/rebalance_comparison.html")
     directory_links = "".join(
         f'<li><a href="{asset.key}/index.html">{html.escape(asset.category)} · '

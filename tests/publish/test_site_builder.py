@@ -45,6 +45,11 @@ def test_build_site_writes_index_and_asset_pages_with_synthetic_closes(
     assert 'href="savings-planner/index.html"' in (site / "index.html").read_text()
     for filename in ("index.html", "style.css", "app.js", "model.js", "exploration.js"):
         assert (site / "savings-planner" / filename).exists()
+    planner_html = (site / "savings-planner" / "index.html").read_text()
+    planner_script = (site / "savings-planner" / "app.js").read_text()
+    assert 'src="app.js?v=' in planner_html
+    assert "./model.js?v=" in planner_script
+    assert "./exploration.js?v=" in planner_script
     assert (site / "methodology.html").exists()
     assert (site / "assets" / "site.css").exists()
     assert (site / ".nojekyll").exists()
